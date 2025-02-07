@@ -20,3 +20,12 @@ This lexer identifies correctly the following in a C++ code file
 - [ ] typedef
 - [ ] until loop
 - [ ] enum, union
+
+## Steps to run
+
+-  Add your test programs in `input/input_{number}.c`
+
+- Run the lexer using the command: 
+```bash
+$ make run-tests
+```
