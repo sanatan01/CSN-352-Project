@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iomanip>
+#include <map>
 
 // Global vector to store lexeme-Identifier pairs
 std::vector<std::pair<std::string, std::string>> lexemeTable;
@@ -74,6 +76,8 @@ L?'(\\.|[^\\'])+'   { add_to_table(yytext, "CONSTANT"); }
 L?\"(\\.|[^\\"])*\" { add_to_table(yytext, "STRING_LITERAL"); }
 
 L?\"(\\.|[^\\"])*   { add_to_table(yytext, "ERROR_UNTERMINATED_STRING"); }
+
+
 
 ">>="               { add_to_table(yytext, "OPERATOR"); }
 "<<="               { add_to_table(yytext, "OPERATOR"); }
@@ -151,9 +155,12 @@ int main(int argc, char** argv) {
 
     // Output the lexeme-Identifier table
     std::cout << "\nLexeme-Identifier Table:\n";
-    std::cout << "--------------------------\n";
+    std::cout << "--------------------------------------------------------------------------------------------\n";
+    std::cout << std::left << std::setw(69) << "Lexeme" << "|    " << "Identifier\n";
+    std::cout << "--------------------------------------------------------------------------------------------\n";
     for (const auto& pair : lexemeTable) {
-        std::cout << "Lexeme: " << pair.first << "\tIdentifier: " << pair.second << "\n";
+        std::cout << std::left << std::setw(69) << pair.first << "|    " << pair.second << "\n";
     }
+	std::cout << "--------------------------------------------------------------------------------------------\n";
     return 0;
 }

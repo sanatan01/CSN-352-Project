@@ -1,0 +1,25 @@
+
+Lexeme-Identifier Table:
+--------------------------------------------------------------------------------------------
+Lexeme                                                               |    Identifier
+--------------------------------------------------------------------------------------------
+include                                                              |    IDENTIFIER
+<                                                                    |    OPERATOR
+stdio                                                                |    IDENTIFIER
+.                                                                    |    OPERATOR
+h                                                                    |    IDENTIFIER
+>                                                                    |    OPERATOR
+int                                                                  |    KEYWORD
+main                                                                 |    IDENTIFIER
+(                                                                    |    OPERATOR
+)                                                                    |    OPERATOR
+{                                                                    |    OPERATOR
+char                                                                 |    KEYWORD
+*                                                                    |    OPERATOR
+str                                                                  |    IDENTIFIER
+=                                                                    |    OPERATOR
+"Hello, world; // Missing closing quote
+    return 0;
+}
+          |    ERROR_UNTERMINATED_STRING
+--------------------------------------------------------------------------------------------

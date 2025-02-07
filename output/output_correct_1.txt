@@ -1,0 +1,37 @@
+
+Lexeme-Identifier Table:
+--------------------------------------------------------------------------------------------
+Lexeme                                                               |    Identifier
+--------------------------------------------------------------------------------------------
+int                                                                  |    KEYWORD
+main                                                                 |    IDENTIFIER
+(                                                                    |    OPERATOR
+)                                                                    |    OPERATOR
+{                                                                    |    OPERATOR
+int                                                                  |    KEYWORD
+a                                                                    |    IDENTIFIER
+,                                                                    |    OPERATOR
+b                                                                    |    IDENTIFIER
+=                                                                    |    OPERATOR
+10                                                                   |    CONSTANT
+;                                                                    |    OPERATOR
+a                                                                    |    IDENTIFIER
+=                                                                    |    OPERATOR
+-                                                                    |    OPERATOR
+b                                                                    |    IDENTIFIER
+--                                                                   |    OPERATOR
+;                                                                    |    OPERATOR
+printf                                                               |    IDENTIFIER
+(                                                                    |    OPERATOR
+"a = %d, b = %d"                                                     |    STRING_LITERAL
+,                                                                    |    OPERATOR
+a                                                                    |    IDENTIFIER
+,                                                                    |    OPERATOR
+b                                                                    |    IDENTIFIER
+)                                                                    |    OPERATOR
+;                                                                    |    OPERATOR
+return                                                               |    KEYWORD
+0                                                                    |    CONSTANT
+;                                                                    |    OPERATOR
+}                                                                    |    OPERATOR
+--------------------------------------------------------------------------------------------

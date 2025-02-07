@@ -27,7 +27,6 @@ int main() {
     
     char *unterminated_str = "This string is not properly closed";
 
-    // Valid operators
     int a = 5, b = 10;
     int sum = a + b;
     int diff = a - b;
@@ -35,7 +34,6 @@ int main() {
     int quotient = a / b;
     int remainder = a % b;
 
-    // Valid control structures
     if (sum > diff) {
         printf("Sum is greater than difference.\n");
     } else {
