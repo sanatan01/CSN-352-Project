@@ -19,11 +19,10 @@ L           [a-zA-Z_]
 H           [a-fA-F0-9]
 E           [Ee][+-]?{D}+
 FS          (f|F|l|L)
-IS          (u|U|l|L)*
+IS          ((u|U)(l|L)?)|((l|L)(u|U)?) 
 
 %%
 
-"/*"                { /* Ignore comments */ }
 "auto"              { add_to_table(yytext, "KEYWORD"); }
 "break"             { add_to_table(yytext, "KEYWORD"); }
 "case"              { add_to_table(yytext, "KEYWORD"); }
@@ -58,14 +57,23 @@ IS          (u|U|l|L)*
 "while"             { add_to_table(yytext, "KEYWORD"); }
 
 {L}({L}|{D})*       { add_to_table(yytext, "IDENTIFIER"); }
+
 0[xX]{H}+{IS}?      { add_to_table(yytext, "CONSTANT"); }
 0{D}+{IS}?          { add_to_table(yytext, "CONSTANT"); }
 {D}+{IS}?           { add_to_table(yytext, "CONSTANT"); }
+
+0[xX]{H}+[a-zA-Z_]+ { add_to_table(yytext, "ERROR_INVALID_CONSTANT"); }
+0{D}+[a-zA-Z_]+     { add_to_table(yytext, "ERROR_INVALID_CONSTANT"); }
+{D}+[a-zA-Z_]+      { add_to_table(yytext, "ERROR_INVALID_CONSTANT"); }
+
 L?'(\\.|[^\\'])+'   { add_to_table(yytext, "CONSTANT"); }
 {D}+{E}{FS}?        { add_to_table(yytext, "CONSTANT"); }
 {D}*"."{D}+({E})?{FS}? { add_to_table(yytext, "CONSTANT"); }
 {D}+"."{D}*({E})?{FS}? { add_to_table(yytext, "CONSTANT"); }
+
 L?\"(\\.|[^\\"])*\" { add_to_table(yytext, "STRING_LITERAL"); }
+
+L?\"(\\.|[^\\"])*   { add_to_table(yytext, "ERROR_UNTERMINATED_STRING"); }
 
 ">>="               { add_to_table(yytext, "OPERATOR"); }
 "<<="               { add_to_table(yytext, "OPERATOR"); }
