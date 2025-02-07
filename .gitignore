@@ -1,2 +1,2 @@
-*.yy.c
-a.out
+lex.yy.cc
+lexer
