@@ -1,33 +1,11 @@
-
-Lexeme-Identifier Table:
---------------------------------------------------------------------------------------------
-Lexeme                                                               |    Identifier
---------------------------------------------------------------------------------------------
-include                                                              |    IDENTIFIER
-<                                                                    |    OPERATOR
-stdio                                                                |    IDENTIFIER
-.                                                                    |    OPERATOR
-h                                                                    |    IDENTIFIER
->                                                                    |    OPERATOR
-int                                                                  |    KEYWORD
-main                                                                 |    IDENTIFIER
-(                                                                    |    OPERATOR
-)                                                                    |    OPERATOR
-{                                                                    |    OPERATOR
-int                                                                  |    KEYWORD
-3num                                                                 |    ERROR_INVALID_CONSTANT
-=                                                                    |    OPERATOR
-1234                                                                 |    CONSTANT
-;                                                                    |    OPERATOR
-printf                                                               |    IDENTIFIER
-(                                                                    |    OPERATOR
-"%d\n"                                                               |    STRING_LITERAL
-,                                                                    |    OPERATOR
-3num                                                                 |    ERROR_INVALID_CONSTANT
-)                                                                    |    OPERATOR
-;                                                                    |    OPERATOR
-return                                                               |    KEYWORD
-0                                                                    |    CONSTANT
-;                                                                    |    OPERATOR
-}                                                                    |    OPERATOR
---------------------------------------------------------------------------------------------
+Token: INT, Text: int
+Token: IDENTIFIER, Text: main
+Token: LEFT_PAREN, Text: (
+Token: RIGHT_PAREN, Text: )
+Token: LEFT_BRACE, Text: {
+Token: INT, Text: int
+Token: CONSTANT, Text: 3
++-----------------+-----------------+-----------------+-----------------+
+| Name            | Type            | Return Type     |
++-----------------+-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+-----------------+

@@ -1,37 +1,46 @@
-
-Lexeme-Identifier Table:
---------------------------------------------------------------------------------------------
-Lexeme                                                               |    Identifier
---------------------------------------------------------------------------------------------
-int                                                                  |    KEYWORD
-main                                                                 |    IDENTIFIER
-(                                                                    |    OPERATOR
-)                                                                    |    OPERATOR
-{                                                                    |    OPERATOR
-int                                                                  |    KEYWORD
-a                                                                    |    IDENTIFIER
-,                                                                    |    OPERATOR
-b                                                                    |    IDENTIFIER
-=                                                                    |    OPERATOR
-10                                                                   |    CONSTANT
-;                                                                    |    OPERATOR
-a                                                                    |    IDENTIFIER
-=                                                                    |    OPERATOR
--                                                                    |    OPERATOR
-b                                                                    |    IDENTIFIER
---                                                                   |    OPERATOR
-;                                                                    |    OPERATOR
-printf                                                               |    IDENTIFIER
-(                                                                    |    OPERATOR
-"a = %d, b = %d"                                                     |    STRING_LITERAL
-,                                                                    |    OPERATOR
-a                                                                    |    IDENTIFIER
-,                                                                    |    OPERATOR
-b                                                                    |    IDENTIFIER
-)                                                                    |    OPERATOR
-;                                                                    |    OPERATOR
-return                                                               |    KEYWORD
-0                                                                    |    CONSTANT
-;                                                                    |    OPERATOR
-}                                                                    |    OPERATOR
---------------------------------------------------------------------------------------------
+Token: INT, Text: int
+Token: IDENTIFIER, Text: main
+Token: LEFT_PAREN, Text: (
+Token: RIGHT_PAREN, Text: )
+Token: LEFT_BRACE, Text: {
+Token: INT, Text: int
+Token: IDENTIFIER, Text: c
+Token: SEMICOLON, Text: ;
+Token: INT, Text: int
+Token: IDENTIFIER, Text: d
+Token: ASSIGN, Text: =
+Token: CONSTANT, Text: 100
+Token: SEMICOLON, Text: ;
+Token: INT, Text: int
+Token: IDENTIFIER, Text: a
+Token: COMMA, Text: ,
+Token: IDENTIFIER, Text: b
+Token: ASSIGN, Text: =
+Token: CONSTANT, Text: 10
+Token: SEMICOLON, Text: ;
+Token: IDENTIFIER, Text: a
+Token: ASSIGN, Text: =
+Token: MINUS, Text: -
+Token: IDENTIFIER, Text: b
+Token: DEC_OP, Text: --
+Token: SEMICOLON, Text: ;
+Token: IDENTIFIER, Text: printf
+Token: LEFT_PAREN, Text: (
+Token: STRING_LITERAL, Text: "a = %d, b = %d"
+Token: COMMA, Text: ,
+Token: IDENTIFIER, Text: a
+Token: COMMA, Text: ,
+Token: IDENTIFIER, Text: b
+Token: RIGHT_PAREN, Text: )
+Token: SEMICOLON, Text: ;
+Token: RETURN, Text: return
+Token: CONSTANT, Text: 0
+Token: SEMICOLON, Text: ;
+Token: RIGHT_BRACE, Text: }
++-----------------+-----------------+-----------------+-----------------+
+| Name            | Type            | Return Type     |
++-----------------+-----------------+-----------------+-----------------+
+| INT             | variable        | INT             |
+| INT             | variable        | INT             |
+| INT             | variable        | INT             |
++-----------------+-----------------+-----------------+-----------------+

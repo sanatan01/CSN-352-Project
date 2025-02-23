@@ -1,16 +1,96 @@
-%token IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
-%token PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
-%token AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
-%token SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
-%token XOR_ASSIGN OR_ASSIGN TYPE_NAME
+%{
+#include "helper.h"
+void yyerror(const char *s);
+extern int yylex();
+extern int yylineno;
+extern FILE *yyin;
+// Global variable to hold the current type for declaration
+char *currentType = NULL;
+%}
 
-%token TYPEDEF EXTERN STATIC AUTO REGISTER
-%token CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
-%token STRUCT UNION ENUM ELLIPSIS
+%union {
+    char *nice;
+}
 
-%token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
+
+%token<nice> IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
+%token<nice> PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
+%token<nice> AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
+%token<nice> SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
+%token<nice> XOR_ASSIGN OR_ASSIGN TYPE_NAME
+
+%token<nice> TYPEDEF EXTERN STATIC AUTO REGISTER
+%token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
+%token<nice> STRUCT UNION ENUM ELLIPSIS
+
+%token<nice> INVALID_CHARACTER
+
+%token<nice> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
 %start translation_unit
+
+
+%type<nice> translation_unit
+%type<nice> external_declaration
+%type<nice> function_definition
+%type<nice> declaration
+%type<nice> declaration_list
+%type<nice> statement
+%type<nice> statement_list
+%type<nice> expression
+%type<nice> assignment_expression
+%type<nice> conditional_expression
+%type<nice> logical_or_expression
+%type<nice> logical_and_expression
+%type<nice> inclusive_or_expression
+%type<nice> exclusive_or_expression
+%type<nice> and_expression
+%type<nice> equality_expression
+%type<nice> relational_expression
+%type<nice> shift_expression
+%type<nice> additive_expression
+%type<nice> multiplicative_expression
+%type<nice> cast_expression
+%type<nice> unary_expression
+%type<nice> unary_operator
+%type<nice> postfix_expression
+%type<nice> argument_expression_list
+%type<nice> declaration_specifiers
+%type<nice> init_declarator_list
+%type<nice> init_declarator
+%type<nice> storage_class_specifier
+%type<nice> type_specifier
+%type<nice> struct_or_union_specifier
+%type<nice> struct_or_union
+%type<nice> struct_declaration_list
+%type<nice> struct_declaration
+%type<nice> specifier_qualifier_list
+%type<nice> struct_declarator_list
+%type<nice> struct_declarator
+%type<nice> enum_specifier
+%type<nice> enumerator_list
+%type<nice> enumerator
+%type<nice> type_qualifier
+%type<nice> declarator
+%type<nice> direct_declarator
+%type<nice> pointer
+%type<nice> type_qualifier_list
+%type<nice> parameter_type_list
+%type<nice> parameter_list
+%type<nice> parameter_declaration
+%type<nice> identifier_list
+%type<nice> type_name
+%type<nice> abstract_declarator
+%type<nice> direct_abstract_declarator
+%type<nice> initializer
+%type<nice> initializer_list
+%type<nice> labeled_statement
+%type<nice> compound_statement
+%type<nice> expression_statement
+%type<nice> selection_statement
+%type<nice> iteration_statement
+%type<nice> jump_statement
+
 %%
 
 primary_expression
@@ -46,12 +126,12 @@ unary_expression
 	;
 
 unary_operator
-	: '&'
-	| '*'
-	| '+'
-	| '-'
-	| '~'
-	| '!'
+	: '&'	{ $$ = "&"; }
+	| '*'	{ $$ = "*"; }
+	| '+'	{ $$ = "+"; }
+	| '-'	{ $$ = "-"; }
+	| '~'	{ $$ = "~"; }
+	| '!'	{ $$ = "!"; }
 	;
 
 cast_expression
@@ -151,17 +231,21 @@ constant_expression
 	;
 
 declaration
-	: declaration_specifiers ';'
-	| declaration_specifiers init_declarator_list ';'
+	: declaration_specifiers ';'	{
+                 insertSymbol($1, "variable", currentType);
+    	}
+	| declaration_specifiers init_declarator_list ';' {
+                 insertSymbol($1, "variable", currentType);
+    	}
 	;
 
 declaration_specifiers
-	: storage_class_specifier
-	| storage_class_specifier declaration_specifiers
-	| type_specifier
-	| type_specifier declaration_specifiers
-	| type_qualifier
-	| type_qualifier declaration_specifiers
+	: storage_class_specifier { $$ = NULL; }
+	| storage_class_specifier declaration_specifiers { $$ = NULL; }
+	| type_specifier { $$ = $1; }
+	| type_specifier declaration_specifiers { $$ = $1; }
+	| type_qualifier { $$ = NULL; }
+	| type_qualifier declaration_specifiers { $$ = NULL; }
 	;
 
 init_declarator_list
@@ -170,9 +254,9 @@ init_declarator_list
 	;
 
 init_declarator
-	: declarator
-	| declarator '=' initializer
-	;
+    : declarator { $$ = $1; }
+    | declarator '=' initializer { $$ = $1; }
+    ;
 
 storage_class_specifier
 	: TYPEDEF
@@ -183,24 +267,24 @@ storage_class_specifier
 	;
 
 type_specifier
-	: VOID
-	| CHAR
-	| SHORT
-	| INT
-	| LONG
-	| FLOAT
-	| DOUBLE
-	| SIGNED
-	| UNSIGNED
-	| struct_or_union_specifier
-	| enum_specifier
-	| TYPE_NAME
-	;
+    : VOID { $$ = strdup("VOID"); currentType = $$; }
+    | CHAR { $$ = strdup("CHAR"); currentType = $$; }
+    | SHORT { $$ = strdup("SHORT"); currentType = $$; }
+    | INT { $$ = strdup("INT"); currentType = $$; }
+    | LONG { $$ = strdup("LONG"); currentType = $$; }
+    | FLOAT { $$ = strdup("FLOAT"); currentType = $$; }
+    | DOUBLE { $$ = strdup("DOUBLE"); currentType = $$; }
+    | SIGNED { $$ = strdup("SIGNED"); currentType = $$; }
+    | UNSIGNED { $$ = strdup("UNSIGNED"); currentType = $$; }
+    | struct_or_union_specifier { $$ = $1; /* currentType not updated here */ }
+    | enum_specifier { $$ = $1; /* currentType not updated here */ }
+    | TYPE_NAME { $$ = strdup("TYPE_NAME"); currentType = $$; }
+    ;
 
 struct_or_union_specifier
-	: struct_or_union IDENTIFIER '{' struct_declaration_list '}'
-	| struct_or_union '{' struct_declaration_list '}'
-	| struct_or_union IDENTIFIER
+	: struct_or_union IDENTIFIER '{' struct_declaration_list '}' { $$ = NULL; }
+	| struct_or_union '{' struct_declaration_list '}' { $$ = NULL; }
+	| struct_or_union IDENTIFIER { $$ = NULL; }
 	;
 
 struct_or_union
@@ -236,9 +320,9 @@ struct_declarator
 	;
 
 enum_specifier
-	: ENUM '{' enumerator_list '}'
-	| ENUM IDENTIFIER '{' enumerator_list '}'
-	| ENUM IDENTIFIER
+	: ENUM '{' enumerator_list '}' { $$ = NULL; }
+	| ENUM IDENTIFIER '{' enumerator_list '}' { $$ = NULL; }
+	| ENUM IDENTIFIER { $$ = NULL; }
 	;
 
 enumerator_list
@@ -252,30 +336,30 @@ enumerator
 	;
 
 type_qualifier
-	: CONST
-	| VOLATILE
+	: CONST { $$ = strdup("CONST"); }
+	| VOLATILE { $$ = strdup("VOLATILE"); }
 	;
 
 declarator
-	: pointer direct_declarator
-	| direct_declarator
+	: pointer direct_declarator { $$ = $2; }
+	| direct_declarator { $$ = $1; }
 	;
 
 direct_declarator
-	: IDENTIFIER
-	| '(' declarator ')'
-	| direct_declarator '[' constant_expression ']'
-	| direct_declarator '[' ']'
-	| direct_declarator '(' parameter_type_list ')'
-	| direct_declarator '(' identifier_list ')'
-	| direct_declarator '(' ')'
+	: IDENTIFIER { $$ = $1; }
+	| '(' declarator ')' { $$ = $2; }
+	| direct_declarator '[' constant_expression ']' { $$ = NULL; }
+	| direct_declarator '[' ']' { $$ = NULL; }
+	| direct_declarator '(' parameter_type_list ')' { $$ = NULL; }
+	| direct_declarator '(' identifier_list ')' { $$ = NULL; }
+	| direct_declarator '(' ')' { $$ = NULL; }
 	;
 
 pointer
-	: '*'
-	| '*' type_qualifier_list
-	| '*' pointer
-	| '*' type_qualifier_list pointer
+	: '*' { $$ = NULL; }
+	| '*' type_qualifier_list { $$ = NULL; }
+	| '*' pointer { $$ = NULL; }
+	| '*' type_qualifier_list pointer { $$ = NULL; }
 	;
 
 type_qualifier_list
@@ -415,14 +499,8 @@ function_definition
 	;
 
 %%
-#include <stdio.h>
 
-extern char yytext[];
-extern int column;
 
-void yyerror(s)
-char *s;
-{
-	fflush(stdout);
-	printf("\n%*s\n%*s\n", column, "^", column, s);
+void yyerror(const char *s) {
+    return;
 }

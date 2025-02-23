@@ -1,100 +1,93 @@
-
-Lexeme-Identifier Table:
---------------------------------------------------------------------------------------------
-Lexeme                                                               |    Identifier
---------------------------------------------------------------------------------------------
-include                                                              |    IDENTIFIER
-<                                                                    |    OPERATOR
-stdio                                                                |    IDENTIFIER
-.                                                                    |    OPERATOR
-h                                                                    |    IDENTIFIER
->                                                                    |    OPERATOR
-unsigned                                                             |    KEYWORD
-long                                                                 |    KEYWORD
-long                                                                 |    KEYWORD
-factorial                                                            |    IDENTIFIER
-(                                                                    |    OPERATOR
-int                                                                  |    KEYWORD
-n                                                                    |    IDENTIFIER
-)                                                                    |    OPERATOR
-{                                                                    |    OPERATOR
-if                                                                   |    KEYWORD
-(                                                                    |    OPERATOR
-n                                                                    |    IDENTIFIER
-==                                                                   |    OPERATOR
-0                                                                    |    CONSTANT
-||                                                                   |    OPERATOR
-n                                                                    |    IDENTIFIER
-==                                                                   |    OPERATOR
-1                                                                    |    CONSTANT
-)                                                                    |    OPERATOR
-{                                                                    |    OPERATOR
-return                                                               |    KEYWORD
-1                                                                    |    CONSTANT
-;                                                                    |    OPERATOR
-}                                                                    |    OPERATOR
-return                                                               |    KEYWORD
-n                                                                    |    IDENTIFIER
-*                                                                    |    OPERATOR
-factorial                                                            |    IDENTIFIER
-(                                                                    |    OPERATOR
-n                                                                    |    IDENTIFIER
--                                                                    |    OPERATOR
-1                                                                    |    CONSTANT
-)                                                                    |    OPERATOR
-;                                                                    |    OPERATOR
-}                                                                    |    OPERATOR
-int                                                                  |    KEYWORD
-main                                                                 |    IDENTIFIER
-(                                                                    |    OPERATOR
-)                                                                    |    OPERATOR
-{                                                                    |    OPERATOR
-int                                                                  |    KEYWORD
-num                                                                  |    IDENTIFIER
-;                                                                    |    OPERATOR
-printf                                                               |    IDENTIFIER
-(                                                                    |    OPERATOR
-"Enter a positive integer: "                                         |    STRING_LITERAL
-)                                                                    |    OPERATOR
-;                                                                    |    OPERATOR
-scanf                                                                |    IDENTIFIER
-(                                                                    |    OPERATOR
-"%d"                                                                 |    STRING_LITERAL
-,                                                                    |    OPERATOR
-&                                                                    |    OPERATOR
-num                                                                  |    IDENTIFIER
-)                                                                    |    OPERATOR
-;                                                                    |    OPERATOR
-if                                                                   |    KEYWORD
-(                                                                    |    OPERATOR
-num                                                                  |    IDENTIFIER
-<                                                                    |    OPERATOR
-0                                                                    |    CONSTANT
-)                                                                    |    OPERATOR
-{                                                                    |    OPERATOR
-printf                                                               |    IDENTIFIER
-(                                                                    |    OPERATOR
-"Factorial is not defined for negative numbers.\n"                   |    STRING_LITERAL
-)                                                                    |    OPERATOR
-;                                                                    |    OPERATOR
-}                                                                    |    OPERATOR
-else                                                                 |    KEYWORD
-{                                                                    |    OPERATOR
-printf                                                               |    IDENTIFIER
-(                                                                    |    OPERATOR
-"Factorial of %d is %llu\n"                                          |    STRING_LITERAL
-,                                                                    |    OPERATOR
-num                                                                  |    IDENTIFIER
-,                                                                    |    OPERATOR
-factorial                                                            |    IDENTIFIER
-(                                                                    |    OPERATOR
-num                                                                  |    IDENTIFIER
-)                                                                    |    OPERATOR
-)                                                                    |    OPERATOR
-;                                                                    |    OPERATOR
-}                                                                    |    OPERATOR
-return                                                               |    KEYWORD
-0                                                                    |    CONSTANT
-;                                                                    |    OPERATOR
-}                                                                    |    OPERATOR
---------------------------------------------------------------------------------------------
+Token: UNSIGNED, Text: unsigned
+Token: LONG, Text: long
+Token: LONG, Text: long
+Token: IDENTIFIER, Text: factorial
+Token: LEFT_PAREN, Text: (
+Token: INT, Text: int
+Token: IDENTIFIER, Text: n
+Token: RIGHT_PAREN, Text: )
+Token: LEFT_BRACE, Text: {
+Token: IF, Text: if
+Token: LEFT_PAREN, Text: (
+Token: IDENTIFIER, Text: n
+Token: EQ_OP, Text: ==
+Token: CONSTANT, Text: 0
+Token: OR_OP, Text: ||
+Token: IDENTIFIER, Text: n
+Token: EQ_OP, Text: ==
+Token: CONSTANT, Text: 1
+Token: RIGHT_PAREN, Text: )
+Token: LEFT_BRACE, Text: {
+Token: RETURN, Text: return
+Token: CONSTANT, Text: 1
+Token: SEMICOLON, Text: ;
+Token: RIGHT_BRACE, Text: }
+Token: RETURN, Text: return
+Token: IDENTIFIER, Text: n
+Token: ASTERISK, Text: *
+Token: IDENTIFIER, Text: factorial
+Token: LEFT_PAREN, Text: (
+Token: IDENTIFIER, Text: n
+Token: MINUS, Text: -
+Token: CONSTANT, Text: 1
+Token: RIGHT_PAREN, Text: )
+Token: SEMICOLON, Text: ;
+Token: RIGHT_BRACE, Text: }
+Token: INT, Text: int
+Token: IDENTIFIER, Text: main
+Token: LEFT_PAREN, Text: (
+Token: RIGHT_PAREN, Text: )
+Token: LEFT_BRACE, Text: {
+Token: INT, Text: int
+Token: IDENTIFIER, Text: num
+Token: SEMICOLON, Text: ;
+Token: IDENTIFIER, Text: printf
+Token: LEFT_PAREN, Text: (
+Token: STRING_LITERAL, Text: "Enter a positive integer: "
+Token: RIGHT_PAREN, Text: )
+Token: SEMICOLON, Text: ;
+Token: IDENTIFIER, Text: scanf
+Token: LEFT_PAREN, Text: (
+Token: STRING_LITERAL, Text: "%d"
+Token: COMMA, Text: ,
+Token: AMPERSAND, Text: &
+Token: IDENTIFIER, Text: num
+Token: RIGHT_PAREN, Text: )
+Token: SEMICOLON, Text: ;
+Token: IF, Text: if
+Token: LEFT_PAREN, Text: (
+Token: IDENTIFIER, Text: num
+Token: LESS_THAN, Text: <
+Token: CONSTANT, Text: 0
+Token: RIGHT_PAREN, Text: )
+Token: LEFT_BRACE, Text: {
+Token: IDENTIFIER, Text: printf
+Token: LEFT_PAREN, Text: (
+Token: STRING_LITERAL, Text: "Factorial is not defined for negative numbers.\n"
+Token: RIGHT_PAREN, Text: )
+Token: SEMICOLON, Text: ;
+Token: RIGHT_BRACE, Text: }
+Token: ELSE, Text: else
+Token: LEFT_BRACE, Text: {
+Token: IDENTIFIER, Text: printf
+Token: LEFT_PAREN, Text: (
+Token: STRING_LITERAL, Text: "Factorial of %d is %llu\n"
+Token: COMMA, Text: ,
+Token: IDENTIFIER, Text: num
+Token: COMMA, Text: ,
+Token: IDENTIFIER, Text: factorial
+Token: LEFT_PAREN, Text: (
+Token: IDENTIFIER, Text: num
+Token: RIGHT_PAREN, Text: )
+Token: RIGHT_PAREN, Text: )
+Token: SEMICOLON, Text: ;
+Token: RIGHT_BRACE, Text: }
+Token: RETURN, Text: return
+Token: CONSTANT, Text: 0
+Token: SEMICOLON, Text: ;
+Token: RIGHT_BRACE, Text: }
++-----------------+-----------------+-----------------+-----------------+
+| Name            | Type            | Return Type     |
++-----------------+-----------------+-----------------+-----------------+
+| INT             | variable        | INT             |
++-----------------+-----------------+-----------------+-----------------+

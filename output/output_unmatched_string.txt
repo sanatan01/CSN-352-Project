@@ -1,25 +1,22 @@
-
-Lexeme-Identifier Table:
---------------------------------------------------------------------------------------------
-Lexeme                                                               |    Identifier
---------------------------------------------------------------------------------------------
-include                                                              |    IDENTIFIER
-<                                                                    |    OPERATOR
-stdio                                                                |    IDENTIFIER
-.                                                                    |    OPERATOR
-h                                                                    |    IDENTIFIER
->                                                                    |    OPERATOR
-int                                                                  |    KEYWORD
-main                                                                 |    IDENTIFIER
-(                                                                    |    OPERATOR
-)                                                                    |    OPERATOR
-{                                                                    |    OPERATOR
-char                                                                 |    KEYWORD
-*                                                                    |    OPERATOR
-str                                                                  |    IDENTIFIER
-=                                                                    |    OPERATOR
-"Hello, world; // Missing closing quote
-    return 0;
-}
-          |    ERROR_UNTERMINATED_STRING
---------------------------------------------------------------------------------------------
+Token: INT, Text: int
+Token: IDENTIFIER, Text: main
+Token: LEFT_PAREN, Text: (
+Token: RIGHT_PAREN, Text: )
+Token: LEFT_BRACE, Text: {
+Token: CHAR, Text: char
+Token: ASTERISK, Text: *
+Token: IDENTIFIER, Text: str
+Token: ASSIGN, Text: =
+Token: IDENTIFIER, Text: Hello
+Token: COMMA, Text: ,
+Token: IDENTIFIER, Text: world
+Token: SEMICOLON, Text: ;
+Token: RETURN, Text: return
+Token: CONSTANT, Text: 0
+Token: SEMICOLON, Text: ;
+Token: RIGHT_BRACE, Text: }
++-----------------+-----------------+-----------------+-----------------+
+| Name            | Type            | Return Type     |
++-----------------+-----------------+-----------------+-----------------+
+| CHAR            | variable        | CHAR            |
++-----------------+-----------------+-----------------+-----------------+
