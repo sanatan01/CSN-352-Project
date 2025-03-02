@@ -101,18 +101,42 @@ extern int yydebug;
     ENUM = 302,                    /* ENUM  */
     ELLIPSIS = 303,                /* ELLIPSIS  */
     INVALID_CHARACTER = 304,       /* INVALID_CHARACTER  */
-    CASE = 305,                    /* CASE  */
-    DEFAULT = 306,                 /* DEFAULT  */
-    IF = 307,                      /* IF  */
-    ELSE = 308,                    /* ELSE  */
-    SWITCH = 309,                  /* SWITCH  */
-    WHILE = 310,                   /* WHILE  */
-    DO = 311,                      /* DO  */
-    FOR = 312,                     /* FOR  */
-    GOTO = 313,                    /* GOTO  */
-    CONTINUE = 314,                /* CONTINUE  */
-    BREAK = 315,                   /* BREAK  */
-    RETURN = 316                   /* RETURN  */
+    SEMICOLON = 305,               /* SEMICOLON  */
+    LEFT_BRACE = 306,              /* LEFT_BRACE  */
+    RIGHT_BRACE = 307,             /* RIGHT_BRACE  */
+    COMMA = 308,                   /* COMMA  */
+    COLON = 309,                   /* COLON  */
+    ASSIGN = 310,                  /* ASSIGN  */
+    LEFT_PAREN = 311,              /* LEFT_PAREN  */
+    RIGHT_PAREN = 312,             /* RIGHT_PAREN  */
+    LEFT_BRACKET = 313,            /* LEFT_BRACKET  */
+    RIGHT_BRACKET = 314,           /* RIGHT_BRACKET  */
+    DOT = 315,                     /* DOT  */
+    AMPERSAND = 316,               /* AMPERSAND  */
+    EXCLAMATION = 317,             /* EXCLAMATION  */
+    TILDE = 318,                   /* TILDE  */
+    MINUS = 319,                   /* MINUS  */
+    PLUS = 320,                    /* PLUS  */
+    ASTERISK = 321,                /* ASTERISK  */
+    SLASH = 322,                   /* SLASH  */
+    PERCENT = 323,                 /* PERCENT  */
+    LESS_THAN = 324,               /* LESS_THAN  */
+    GREATER_THAN = 325,            /* GREATER_THAN  */
+    CARET = 326,                   /* CARET  */
+    PIPE = 327,                    /* PIPE  */
+    QUESTION = 328,                /* QUESTION  */
+    CASE = 329,                    /* CASE  */
+    DEFAULT = 330,                 /* DEFAULT  */
+    IF = 331,                      /* IF  */
+    ELSE = 332,                    /* ELSE  */
+    SWITCH = 333,                  /* SWITCH  */
+    WHILE = 334,                   /* WHILE  */
+    DO = 335,                      /* DO  */
+    FOR = 336,                     /* FOR  */
+    GOTO = 337,                    /* GOTO  */
+    CONTINUE = 338,                /* CONTINUE  */
+    BREAK = 339,                   /* BREAK  */
+    RETURN = 340                   /* RETURN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -125,7 +149,7 @@ union YYSTYPE
 
     char *nice;
 
-#line 129 "src/y.tab.h"
+#line 153 "src/y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

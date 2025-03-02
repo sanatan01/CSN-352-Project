@@ -40,7 +40,8 @@ Token: RIGHT_BRACE, Text: }
 +-----------------+-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
 +-----------------+-----------------+-----------------+-----------------+
-| INT             | variable        | INT             |
-| INT             | variable        | INT             |
-| INT             | variable        | INT             |
+| c               | variable        | INT             |
+| d               | variable        | INT             |
+| a               | variable        | INT             |
+| main            | function        | INT             |
 +-----------------+-----------------+-----------------+-----------------+

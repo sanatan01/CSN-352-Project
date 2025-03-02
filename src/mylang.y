@@ -23,7 +23,9 @@ char *currentType = NULL;
 %token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
 %token<nice> STRUCT UNION ENUM ELLIPSIS
 
-%token<nice> INVALID_CHARACTER
+%token<nice> INVALID_CHARACTER SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON ASSIGN 
+%token<nice> LEFT_PAREN RIGHT_PAREN LEFT_BRACKET RIGHT_BRACKET DOT AMPERSAND EXCLAMATION 
+%token<nice> TILDE MINUS PLUS ASTERISK SLASH PERCENT LESS_THAN GREATER_THAN CARET PIPE QUESTION
 
 %token<nice> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
@@ -93,63 +95,69 @@ char *currentType = NULL;
 
 %%
 
+/* Primary expressions */
 primary_expression
 	: IDENTIFIER
 	| CONSTANT
 	| STRING_LITERAL
-	| '(' expression ')'
+	| LEFT_PAREN expression RIGHT_PAREN
 	;
 
+/* Postfix expressions */
 postfix_expression
 	: primary_expression
-	| postfix_expression '[' expression ']'
-	| postfix_expression '(' ')'
-	| postfix_expression '(' argument_expression_list ')'
-	| postfix_expression '.' IDENTIFIER
+	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET
+	| postfix_expression LEFT_PAREN RIGHT_PAREN
+	| postfix_expression LEFT_PAREN argument_expression_list RIGHT_PAREN
+	| postfix_expression DOT IDENTIFIER
 	| postfix_expression PTR_OP IDENTIFIER
 	| postfix_expression INC_OP
 	| postfix_expression DEC_OP
 	;
 
+/* Argument expression list for function calls */
 argument_expression_list
 	: assignment_expression
-	| argument_expression_list ',' assignment_expression
+	| argument_expression_list COMMA assignment_expression
 	;
 
+/* Unary expressions */
 unary_expression
 	: postfix_expression
 	| INC_OP unary_expression
 	| DEC_OP unary_expression
 	| unary_operator cast_expression
 	| SIZEOF unary_expression
-	| SIZEOF '(' type_name ')'
+	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN
 	;
 
 unary_operator
-	: '&'	{ $$ = "&"; }
-	| '*'	{ $$ = "*"; }
-	| '+'	{ $$ = "+"; }
-	| '-'	{ $$ = "-"; }
-	| '~'	{ $$ = "~"; }
-	| '!'	{ $$ = "!"; }
+	: AMPERSAND     { $$ = "&"; }
+	| ASTERISK      { $$ = "*"; }
+	| PLUS          { $$ = "+"; }
+	| MINUS         { $$ = "-"; }
+	| TILDE         { $$ = "~"; }
+	| EXCLAMATION   { $$ = "!"; }
 	;
 
+/* Type casting */
 cast_expression
 	: unary_expression
-	| '(' type_name ')' cast_expression
+	| LEFT_PAREN type_name RIGHT_PAREN cast_expression
 	;
 
+/* Arithmetic expressions */
 multiplicative_expression
 	: cast_expression
-	| multiplicative_expression '*' cast_expression
-	| multiplicative_expression '/' cast_expression
-	| multiplicative_expression '%' cast_expression
+	| multiplicative_expression ASTERISK cast_expression
+	| multiplicative_expression SLASH cast_expression
+	| multiplicative_expression PERCENT cast_expression
 	;
 
 additive_expression
 	: multiplicative_expression
-	| additive_expression '+' multiplicative_expression
-	| additive_expression '-' multiplicative_expression
+	| additive_expression PLUS multiplicative_expression
+	| additive_expression MINUS multiplicative_expression
 	;
 
 shift_expression
@@ -158,10 +166,11 @@ shift_expression
 	| shift_expression RIGHT_OP additive_expression
 	;
 
+/* Relational expressions */
 relational_expression
 	: shift_expression
-	| relational_expression '<' shift_expression
-	| relational_expression '>' shift_expression
+	| relational_expression LESS_THAN shift_expression
+	| relational_expression GREATER_THAN shift_expression
 	| relational_expression LE_OP shift_expression
 	| relational_expression GE_OP shift_expression
 	;
@@ -172,21 +181,23 @@ equality_expression
 	| equality_expression NE_OP relational_expression
 	;
 
+/* Bitwise expressions */
 and_expression
 	: equality_expression
-	| and_expression '&' equality_expression
+	| and_expression AMPERSAND equality_expression
 	;
 
 exclusive_or_expression
 	: and_expression
-	| exclusive_or_expression '^' and_expression
+	| exclusive_or_expression CARET and_expression
 	;
 
 inclusive_or_expression
 	: exclusive_or_expression
-	| inclusive_or_expression '|' exclusive_or_expression
+	| inclusive_or_expression PIPE exclusive_or_expression
 	;
 
+/* Logical expressions */
 logical_and_expression
 	: inclusive_or_expression
 	| logical_and_expression AND_OP inclusive_or_expression
@@ -197,18 +208,20 @@ logical_or_expression
 	| logical_or_expression OR_OP logical_and_expression
 	;
 
+/* Conditional expression (ternary operator) */
 conditional_expression
 	: logical_or_expression
-	| logical_or_expression '?' expression ':' conditional_expression
+	| logical_or_expression QUESTION expression COLON conditional_expression
 	;
 
+/* Assignment */
 assignment_expression
 	: conditional_expression
 	| unary_expression assignment_operator assignment_expression
 	;
 
 assignment_operator
-	: '='
+	: ASSIGN
 	| MUL_ASSIGN
 	| DIV_ASSIGN
 	| MOD_ASSIGN
@@ -221,43 +234,47 @@ assignment_operator
 	| OR_ASSIGN
 	;
 
+/* Expressions */
 expression
 	: assignment_expression
-	| expression ',' assignment_expression
+	| expression COMMA assignment_expression
 	;
 
 constant_expression
 	: conditional_expression
 	;
 
+/* Declarations */
 declaration
-	: declaration_specifiers ';'	{
-                 insertSymbol($1, "variable", currentType);
-    	}
-	| declaration_specifiers init_declarator_list ';' {
-                 insertSymbol($1, "variable", currentType);
-    	}
+	: declaration_specifiers SEMICOLON {
+		  insertSymbol($1, "variable", currentType);
+	  }
+	| declaration_specifiers init_declarator_list SEMICOLON {
+		  /* Use the variable name from init_declarator */
+		  insertSymbol($2, "variable", currentType);
+	  }
 	;
 
 declaration_specifiers
-	: storage_class_specifier { $$ = NULL; }
-	| storage_class_specifier declaration_specifiers { $$ = NULL; }
-	| type_specifier { $$ = $1; }
-	| type_specifier declaration_specifiers { $$ = $1; }
-	| type_qualifier { $$ = NULL; }
-	| type_qualifier declaration_specifiers { $$ = NULL; }
+	: storage_class_specifier 
+	| storage_class_specifier declaration_specifiers
+	| type_specifier
+	| type_specifier declaration_specifiers
+	| type_qualifier 
+	| type_qualifier declaration_specifiers 
 	;
 
 init_declarator_list
 	: init_declarator
-	| init_declarator_list ',' init_declarator
+	| init_declarator_list COMMA init_declarator
 	;
 
 init_declarator
-    : declarator { $$ = $1; }
-    | declarator '=' initializer { $$ = $1; }
-    ;
+	: declarator
+	| declarator ASSIGN initializer
+	;
 
+/* Storage classes */
 storage_class_specifier
 	: TYPEDEF
 	| EXTERN
@@ -266,25 +283,27 @@ storage_class_specifier
 	| REGISTER
 	;
 
+/* Type specifiers */
 type_specifier
-    : VOID { $$ = strdup("VOID"); currentType = $$; }
-    | CHAR { $$ = strdup("CHAR"); currentType = $$; }
-    | SHORT { $$ = strdup("SHORT"); currentType = $$; }
-    | INT { $$ = strdup("INT"); currentType = $$; }
-    | LONG { $$ = strdup("LONG"); currentType = $$; }
-    | FLOAT { $$ = strdup("FLOAT"); currentType = $$; }
-    | DOUBLE { $$ = strdup("DOUBLE"); currentType = $$; }
-    | SIGNED { $$ = strdup("SIGNED"); currentType = $$; }
-    | UNSIGNED { $$ = strdup("UNSIGNED"); currentType = $$; }
-    | struct_or_union_specifier { $$ = $1; /* currentType not updated here */ }
-    | enum_specifier { $$ = $1; /* currentType not updated here */ }
-    | TYPE_NAME { $$ = strdup("TYPE_NAME"); currentType = $$; }
-    ;
+	: VOID     { $$ = strdup("VOID"); currentType = $$; }
+	| CHAR     { $$ = strdup("CHAR"); currentType = $$; }
+	| SHORT    { $$ = strdup("SHORT"); currentType = $$; }
+	| INT      { $$ = strdup("INT"); currentType = $$; }
+	| LONG     { $$ = strdup("LONG"); currentType = $$; }
+	| FLOAT    { $$ = strdup("FLOAT"); currentType = $$; }
+	| DOUBLE   { $$ = strdup("DOUBLE"); currentType = $$; }
+	| SIGNED   { $$ = strdup("SIGNED"); currentType = $$; }
+	| UNSIGNED { $$ = strdup("UNSIGNED"); currentType = $$; }
+	| struct_or_union_specifier { $$ = $1; }
+	| enum_specifier { $$ = $1; }
+	| TYPE_NAME { $$ = strdup("TYPE_NAME"); currentType = $$; }
+	;
 
+/* Struct and union specifiers */
 struct_or_union_specifier
-	: struct_or_union IDENTIFIER '{' struct_declaration_list '}' { $$ = NULL; }
-	| struct_or_union '{' struct_declaration_list '}' { $$ = NULL; }
-	| struct_or_union IDENTIFIER { $$ = NULL; }
+	: struct_or_union IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE 
+	| struct_or_union LEFT_BRACE struct_declaration_list RIGHT_BRACE
+	| struct_or_union IDENTIFIER
 	;
 
 struct_or_union
@@ -298,7 +317,7 @@ struct_declaration_list
 	;
 
 struct_declaration
-	: specifier_qualifier_list struct_declarator_list ';'
+	: specifier_qualifier_list struct_declarator_list SEMICOLON
 	;
 
 specifier_qualifier_list
@@ -310,36 +329,39 @@ specifier_qualifier_list
 
 struct_declarator_list
 	: struct_declarator
-	| struct_declarator_list ',' struct_declarator
+	| struct_declarator_list COMMA struct_declarator
 	;
 
 struct_declarator
 	: declarator
-	| ':' constant_expression
-	| declarator ':' constant_expression
+	| COLON constant_expression
+	| declarator COLON constant_expression
 	;
 
+/* Enum specifiers */
 enum_specifier
-	: ENUM '{' enumerator_list '}' { $$ = NULL; }
-	| ENUM IDENTIFIER '{' enumerator_list '}' { $$ = NULL; }
-	| ENUM IDENTIFIER { $$ = NULL; }
+	: ENUM LEFT_BRACE enumerator_list RIGHT_BRACE 
+	| ENUM IDENTIFIER LEFT_BRACE enumerator_list RIGHT_BRACE
+	| ENUM IDENTIFIER
 	;
 
 enumerator_list
 	: enumerator
-	| enumerator_list ',' enumerator
+	| enumerator_list COMMA enumerator
 	;
 
 enumerator
 	: IDENTIFIER
-	| IDENTIFIER '=' constant_expression
+	| IDENTIFIER ASSIGN constant_expression
 	;
 
+/* Type qualifiers */
 type_qualifier
-	: CONST { $$ = strdup("CONST"); }
+	: CONST    { $$ = strdup("CONST"); }
 	| VOLATILE { $$ = strdup("VOLATILE"); }
 	;
 
+/* Declarators */
 declarator
 	: pointer direct_declarator { $$ = $2; }
 	| direct_declarator { $$ = $1; }
@@ -347,19 +369,19 @@ declarator
 
 direct_declarator
 	: IDENTIFIER { $$ = $1; }
-	| '(' declarator ')' { $$ = $2; }
-	| direct_declarator '[' constant_expression ']' { $$ = NULL; }
-	| direct_declarator '[' ']' { $$ = NULL; }
-	| direct_declarator '(' parameter_type_list ')' { $$ = NULL; }
-	| direct_declarator '(' identifier_list ')' { $$ = NULL; }
-	| direct_declarator '(' ')' { $$ = NULL; }
+	| LEFT_PAREN declarator RIGHT_PAREN { $$ = $2; }
+	| direct_declarator LEFT_BRACKET constant_expression RIGHT_BRACKET { $$ = $1; }
+	| direct_declarator LEFT_BRACKET RIGHT_BRACKET { $$ = $1; }
+	| direct_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN { $$ = $1; }
+	| direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN { $$ = $1; }
+	| direct_declarator LEFT_PAREN RIGHT_PAREN { $$ = $1; }
 	;
 
 pointer
-	: '*' { $$ = NULL; }
-	| '*' type_qualifier_list { $$ = NULL; }
-	| '*' pointer { $$ = NULL; }
-	| '*' type_qualifier_list pointer { $$ = NULL; }
+	: ASTERISK { $$ = NULL; }
+	| ASTERISK type_qualifier_list { $$ = NULL; }
+	| ASTERISK pointer { $$ = NULL; }
+	| ASTERISK type_qualifier_list pointer { $$ = NULL; }
 	;
 
 type_qualifier_list
@@ -367,15 +389,15 @@ type_qualifier_list
 	| type_qualifier_list type_qualifier
 	;
 
-
+/* Function parameters */
 parameter_type_list
 	: parameter_list
-	| parameter_list ',' ELLIPSIS
+	| parameter_list COMMA ELLIPSIS
 	;
 
 parameter_list
 	: parameter_declaration
-	| parameter_list ',' parameter_declaration
+	| parameter_list COMMA parameter_declaration
 	;
 
 parameter_declaration
@@ -386,7 +408,7 @@ parameter_declaration
 
 identifier_list
 	: IDENTIFIER
-	| identifier_list ',' IDENTIFIER
+	| identifier_list COMMA IDENTIFIER
 	;
 
 type_name
@@ -401,28 +423,30 @@ abstract_declarator
 	;
 
 direct_abstract_declarator
-	: '(' abstract_declarator ')'
-	| '[' ']'
-	| '[' constant_expression ']'
-	| direct_abstract_declarator '[' ']'
-	| direct_abstract_declarator '[' constant_expression ']'
-	| '(' ')'
-	| '(' parameter_type_list ')'
-	| direct_abstract_declarator '(' ')'
-	| direct_abstract_declarator '(' parameter_type_list ')'
+	: LEFT_PAREN abstract_declarator RIGHT_PAREN
+	| LEFT_BRACKET RIGHT_BRACKET
+	| LEFT_BRACKET constant_expression RIGHT_BRACKET
+	| direct_abstract_declarator LEFT_BRACKET RIGHT_BRACKET
+	| direct_abstract_declarator LEFT_BRACKET constant_expression RIGHT_BRACKET
+	| LEFT_PAREN RIGHT_PAREN
+	| LEFT_PAREN parameter_type_list RIGHT_PAREN
+	| direct_abstract_declarator LEFT_PAREN RIGHT_PAREN
+	| direct_abstract_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN
 	;
 
+/* Initializers */
 initializer
 	: assignment_expression
-	| '{' initializer_list '}'
-	| '{' initializer_list ',' '}'
+	| LEFT_BRACE initializer_list RIGHT_BRACE
+	| LEFT_BRACE initializer_list COMMA RIGHT_BRACE
 	;
 
 initializer_list
 	: initializer
-	| initializer_list ',' initializer
+	| initializer_list COMMA initializer
 	;
 
+/* Statements */
 statement
 	: labeled_statement
 	| compound_statement
@@ -433,16 +457,16 @@ statement
 	;
 
 labeled_statement
-	: IDENTIFIER ':' statement
-	| CASE constant_expression ':' statement
-	| DEFAULT ':' statement
+	: IDENTIFIER COLON statement
+	| CASE constant_expression COLON statement
+	| DEFAULT COLON statement
 	;
 
 compound_statement
-	: '{' '}'
-	| '{' statement_list '}'
-	| '{' declaration_list '}'
-	| '{' declaration_list statement_list '}'
+	: LEFT_BRACE RIGHT_BRACE
+	| LEFT_BRACE statement_list RIGHT_BRACE
+	| LEFT_BRACE declaration_list RIGHT_BRACE
+	| LEFT_BRACE declaration_list statement_list RIGHT_BRACE
 	;
 
 declaration_list
@@ -456,31 +480,33 @@ statement_list
 	;
 
 expression_statement
-	: ';'
-	| expression ';'
+	: SEMICOLON
+	| expression SEMICOLON
 	;
 
+/* Control flow */
 selection_statement
-	: IF '(' expression ')' statement
-	| IF '(' expression ')' statement ELSE statement
-	| SWITCH '(' expression ')' statement
+	: IF LEFT_PAREN expression RIGHT_PAREN statement
+	| IF LEFT_PAREN expression RIGHT_PAREN statement ELSE statement
+	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
 	;
 
 iteration_statement
-	: WHILE '(' expression ')' statement
-	| DO statement WHILE '(' expression ')' ';'
-	| FOR '(' expression_statement expression_statement ')' statement
-	| FOR '(' expression_statement expression_statement expression ')' statement
+	: WHILE LEFT_PAREN expression RIGHT_PAREN statement
+	| DO statement WHILE LEFT_PAREN expression RIGHT_PAREN SEMICOLON
+	| FOR LEFT_PAREN expression_statement expression_statement RIGHT_PAREN statement
+	| FOR LEFT_PAREN expression_statement expression_statement expression RIGHT_PAREN statement
 	;
 
 jump_statement
-	: GOTO IDENTIFIER ';'
-	| CONTINUE ';'
-	| BREAK ';'
-	| RETURN ';'
-	| RETURN expression ';'
+	: GOTO IDENTIFIER SEMICOLON
+	| CONTINUE SEMICOLON
+	| BREAK SEMICOLON
+	| RETURN SEMICOLON
+	| RETURN expression SEMICOLON
 	;
 
+/* Top-level constructs */
 translation_unit
 	: external_declaration
 	| translation_unit external_declaration
@@ -492,14 +518,22 @@ external_declaration
 	;
 
 function_definition
-	: declaration_specifiers declarator declaration_list compound_statement
-	| declaration_specifiers declarator compound_statement
-	| declarator declaration_list compound_statement
-	| declarator compound_statement
+	: declaration_specifiers declarator declaration_list compound_statement {
+		  insertSymbol($2, "function", currentType); /* Insert function with its return type */
+	  }
+	| declaration_specifiers declarator compound_statement {
+		  insertSymbol($2, "function", currentType);
+	  }
+	| declarator declaration_list compound_statement {
+		  insertSymbol($1, "function", "auto"); /* Default to auto when return type isn't specified */
+	  }
+	| declarator compound_statement {
+		  insertSymbol($1, "function", "auto");
+	  }
 	;
 
-%%
 
+%%
 
 void yyerror(const char *s) {
     return;

@@ -24,7 +24,7 @@ Token: CONSTANT, Text: 3
 +-----------------+-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
 +-----------------+-----------------+-----------------+-----------------+
-| INT             | variable        | INT             |
-| FLOAT           | variable        | FLOAT           |
-| CHAR            | variable        | CHAR            |
+| num             | variable        | INT             |
+| _value          | variable        | FLOAT           |
+| str             | variable        | CHAR            |
 +-----------------+-----------------+-----------------+-----------------+
