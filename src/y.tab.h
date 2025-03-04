@@ -1,14 +1,14 @@
-/* A Bison parser, made by GNU Bison 3.8.2.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
-/* Bison interface for Yacc-like parsers in C
+/* Skeleton interface for Bison's Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
-   Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,7 +16,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -31,141 +33,206 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
-   especially those whose name start with YY_ or yy_.  They are
-   private implementation details that can be changed or removed.  */
-
-#ifndef YY_YY_SRC_Y_TAB_H_INCLUDED
-# define YY_YY_SRC_Y_TAB_H_INCLUDED
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
-
-/* Token kinds.  */
+/* Tokens.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-  enum yytokentype
-  {
-    YYEMPTY = -2,
-    YYEOF = 0,                     /* "end of file"  */
-    YYerror = 256,                 /* error  */
-    YYUNDEF = 257,                 /* "invalid token"  */
-    IDENTIFIER = 258,              /* IDENTIFIER  */
-    CONSTANT = 259,                /* CONSTANT  */
-    STRING_LITERAL = 260,          /* STRING_LITERAL  */
-    SIZEOF = 261,                  /* SIZEOF  */
-    PTR_OP = 262,                  /* PTR_OP  */
-    INC_OP = 263,                  /* INC_OP  */
-    DEC_OP = 264,                  /* DEC_OP  */
-    LEFT_OP = 265,                 /* LEFT_OP  */
-    RIGHT_OP = 266,                /* RIGHT_OP  */
-    LE_OP = 267,                   /* LE_OP  */
-    GE_OP = 268,                   /* GE_OP  */
-    EQ_OP = 269,                   /* EQ_OP  */
-    NE_OP = 270,                   /* NE_OP  */
-    AND_OP = 271,                  /* AND_OP  */
-    OR_OP = 272,                   /* OR_OP  */
-    MUL_ASSIGN = 273,              /* MUL_ASSIGN  */
-    DIV_ASSIGN = 274,              /* DIV_ASSIGN  */
-    MOD_ASSIGN = 275,              /* MOD_ASSIGN  */
-    ADD_ASSIGN = 276,              /* ADD_ASSIGN  */
-    SUB_ASSIGN = 277,              /* SUB_ASSIGN  */
-    LEFT_ASSIGN = 278,             /* LEFT_ASSIGN  */
-    RIGHT_ASSIGN = 279,            /* RIGHT_ASSIGN  */
-    AND_ASSIGN = 280,              /* AND_ASSIGN  */
-    XOR_ASSIGN = 281,              /* XOR_ASSIGN  */
-    OR_ASSIGN = 282,               /* OR_ASSIGN  */
-    TYPE_NAME = 283,               /* TYPE_NAME  */
-    TYPEDEF = 284,                 /* TYPEDEF  */
-    EXTERN = 285,                  /* EXTERN  */
-    STATIC = 286,                  /* STATIC  */
-    AUTO = 287,                    /* AUTO  */
-    REGISTER = 288,                /* REGISTER  */
-    CHAR = 289,                    /* CHAR  */
-    SHORT = 290,                   /* SHORT  */
-    INT = 291,                     /* INT  */
-    LONG = 292,                    /* LONG  */
-    SIGNED = 293,                  /* SIGNED  */
-    UNSIGNED = 294,                /* UNSIGNED  */
-    FLOAT = 295,                   /* FLOAT  */
-    DOUBLE = 296,                  /* DOUBLE  */
-    CONST = 297,                   /* CONST  */
-    VOLATILE = 298,                /* VOLATILE  */
-    VOID = 299,                    /* VOID  */
-    STRUCT = 300,                  /* STRUCT  */
-    UNION = 301,                   /* UNION  */
-    ENUM = 302,                    /* ENUM  */
-    ELLIPSIS = 303,                /* ELLIPSIS  */
-    SEMICOLON = 304,               /* SEMICOLON  */
-    LEFT_BRACE = 305,              /* LEFT_BRACE  */
-    RIGHT_BRACE = 306,             /* RIGHT_BRACE  */
-    COMMA = 307,                   /* COMMA  */
-    COLON = 308,                   /* COLON  */
-    ASSIGN = 309,                  /* ASSIGN  */
-    LEFT_PAREN = 310,              /* LEFT_PAREN  */
-    RIGHT_PAREN = 311,             /* RIGHT_PAREN  */
-    LEFT_BRACKET = 312,            /* LEFT_BRACKET  */
-    RIGHT_BRACKET = 313,           /* RIGHT_BRACKET  */
-    DOT = 314,                     /* DOT  */
-    AMPERSAND = 315,               /* AMPERSAND  */
-    EXCLAMATION = 316,             /* EXCLAMATION  */
-    TILDE = 317,                   /* TILDE  */
-    MINUS = 318,                   /* MINUS  */
-    PLUS = 319,                    /* PLUS  */
-    ASTERISK = 320,                /* ASTERISK  */
-    SLASH = 321,                   /* SLASH  */
-    PERCENT = 322,                 /* PERCENT  */
-    LESS_THAN = 323,               /* LESS_THAN  */
-    GREATER_THAN = 324,            /* GREATER_THAN  */
-    CARET = 325,                   /* CARET  */
-    PIPE = 326,                    /* PIPE  */
-    QUESTION = 327,                /* QUESTION  */
-    INVALID_ID = 328,              /* INVALID_ID  */
-    INVALID_CHAR = 329,            /* INVALID_CHAR  */
-    INVALID_OCT = 330,             /* INVALID_OCT  */
-    UNTERM_STRING = 331,           /* UNTERM_STRING  */
-    CASE = 332,                    /* CASE  */
-    DEFAULT = 333,                 /* DEFAULT  */
-    IF = 334,                      /* IF  */
-    ELSE = 335,                    /* ELSE  */
-    SWITCH = 336,                  /* SWITCH  */
-    WHILE = 337,                   /* WHILE  */
-    DO = 338,                      /* DO  */
-    FOR = 339,                     /* FOR  */
-    GOTO = 340,                    /* GOTO  */
-    CONTINUE = 341,                /* CONTINUE  */
-    BREAK = 342,                   /* BREAK  */
-    RETURN = 343,                  /* RETURN  */
-    ERROR = 344                    /* ERROR  */
-  };
-  typedef enum yytokentype yytoken_kind_t;
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum yytokentype {
+     IDENTIFIER = 258,
+     CONSTANT = 259,
+     STRING_LITERAL = 260,
+     SIZEOF = 261,
+     PTR_OP = 262,
+     INC_OP = 263,
+     DEC_OP = 264,
+     LEFT_OP = 265,
+     RIGHT_OP = 266,
+     LE_OP = 267,
+     GE_OP = 268,
+     EQ_OP = 269,
+     NE_OP = 270,
+     AND_OP = 271,
+     OR_OP = 272,
+     MUL_ASSIGN = 273,
+     DIV_ASSIGN = 274,
+     MOD_ASSIGN = 275,
+     ADD_ASSIGN = 276,
+     SUB_ASSIGN = 277,
+     LEFT_ASSIGN = 278,
+     RIGHT_ASSIGN = 279,
+     AND_ASSIGN = 280,
+     XOR_ASSIGN = 281,
+     OR_ASSIGN = 282,
+     TYPE_NAME = 283,
+     TYPEDEF = 284,
+     EXTERN = 285,
+     STATIC = 286,
+     AUTO = 287,
+     REGISTER = 288,
+     CHAR = 289,
+     SHORT = 290,
+     INT = 291,
+     LONG = 292,
+     SIGNED = 293,
+     UNSIGNED = 294,
+     FLOAT = 295,
+     DOUBLE = 296,
+     CONST = 297,
+     VOLATILE = 298,
+     VOID = 299,
+     STRUCT = 300,
+     UNION = 301,
+     ENUM = 302,
+     ELLIPSIS = 303,
+     SEMICOLON = 304,
+     LEFT_BRACE = 305,
+     RIGHT_BRACE = 306,
+     COMMA = 307,
+     COLON = 308,
+     ASSIGN = 309,
+     LEFT_PAREN = 310,
+     RIGHT_PAREN = 311,
+     LEFT_BRACKET = 312,
+     RIGHT_BRACKET = 313,
+     DOT = 314,
+     AMPERSAND = 315,
+     EXCLAMATION = 316,
+     TILDE = 317,
+     MINUS = 318,
+     PLUS = 319,
+     ASTERISK = 320,
+     SLASH = 321,
+     PERCENT = 322,
+     LESS_THAN = 323,
+     GREATER_THAN = 324,
+     CARET = 325,
+     PIPE = 326,
+     QUESTION = 327,
+     INVALID_ID = 328,
+     INVALID_CHAR = 329,
+     INVALID_OCT = 330,
+     UNTERM_STRING = 331,
+     CASE = 332,
+     DEFAULT = 333,
+     IF = 334,
+     ELSE = 335,
+     SWITCH = 336,
+     WHILE = 337,
+     DO = 338,
+     FOR = 339,
+     GOTO = 340,
+     CONTINUE = 341,
+     BREAK = 342,
+     RETURN = 343,
+     ERROR = 344
+   };
 #endif
+/* Tokens.  */
+#define IDENTIFIER 258
+#define CONSTANT 259
+#define STRING_LITERAL 260
+#define SIZEOF 261
+#define PTR_OP 262
+#define INC_OP 263
+#define DEC_OP 264
+#define LEFT_OP 265
+#define RIGHT_OP 266
+#define LE_OP 267
+#define GE_OP 268
+#define EQ_OP 269
+#define NE_OP 270
+#define AND_OP 271
+#define OR_OP 272
+#define MUL_ASSIGN 273
+#define DIV_ASSIGN 274
+#define MOD_ASSIGN 275
+#define ADD_ASSIGN 276
+#define SUB_ASSIGN 277
+#define LEFT_ASSIGN 278
+#define RIGHT_ASSIGN 279
+#define AND_ASSIGN 280
+#define XOR_ASSIGN 281
+#define OR_ASSIGN 282
+#define TYPE_NAME 283
+#define TYPEDEF 284
+#define EXTERN 285
+#define STATIC 286
+#define AUTO 287
+#define REGISTER 288
+#define CHAR 289
+#define SHORT 290
+#define INT 291
+#define LONG 292
+#define SIGNED 293
+#define UNSIGNED 294
+#define FLOAT 295
+#define DOUBLE 296
+#define CONST 297
+#define VOLATILE 298
+#define VOID 299
+#define STRUCT 300
+#define UNION 301
+#define ENUM 302
+#define ELLIPSIS 303
+#define SEMICOLON 304
+#define LEFT_BRACE 305
+#define RIGHT_BRACE 306
+#define COMMA 307
+#define COLON 308
+#define ASSIGN 309
+#define LEFT_PAREN 310
+#define RIGHT_PAREN 311
+#define LEFT_BRACKET 312
+#define RIGHT_BRACKET 313
+#define DOT 314
+#define AMPERSAND 315
+#define EXCLAMATION 316
+#define TILDE 317
+#define MINUS 318
+#define PLUS 319
+#define ASTERISK 320
+#define SLASH 321
+#define PERCENT 322
+#define LESS_THAN 323
+#define GREATER_THAN 324
+#define CARET 325
+#define PIPE 326
+#define QUESTION 327
+#define INVALID_ID 328
+#define INVALID_CHAR 329
+#define INVALID_OCT 330
+#define UNTERM_STRING 331
+#define CASE 332
+#define DEFAULT 333
+#define IF 334
+#define ELSE 335
+#define SWITCH 336
+#define WHILE 337
+#define DO 338
+#define FOR 339
+#define GOTO 340
+#define CONTINUE 341
+#define BREAK 342
+#define RETURN 343
+#define ERROR 344
 
-/* Value type.  */
+
+
+
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
+typedef union YYSTYPE
+#line 13 "src/mylang.y"
 {
-#line 14 "src/mylang.y"
-
     char *nice;
-
-#line 157 "src/y.tab.h"
-
-};
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 1529 of yacc.c.  */
+#line 231 "src/y.tab.h"
+	YYSTYPE;
+# define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 extern YYSTYPE yylval;
 
-
-int yyparse (void);
-
-
-#endif /* !YY_YY_SRC_Y_TAB_H_INCLUDED  */

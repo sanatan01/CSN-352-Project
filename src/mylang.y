@@ -9,7 +9,6 @@ char *currentType = NULL;
 int grammarErrorCount = 0;
 %}
 
-%define parse.error verbose
 
 %union {
     char *nice;
@@ -40,7 +39,7 @@ int grammarErrorCount = 0;
 
 %start translation_unit
 
-
+%type<nice> array_declaration
 %type<nice> translation_unit
 %type<nice> external_declaration
 %type<nice> function_definition
@@ -273,8 +272,17 @@ declaration
 	  }
 	| declaration_specifiers init_declarator_list SEMICOLON {
 		  /* Use the variable name from init_declarator */
+		  $$ = $1;
 		  insertSymbol($2, "variable", $$);
 	  }
+	| declaration_specifiers IDENTIFIER array_declaration SEMICOLON {
+		char *temp = malloc(strlen($1) + strlen($3) + 3);
+		strcpy(temp, $1);
+		strcat(temp, strdup(" "));
+		strcat(temp, $3);
+		$$ = temp;
+		insertSymbol($2, "variable", $$);
+	}
 	| ERROR SEMICOLON {
 		yyerror($1);
 		yyerrok;
@@ -289,9 +297,29 @@ declaration
 	}
 	;
 
+array_declaration
+	: LEFT_BRACKET constant_expression RIGHT_BRACKET { $$ = strdup("ARRAY");}
+	| array_declaration LEFT_BRACKET constant_expression RIGHT_BRACKET {
+		char *temp = malloc(strlen("ARRAY") + strlen($1) + 2);
+		sprintf(temp, "ARRAY %s", $1);
+		$$ = temp;
+	}
+	| array_declaration LEFT_BRACKET RIGHT_BRACKET {
+		char *temp = malloc(strlen("ARRAY") + strlen($1) + 2);
+		sprintf(temp, "ARRAY %s", $1);
+		$$ = temp;
+	}
+	;
+
 declaration_specifiers
 	: storage_class_specifier 
-	| storage_class_specifier declaration_specifiers
+	| storage_class_specifier declaration_specifiers {
+		char * temp = malloc(strlen($1) + strlen($2) + 3);
+		strcpy(temp, $1);
+		strcat(temp, strdup(" "));
+		strcat(temp, $2);
+		$$ = temp;
+	}
 	| type_specifier
 	| type_specifier declaration_specifiers
 	| type_qualifier 
