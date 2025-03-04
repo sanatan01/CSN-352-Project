@@ -52,6 +52,8 @@ void displayTables() {
     // printf("+-----------------+-----------------+\n");
 }
 
+extern int yylineno; // Add this at the top with other extern declarations
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);
@@ -64,6 +66,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    yylineno = 1; // Initialize line number counter
     yyin = input_file;
     yyparse(); // Invoke the parser
     fclose(input_file);

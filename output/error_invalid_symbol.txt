@@ -1,2 +1,2 @@
-Lexical error at line 1: Invalid identifier '12a' - cannot start with digit
-Syntax Error at line 1: 12a
+Lexical error at line 2: Invalid identifier '12a' - cannot start with digit
+Syntax Error at line 2: 12a

@@ -7,7 +7,11 @@ int main() {
     
     struct point p1;
 
-    int *abc = 5;
+    int ***abc = 5;
+
+    int arr[10][20][];
+
+    static int* c;
 
     int c;
     int d = 100;

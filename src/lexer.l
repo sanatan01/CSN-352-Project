@@ -8,6 +8,8 @@ int errorCount = 0;
 
 %}
 
+%option yylineno
+
 D			[0-9]
 L			[a-zA-Z_]
 H			[a-fA-F0-9]

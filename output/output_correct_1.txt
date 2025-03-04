@@ -24,9 +24,27 @@
 | SEMICOLON            | ;                    |
 | INT                  | int                  |
 | ASTERISK             | *                    |
+| ASTERISK             | *                    |
+| ASTERISK             | *                    |
 | IDENTIFIER           | abc                  |
 | ASSIGN               | =                    |
 | CONSTANT             | 5                    |
+| SEMICOLON            | ;                    |
+| INT                  | int                  |
+| IDENTIFIER           | arr                  |
+| LEFT_BRACKET         | [                    |
+| CONSTANT             | 10                   |
+| RIGHT_BRACKET        | ]                    |
+| LEFT_BRACKET         | [                    |
+| CONSTANT             | 20                   |
+| RIGHT_BRACKET        | ]                    |
+| LEFT_BRACKET         | [                    |
+| RIGHT_BRACKET        | ]                    |
+| SEMICOLON            | ;                    |
+| STATIC               | static               |
+| INT                  | int                  |
+| ASTERISK             | *                    |
+| IDENTIFIER           | c                    |
 | SEMICOLON            | ;                    |
 | INT                  | int                  |
 | IDENTIFIER           | c                    |
@@ -70,6 +88,8 @@ SYMBOL TABLE:
 | p2              | variable        | point           |
 | p1              | variable        | point           |
 | abc             | variable        | INT*            |
+| arr             | variable        | INT ARRAY ARRAY ARRAY |
+| c               | variable        | STATIC INT*     |
 | c               | variable        | INT             |
 | d               | variable        | INT             |
 | a               | variable        | INT             |

@@ -1,12 +1,12 @@
-Lexical error at line 1: Invalid identifier '3num' - cannot start with digit
-Syntax Error at line 1: 3num
-Lexical error at line 1: Invalid identifier '123a' - cannot start with digit
-Syntax Error at line 1: 123a
-Lexical error at line 1: Invalid identifier '0x1A3F' - cannot start with digit
-Syntax Error at line 1: 0x1A3F
-Lexical error at line 1: Invalid identifier '1234567890UL' - cannot start with digit
-Syntax Error at line 1: 1234567890UL
-Lexical error at line 1: Invalid identifier '0x1G3F' - cannot start with digit
-Syntax Error at line 1: 0x1G3F
-Lexical error at line 1: Invalid identifier '123a' - cannot start with digit
-Syntax Error at line 1: 123a
+Lexical error at line 8: Invalid identifier '3num' - cannot start with digit
+Syntax Error at line 8: 3num
+Lexical error at line 9: Invalid identifier '123a' - cannot start with digit
+Syntax Error at line 9: 123a
+Lexical error at line 12: Invalid identifier '0x1A3F' - cannot start with digit
+Syntax Error at line 12: 0x1A3F
+Lexical error at line 13: Invalid identifier '1234567890UL' - cannot start with digit
+Syntax Error at line 13: 1234567890UL
+Lexical error at line 17: Invalid identifier '0x1G3F' - cannot start with digit
+Syntax Error at line 17: 0x1G3F
+Lexical error at line 19: Invalid identifier '123a' - cannot start with digit
+Syntax Error at line 19: 123a
