@@ -9,7 +9,7 @@ int main() {
 
     int ***abc = 5;
 
-    int arr[10][20][];
+    int arr[10][20][][][];
 
     static int* c;
 

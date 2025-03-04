@@ -40,6 +40,10 @@
 | RIGHT_BRACKET        | ]                    |
 | LEFT_BRACKET         | [                    |
 | RIGHT_BRACKET        | ]                    |
+| LEFT_BRACKET         | [                    |
+| RIGHT_BRACKET        | ]                    |
+| LEFT_BRACKET         | [                    |
+| RIGHT_BRACKET        | ]                    |
 | SEMICOLON            | ;                    |
 | STATIC               | static               |
 | INT                  | int                  |
@@ -88,7 +92,7 @@ SYMBOL TABLE:
 | p2              | variable        | point           |
 | p1              | variable        | point           |
 | abc             | variable        | INT*            |
-| arr             | variable        | INT ARRAY ARRAY ARRAY |
+| arr             | variable        | INT [][][][][]  |
 | c               | variable        | STATIC INT*     |
 | c               | variable        | INT             |
 | d               | variable        | INT             |

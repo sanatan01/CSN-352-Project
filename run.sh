@@ -15,7 +15,7 @@ echo "Compiling generator.l with flex..."
 flex -o src/lex.yy.c src/lexer.l
 
 echo "Compiling the generated C files with gcc..."
-gcc -o src/syntax_analyser src/scanner.c src/lex.yy.c src/y.tab.c -lfl
+gcc -o src/syntax_analyser src/scanner.c src/lex.yy.c src/y.tab.c
 
 echo "Running test cases from $INPUT_DIR and saving results to $OUTPUT_DIR..."
 for input_file in "$INPUT_DIR"/*; do

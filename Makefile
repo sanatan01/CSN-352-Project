@@ -5,3 +5,6 @@ help:
 
 run-tests: ## runs all the testcases for lexer generator
 	@chmod +x run.sh && ./run.sh
+
+clean: ## remove all unecessary code files
+	@rm -f src/lex.yy.c src/syntax_analyser src/y.tab.c src/y.tab.h

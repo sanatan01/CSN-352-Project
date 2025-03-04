@@ -298,15 +298,15 @@ declaration
 	;
 
 array_declaration
-	: LEFT_BRACKET constant_expression RIGHT_BRACKET { $$ = strdup("ARRAY");}
+	: LEFT_BRACKET constant_expression RIGHT_BRACKET { $$ = strdup("[]");}
 	| array_declaration LEFT_BRACKET constant_expression RIGHT_BRACKET {
-		char *temp = malloc(strlen("ARRAY") + strlen($1) + 2);
-		sprintf(temp, "ARRAY %s", $1);
+		char *temp = malloc(strlen("[]") + strlen($1) + 2);
+		sprintf(temp, "[]%s", $1);
 		$$ = temp;
 	}
 	| array_declaration LEFT_BRACKET RIGHT_BRACKET {
-		char *temp = malloc(strlen("ARRAY") + strlen($1) + 2);
-		sprintf(temp, "ARRAY %s", $1);
+		char *temp = malloc(strlen("[]") + strlen($1) + 2);
+		sprintf(temp, "[]%s", $1);
 		$$ = temp;
 	}
 	;
