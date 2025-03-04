@@ -29,29 +29,15 @@ UNTERMINATED_STRING   L?\"([^"\\\n]|\\.)*$
 {INVALID_IDENTIFIER} {
     lexicalError("Invalid identifier '%s' - cannot start with digit", yytext);
     displayLexer(INVALID_ID, yytext);
-    yylval.nice = strdup("ERROR");
-    return INVALID_ID;
-}
-
-{INVALID_OCT_NUM} {
-    lexicalError("Invalid octal constant '%s'", yytext);
-    displayLexer(INVALID_OCT, yytext);
-    yylval.nice = strdup("ERROR");
-    return INVALID_OCT;
-}
-
-{UNTERMINATED_STRING} {
-    lexicalError("Unterminated string literal '%s'", yytext);
-    displayLexer(UNTERM_STRING, yytext);
-    yylval.nice = strdup("ERROR");
-    return UNTERM_STRING;
+    yylval.nice = strdup(yytext);
+    return ERROR;
 }
 
 {INVALID_CHARACTER} {
     lexicalError("Invalid character '%s' in input", yytext);
     displayLexer(INVALID_CHAR, yytext);
-    yylval.nice = strdup("ERROR");
-    return INVALID_CHAR;
+    yylval.nice = strdup("INVALID CHARACTER");
+    return ERROR;
 }
 
 "auto"      { displayLexer(AUTO, yytext);      yylval.nice = strdup(getTokenName(AUTO));      return AUTO; }
@@ -104,7 +90,23 @@ L?'(\\.|[^\\'])+\'               { displayLexer(CONSTANT, yytext); yylval.nice =
 {D}+"."{D}*({E})?{FS}?           { displayLexer(CONSTANT, yytext); yylval.nice = strdup(yytext); return CONSTANT; }
 
 
+{INVALID_OCT_NUM} {
+    lexicalError("Invalid octal constant '%s'", yytext);
+    displayLexer(INVALID_OCT, yytext);
+    yylval.nice = strdup("INVALID OCTAL");
+    return ERROR;
+}
+
+
 L?\"(\\.|[^\\"])*\"              { displayLexer(STRING_LITERAL, yytext); yylval.nice = strdup(getTokenName(STRING_LITERAL)); return STRING_LITERAL; }
+
+
+{UNTERMINATED_STRING} {
+    lexicalError("Unterminated string literal '%s'", yytext);
+    displayLexer(UNTERM_STRING, yytext);
+    yylval.nice = strdup("UNTERMINATED STRING");
+    return ERROR;
+}
 
 
 "..."       { displayLexer(ELLIPSIS, yytext);    yylval.nice = strdup(getTokenName(ELLIPSIS));    return ELLIPSIS; }

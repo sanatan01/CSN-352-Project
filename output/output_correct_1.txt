@@ -6,6 +6,28 @@
 | LEFT_PAREN           | (                    |
 | RIGHT_PAREN          | )                    |
 | LEFT_BRACE           | {                    |
+| STRUCT               | struct               |
+| IDENTIFIER           | point                |
+| LEFT_BRACE           | {                    |
+| INT                  | int                  |
+| IDENTIFIER           | x                    |
+| SEMICOLON            | ;                    |
+| INT                  | int                  |
+| IDENTIFIER           | y                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+| IDENTIFIER           | p2                   |
+| SEMICOLON            | ;                    |
+| STRUCT               | struct               |
+| IDENTIFIER           | point                |
+| IDENTIFIER           | p1                   |
+| SEMICOLON            | ;                    |
+| INT                  | int                  |
+| ASTERISK             | *                    |
+| IDENTIFIER           | abc                  |
+| ASSIGN               | =                    |
+| CONSTANT             | 5                    |
+| SEMICOLON            | ;                    |
 | INT                  | int                  |
 | IDENTIFIER           | c                    |
 | SEMICOLON            | ;                    |
@@ -45,6 +67,9 @@ SYMBOL TABLE:
 +-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
 +-----------------+-----------------+-----------------+
+| p2              | variable        | point           |
+| p1              | variable        | point           |
+| abc             | variable        | INT*            |
 | c               | variable        | INT             |
 | d               | variable        | INT             |
 | a               | variable        | INT             |

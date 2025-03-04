@@ -8,9 +8,25 @@
 | LEFT_BRACE           | {                    |
 | INT                  | int                  |
 | INVALID_ID           | 3num                 |
+| ASSIGN               | =                    |
+| CONSTANT             | 1234                 |
+| SEMICOLON            | ;                    |
+| IDENTIFIER           | printf               |
+| LEFT_PAREN           | (                    |
+| STRING_LITERAL       | "%d\n"               |
+| COMMA                | ,                    |
+| INVALID_ID           | 3num                 |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+| RETURN               | return               |
+| CONSTANT             | 0                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
 
 SYMBOL TABLE:
 +-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
 +-----------------+-----------------+-----------------+
+| 3num            | variable        | INT             |
+| main            | function        | INT             |
 +-----------------+-----------------+-----------------+

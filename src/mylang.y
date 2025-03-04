@@ -9,9 +9,13 @@ char *currentType = NULL;
 int grammarErrorCount = 0;
 %}
 
+%define parse.error verbose
+
 %union {
     char *nice;
 }
+
+
 
 
 %token<nice> IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
@@ -31,6 +35,8 @@ int grammarErrorCount = 0;
 %token<nice> INVALID_ID INVALID_CHAR INVALID_OCT UNTERM_STRING
 
 %token<nice> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
+
+%token<nice> ERROR
 
 %start translation_unit
 
@@ -105,22 +111,10 @@ primary_expression
 	| CONSTANT
 	| STRING_LITERAL
 	| LEFT_PAREN expression RIGHT_PAREN
-    | INVALID_ID    { 
-        yyerror("Invalid identifier used in expression"); 
-        $$ = "error";
-    }
-    | INVALID_CHAR  { 
-        yyerror("Invalid character in expression"); 
-        $$ = "error";
-    }
-    | INVALID_OCT   { 
-        yyerror("Invalid octal constant in expression"); 
-        $$ = "error";
-    }
-    | UNTERM_STRING { 
-        yyerror("Unterminated string literal"); 
-        $$ = "error";
-    }
+	| ERROR {
+		yyerror($1);
+		yyerrok;
+	}
 	;
 
 /* Postfix expressions */
@@ -258,6 +252,14 @@ assignment_operator
 expression
 	: assignment_expression
 	| expression COMMA assignment_expression
+	| ERROR COMMA assignment_expression {
+		yyerror($1);
+		yyerrok;
+	}
+	| assignment_expression COMMA ERROR {
+		yyerror($1);
+		yyerrok;
+	}
 	;
 
 constant_expression
@@ -267,12 +269,24 @@ constant_expression
 /* Declarations */
 declaration
 	: declaration_specifiers SEMICOLON {
-		  insertSymbol($1, "variable", currentType);
+		  insertSymbol($1, "variable", $$);
 	  }
 	| declaration_specifiers init_declarator_list SEMICOLON {
 		  /* Use the variable name from init_declarator */
-		  insertSymbol($2, "variable", currentType);
+		  insertSymbol($2, "variable", $$);
 	  }
+	| ERROR SEMICOLON {
+		yyerror($1);
+		yyerrok;
+	}
+	| ERROR init_declarator_list SEMICOLON {
+		yyerror($1);
+		yyerrok;
+	}
+	| declaration_specifiers ERROR SEMICOLON {
+		yyerror($1);
+		yyerrok;
+	}
 	;
 
 declaration_specifiers
@@ -292,6 +306,14 @@ init_declarator_list
 init_declarator
 	: declarator
 	| declarator ASSIGN initializer
+	| ERROR ASSIGN initializer {
+		yyerror($1);
+		yyerrok;
+	}
+	| declarator ASSIGN ERROR {
+		yyerror($1);
+		yyerrok;
+	}
 	;
 
 /* Storage classes */
@@ -305,25 +327,30 @@ storage_class_specifier
 
 /* Type specifiers */
 type_specifier
-	: VOID     { $$ = strdup("VOID"); currentType = $$; }
-	| CHAR     { $$ = strdup("CHAR"); currentType = $$; }
-	| SHORT    { $$ = strdup("SHORT"); currentType = $$; }
-	| INT      { $$ = strdup("INT"); currentType = $$; }
-	| LONG     { $$ = strdup("LONG"); currentType = $$; }
-	| FLOAT    { $$ = strdup("FLOAT"); currentType = $$; }
-	| DOUBLE   { $$ = strdup("DOUBLE"); currentType = $$; }
-	| SIGNED   { $$ = strdup("SIGNED"); currentType = $$; }
-	| UNSIGNED { $$ = strdup("UNSIGNED"); currentType = $$; }
+	: VOID     { $$ = strdup("VOID"); }
+	| CHAR     { $$ = strdup("CHAR");}
+	| SHORT    { $$ = strdup("SHORT");}
+	| INT      { $$ = strdup("INT");}
+	| LONG     { $$ = strdup("LONG");}
+	| FLOAT    { $$ = strdup("FLOAT");}
+	| DOUBLE   { $$ = strdup("DOUBLE");}
+	| SIGNED   { $$ = strdup("SIGNED");}
+	| UNSIGNED { $$ = strdup("UNSIGNED");}
 	| struct_or_union_specifier { $$ = $1; }
 	| enum_specifier { $$ = $1; }
-	| TYPE_NAME { $$ = strdup("TYPE_NAME"); currentType = $$; }
+	| TYPE_NAME { $$ = strdup("TYPE_NAME");}
+	| type_specifier pointer {
+		char*temp = malloc(strlen($1) + 2 );
+		sprintf(temp, "%s*", $1);
+		$$ = temp;
+	}
 	;
 
 /* Struct and union specifiers */
 struct_or_union_specifier
-	: struct_or_union IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE 
+	: struct_or_union IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = $2; }
 	| struct_or_union LEFT_BRACE struct_declaration_list RIGHT_BRACE
-	| struct_or_union IDENTIFIER
+	| struct_or_union IDENTIFIER { $$ = $2; }
 	;
 
 struct_or_union
@@ -511,11 +538,17 @@ selection_statement
 	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
 	;
 
+declaration_statement
+	: SEMICOLON
+	| declaration
+	;
+
 iteration_statement
 	: WHILE LEFT_PAREN expression RIGHT_PAREN statement
 	| DO statement WHILE LEFT_PAREN expression RIGHT_PAREN SEMICOLON
 	| FOR LEFT_PAREN expression_statement expression_statement RIGHT_PAREN statement
-	| FOR LEFT_PAREN expression_statement expression_statement expression RIGHT_PAREN statement
+	| FOR LEFT_PAREN declaration_statement expression_statement expression RIGHT_PAREN statement
+	| FOR LEFT_PAREN expression_statement declaration_statement expression RIGHT_PAREN statement
 	;
 
 jump_statement
@@ -550,11 +583,16 @@ function_definition
 	| declarator compound_statement {
 		  insertSymbol($1, "function", "auto");
 	  }
+	| ERROR compound_statement {
+		yyerror($1);
+		yyerrok;
+	}
+
 	;
 
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "\033[1;31mSyntax Error\033[0m at line %d: %s\n", yylineno, s);
+    fprintf(stderr, "Syntax Error at line %d: %s\n", yylineno, s);
     grammarErrorCount++;
 }

@@ -139,7 +139,8 @@ extern int yydebug;
     GOTO = 340,                    /* GOTO  */
     CONTINUE = 341,                /* CONTINUE  */
     BREAK = 342,                   /* BREAK  */
-    RETURN = 343                   /* RETURN  */
+    RETURN = 343,                  /* RETURN  */
+    ERROR = 344                    /* ERROR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -148,11 +149,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 12 "src/mylang.y"
+#line 14 "src/mylang.y"
 
     char *nice;
 
-#line 156 "src/y.tab.h"
+#line 157 "src/y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
