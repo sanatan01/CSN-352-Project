@@ -1,0 +1,3 @@
+Lexical error at line 1: Unterminated string literal '"Hello, world; // Missing closing quote'
+[1;31mSyntax Error[0m at line 1: Unterminated string literal
+[1;31mSyntax Error[0m at line 1: syntax error

@@ -6,6 +6,10 @@ extern int yyparse();
 SymbolEntry symbolTable[1000];
 int symbolCount = 0;
 
+// Constant table implementation
+ConstantEntry constantTable[1000];
+int constantCount = 0;
+
 
 void insertSymbol(char* name, char* type, char* return_type) {
     symbolTable[symbolCount].name = strdup(name);
@@ -14,19 +18,38 @@ void insertSymbol(char* name, char* type, char* return_type) {
     symbolCount++;
 }
 
+void insertConstant(char* value, char* type) {
+    constantTable[constantCount].value = strdup(value);
+    constantTable[constantCount].type = strdup(type);
+    constantCount++;
+}
 
 
 void displayTables() {
-    printf("+-----------------+-----------------+-----------------+-----------------+\n");
+    // Symbol table display
+    printf("\nSYMBOL TABLE:\n");
+    printf("+-----------------+-----------------+-----------------+\n");
     printf("| %-15s | %-15s | %-15s |\n", "Name", "Type", "Return Type");
-    printf("+-----------------+-----------------+-----------------+-----------------+\n");
+    printf("+-----------------+-----------------+-----------------+\n");
     for (int i = 0; i < symbolCount; i++) {
         printf("| %-15s | %-15s | %-15s |\n",
                symbolTable[i].name,
                symbolTable[i].type,
                symbolTable[i].return_type);
     }
-    printf("+-----------------+-----------------+-----------------+-----------------+\n");
+    printf("+-----------------+-----------------+-----------------+\n");
+    
+    // Constant table display
+    // printf("\nCONSTANT TABLE:\n");
+    // printf("+-----------------+-----------------+\n");
+    // printf("| %-15s | %-15s |\n", "Value", "Type");
+    // printf("+-----------------+-----------------+\n");
+    // for (int i = 0; i < constantCount; i++) {
+    //     printf("| %-15s | %-15s |\n",
+    //            constantTable[i].value,
+    //            constantTable[i].type);
+    // }
+    // printf("+-----------------+-----------------+\n");
 }
 
 int main(int argc, char** argv) {

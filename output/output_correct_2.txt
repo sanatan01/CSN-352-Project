@@ -1,95 +1,100 @@
-Token: UNSIGNED, Text: unsigned
-Token: LONG, Text: long
-Token: LONG, Text: long
-Token: IDENTIFIER, Text: factorial
-Token: LEFT_PAREN, Text: (
-Token: INT, Text: int
-Token: IDENTIFIER, Text: n
-Token: RIGHT_PAREN, Text: )
-Token: LEFT_BRACE, Text: {
-Token: IF, Text: if
-Token: LEFT_PAREN, Text: (
-Token: IDENTIFIER, Text: n
-Token: EQ_OP, Text: ==
-Token: CONSTANT, Text: 0
-Token: OR_OP, Text: ||
-Token: IDENTIFIER, Text: n
-Token: EQ_OP, Text: ==
-Token: CONSTANT, Text: 1
-Token: RIGHT_PAREN, Text: )
-Token: LEFT_BRACE, Text: {
-Token: RETURN, Text: return
-Token: CONSTANT, Text: 1
-Token: SEMICOLON, Text: ;
-Token: RIGHT_BRACE, Text: }
-Token: RETURN, Text: return
-Token: IDENTIFIER, Text: n
-Token: ASTERISK, Text: *
-Token: IDENTIFIER, Text: factorial
-Token: LEFT_PAREN, Text: (
-Token: IDENTIFIER, Text: n
-Token: MINUS, Text: -
-Token: CONSTANT, Text: 1
-Token: RIGHT_PAREN, Text: )
-Token: SEMICOLON, Text: ;
-Token: RIGHT_BRACE, Text: }
-Token: INT, Text: int
-Token: IDENTIFIER, Text: main
-Token: LEFT_PAREN, Text: (
-Token: RIGHT_PAREN, Text: )
-Token: LEFT_BRACE, Text: {
-Token: INT, Text: int
-Token: IDENTIFIER, Text: num
-Token: SEMICOLON, Text: ;
-Token: IDENTIFIER, Text: printf
-Token: LEFT_PAREN, Text: (
-Token: STRING_LITERAL, Text: "Enter a positive integer: "
-Token: RIGHT_PAREN, Text: )
-Token: SEMICOLON, Text: ;
-Token: IDENTIFIER, Text: scanf
-Token: LEFT_PAREN, Text: (
-Token: STRING_LITERAL, Text: "%d"
-Token: COMMA, Text: ,
-Token: AMPERSAND, Text: &
-Token: IDENTIFIER, Text: num
-Token: RIGHT_PAREN, Text: )
-Token: SEMICOLON, Text: ;
-Token: IF, Text: if
-Token: LEFT_PAREN, Text: (
-Token: IDENTIFIER, Text: num
-Token: LESS_THAN, Text: <
-Token: CONSTANT, Text: 0
-Token: RIGHT_PAREN, Text: )
-Token: LEFT_BRACE, Text: {
-Token: IDENTIFIER, Text: printf
-Token: LEFT_PAREN, Text: (
-Token: STRING_LITERAL, Text: "Factorial is not defined for negative numbers.\n"
-Token: RIGHT_PAREN, Text: )
-Token: SEMICOLON, Text: ;
-Token: RIGHT_BRACE, Text: }
-Token: ELSE, Text: else
-Token: LEFT_BRACE, Text: {
-Token: IDENTIFIER, Text: printf
-Token: LEFT_PAREN, Text: (
-Token: STRING_LITERAL, Text: "Factorial of %d is %llu\n"
-Token: COMMA, Text: ,
-Token: IDENTIFIER, Text: num
-Token: COMMA, Text: ,
-Token: IDENTIFIER, Text: factorial
-Token: LEFT_PAREN, Text: (
-Token: IDENTIFIER, Text: num
-Token: RIGHT_PAREN, Text: )
-Token: RIGHT_PAREN, Text: )
-Token: SEMICOLON, Text: ;
-Token: RIGHT_BRACE, Text: }
-Token: RETURN, Text: return
-Token: CONSTANT, Text: 0
-Token: SEMICOLON, Text: ;
-Token: RIGHT_BRACE, Text: }
-+-----------------+-----------------+-----------------+-----------------+
++----------------------+----------------------+
+| Token                | Text                 |
++----------------------+----------------------+
+| UNSIGNED             | unsigned             |
+| LONG                 | long                 |
+| LONG                 | long                 |
+| IDENTIFIER           | factorial            |
+| LEFT_PAREN           | (                    |
+| INT                  | int                  |
+| IDENTIFIER           | n                    |
+| RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| IF                   | if                   |
+| LEFT_PAREN           | (                    |
+| IDENTIFIER           | n                    |
+| EQ_OP                | ==                   |
+| CONSTANT             | 0                    |
+| OR_OP                | ||                   |
+| IDENTIFIER           | n                    |
+| EQ_OP                | ==                   |
+| CONSTANT             | 1                    |
+| RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| RETURN               | return               |
+| CONSTANT             | 1                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+| RETURN               | return               |
+| IDENTIFIER           | n                    |
+| ASTERISK             | *                    |
+| IDENTIFIER           | factorial            |
+| LEFT_PAREN           | (                    |
+| IDENTIFIER           | n                    |
+| MINUS                | -                    |
+| CONSTANT             | 1                    |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+| INT                  | int                  |
+| IDENTIFIER           | main                 |
+| LEFT_PAREN           | (                    |
+| RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| INT                  | int                  |
+| IDENTIFIER           | num                  |
+| SEMICOLON            | ;                    |
+| IDENTIFIER           | printf               |
+| LEFT_PAREN           | (                    |
+| STRING_LITERAL       | "Enter a positive integer: " |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+| IDENTIFIER           | scanf                |
+| LEFT_PAREN           | (                    |
+| STRING_LITERAL       | "%d"                 |
+| COMMA                | ,                    |
+| AMPERSAND            | &                    |
+| IDENTIFIER           | num                  |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+| IF                   | if                   |
+| LEFT_PAREN           | (                    |
+| IDENTIFIER           | num                  |
+| LESS_THAN            | <                    |
+| CONSTANT             | 0                    |
+| RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| IDENTIFIER           | printf               |
+| LEFT_PAREN           | (                    |
+| STRING_LITERAL       | "Factorial is not defined for negative numbers.\n" |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+| ELSE                 | else                 |
+| LEFT_BRACE           | {                    |
+| IDENTIFIER           | printf               |
+| LEFT_PAREN           | (                    |
+| STRING_LITERAL       | "Factorial of %d is %llu\n" |
+| COMMA                | ,                    |
+| IDENTIFIER           | num                  |
+| COMMA                | ,                    |
+| IDENTIFIER           | factorial            |
+| LEFT_PAREN           | (                    |
+| IDENTIFIER           | num                  |
+| RIGHT_PAREN          | )                    |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+| RETURN               | return               |
+| CONSTANT             | 0                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+
+SYMBOL TABLE:
++-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
-+-----------------+-----------------+-----------------+-----------------+
-| factorial       | function        | INT             |
++-----------------+-----------------+-----------------+
+| factorial       | function        | UNSIGNED        |
 | num             | variable        | INT             |
 | main            | function        | INT             |
-+-----------------+-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+

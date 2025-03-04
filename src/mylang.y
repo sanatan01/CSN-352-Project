@@ -6,6 +6,7 @@ extern int yylineno;
 extern FILE *yyin;
 // Global variable to hold the current type for declaration
 char *currentType = NULL;
+int grammarErrorCount = 0;
 %}
 
 %union {
@@ -23,9 +24,11 @@ char *currentType = NULL;
 %token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
 %token<nice> STRUCT UNION ENUM ELLIPSIS
 
-%token<nice> INVALID_CHARACTER SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON ASSIGN 
+%token<nice> SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON ASSIGN 
 %token<nice> LEFT_PAREN RIGHT_PAREN LEFT_BRACKET RIGHT_BRACKET DOT AMPERSAND EXCLAMATION 
 %token<nice> TILDE MINUS PLUS ASTERISK SLASH PERCENT LESS_THAN GREATER_THAN CARET PIPE QUESTION
+
+%token<nice> INVALID_ID INVALID_CHAR INVALID_OCT UNTERM_STRING
 
 %token<nice> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
@@ -92,6 +95,7 @@ char *currentType = NULL;
 %type<nice> selection_statement
 %type<nice> iteration_statement
 %type<nice> jump_statement
+%type<nice> primary_expression
 
 %%
 
@@ -101,6 +105,22 @@ primary_expression
 	| CONSTANT
 	| STRING_LITERAL
 	| LEFT_PAREN expression RIGHT_PAREN
+    | INVALID_ID    { 
+        yyerror("Invalid identifier used in expression"); 
+        $$ = "error";
+    }
+    | INVALID_CHAR  { 
+        yyerror("Invalid character in expression"); 
+        $$ = "error";
+    }
+    | INVALID_OCT   { 
+        yyerror("Invalid octal constant in expression"); 
+        $$ = "error";
+    }
+    | UNTERM_STRING { 
+        yyerror("Unterminated string literal"); 
+        $$ = "error";
+    }
 	;
 
 /* Postfix expressions */
@@ -519,10 +539,10 @@ external_declaration
 
 function_definition
 	: declaration_specifiers declarator declaration_list compound_statement {
-		  insertSymbol($2, "function", currentType); /* Insert function with its return type */
+		  insertSymbol($2, "function", $1); /* Insert function with its return type */
 	  }
 	| declaration_specifiers declarator compound_statement {
-		  insertSymbol($2, "function", currentType);
+		  insertSymbol($2, "function", $1);
 	  }
 	| declarator declaration_list compound_statement {
 		  insertSymbol($1, "function", "auto"); /* Default to auto when return type isn't specified */
@@ -532,9 +552,9 @@ function_definition
 	  }
 	;
 
-
 %%
 
 void yyerror(const char *s) {
-    return;
+    fprintf(stderr, "\033[1;31mSyntax Error\033[0m at line %d: %s\n", yylineno, s);
+    grammarErrorCount++;
 }

@@ -23,8 +23,9 @@ for input_file in "$INPUT_DIR"/*; do
     filename_no_ext="${filename%.*}"
     filename_no_prefix="${filename_no_ext#input}"
     output_file="$OUTPUT_DIR/output${filename_no_prefix}.txt"
+    error_file="$OUTPUT_DIR/error${filename_no_prefix}.txt"
 
-    src/syntax_analyser "$input_file" > "$output_file"
+    src/syntax_analyser "$input_file" > "$output_file" 2> "$error_file"
 done
 
 echo "All test cases executed successfully!"

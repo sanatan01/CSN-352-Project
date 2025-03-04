@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "y.tab.h"
+#include <stdarg.h>
 
 
 // Symbol table structure
@@ -13,6 +14,13 @@ typedef struct {
     char *type;
     char *return_type;
 } SymbolEntry;
+
+// Constant table structure
+typedef struct {
+    char *name;
+    char *type;
+    char *value;
+} ConstantEntry;
 
 static inline const char* getTokenName(int token) {
     switch(token) {
@@ -97,7 +105,10 @@ static inline const char* getTokenName(int token) {
         case CARET:          return "CARET";
         case PIPE:           return "PIPE";
         case QUESTION:       return "QUESTION";
-        case INVALID_CHARACTER: return "INVALID_CHARACTER";
+        case INVALID_ID:        return "INVALID_ID";
+        case INVALID_CHAR:      return "INVALID_CHAR";
+        case INVALID_OCT:       return "INVALID_OCT";
+        case UNTERM_STRING:     return "UNTERM_STRING";
         default:                return "UNKNOWN";
     }
 }

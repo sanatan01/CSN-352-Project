@@ -1,30 +1,35 @@
-Token: INT, Text: int
-Token: IDENTIFIER, Text: main
-Token: LEFT_PAREN, Text: (
-Token: RIGHT_PAREN, Text: )
-Token: LEFT_BRACE, Text: {
-Token: INT, Text: int
-Token: IDENTIFIER, Text: num
-Token: ASSIGN, Text: =
-Token: CONSTANT, Text: 10
-Token: SEMICOLON, Text: ;
-Token: FLOAT, Text: float
-Token: IDENTIFIER, Text: _value
-Token: ASSIGN, Text: =
-Token: CONSTANT, Text: 3.14
-Token: SEMICOLON, Text: ;
-Token: CHAR, Text: char
-Token: ASTERISK, Text: *
-Token: IDENTIFIER, Text: str
-Token: ASSIGN, Text: =
-Token: STRING_LITERAL, Text: "Hello, World!"
-Token: SEMICOLON, Text: ;
-Token: INT, Text: int
-Token: CONSTANT, Text: 3
-+-----------------+-----------------+-----------------+-----------------+
++----------------------+----------------------+
+| Token                | Text                 |
++----------------------+----------------------+
+| INT                  | int                  |
+| IDENTIFIER           | main                 |
+| LEFT_PAREN           | (                    |
+| RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| INT                  | int                  |
+| IDENTIFIER           | num                  |
+| ASSIGN               | =                    |
+| CONSTANT             | 10                   |
+| SEMICOLON            | ;                    |
+| FLOAT                | float                |
+| IDENTIFIER           | _value               |
+| ASSIGN               | =                    |
+| CONSTANT             | 3.14                 |
+| SEMICOLON            | ;                    |
+| CHAR                 | char                 |
+| ASTERISK             | *                    |
+| IDENTIFIER           | str                  |
+| ASSIGN               | =                    |
+| STRING_LITERAL       | "Hello, World!"      |
+| SEMICOLON            | ;                    |
+| INT                  | int                  |
+| INVALID_ID           | 3num                 |
+
+SYMBOL TABLE:
++-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
-+-----------------+-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+
 | num             | variable        | INT             |
 | _value          | variable        | FLOAT           |
 | str             | variable        | CHAR            |
-+-----------------+-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+

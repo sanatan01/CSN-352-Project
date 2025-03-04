@@ -1,23 +1,20 @@
-Token: INT, Text: int
-Token: IDENTIFIER, Text: main
-Token: LEFT_PAREN, Text: (
-Token: RIGHT_PAREN, Text: )
-Token: LEFT_BRACE, Text: {
-Token: CHAR, Text: char
-Token: ASTERISK, Text: *
-Token: IDENTIFIER, Text: str
-Token: ASSIGN, Text: =
-Token: IDENTIFIER, Text: Hello
-Token: COMMA, Text: ,
-Token: IDENTIFIER, Text: world
-Token: SEMICOLON, Text: ;
-Token: RETURN, Text: return
-Token: CONSTANT, Text: 0
-Token: SEMICOLON, Text: ;
-Token: RIGHT_BRACE, Text: }
-+-----------------+-----------------+-----------------+-----------------+
++----------------------+----------------------+
+| Token                | Text                 |
++----------------------+----------------------+
+| INT                  | int                  |
+| IDENTIFIER           | main                 |
+| LEFT_PAREN           | (                    |
+| RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| CHAR                 | char                 |
+| ASTERISK             | *                    |
+| IDENTIFIER           | str                  |
+| ASSIGN               | =                    |
+| UNTERM_STRING        | "Hello, world; // Missing closing quote |
+| RETURN               | return               |
+
+SYMBOL TABLE:
++-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
-+-----------------+-----------------+-----------------+-----------------+
-| str             | variable        | CHAR            |
-| main            | function        | CHAR            |
-+-----------------+-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+

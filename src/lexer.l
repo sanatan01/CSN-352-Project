@@ -3,6 +3,9 @@
 
 void displayLexer(int token, const char* text);
 int check_type();
+void lexicalError(const char* message, ...);
+int errorCount = 0;
+
 %}
 
 D			[0-9]
@@ -10,12 +13,46 @@ L			[a-zA-Z_]
 H			[a-fA-F0-9]
 E			[Ee][+-]?{D}+
 FS			(f|F|l|L)
-IS          (u|U|ul|Ul|uL|UL|ull|Ull|uLl|UlL|uLL|ULL)
+IS          (u|U|l|L|ll|LL|ul|uL|Ul|UL|lu|lU|Lu|LU|ull|uLL|Ull|ULL|llu|llU|LLu|LLU)
+
+/* Add error patterns */
+INVALID_IDENTIFIER      {D}+{L}+({L}|{D})*
+INVALID_CHARACTER    [$@`]
+INVALID_OCT_NUM     0[0-7]*[89][0-7]*
+UNTERMINATED_STRING   L?\"([^"\\\n]|\\.)*$
 
 %%
 "//".* { /* Single-line comment: ignore */ }
 "/*" { comment(); }
 
+
+{INVALID_IDENTIFIER} {
+    lexicalError("Invalid identifier '%s' - cannot start with digit", yytext);
+    displayLexer(INVALID_ID, yytext);
+    yylval.nice = strdup("ERROR");
+    return INVALID_ID;
+}
+
+{INVALID_OCT_NUM} {
+    lexicalError("Invalid octal constant '%s'", yytext);
+    displayLexer(INVALID_OCT, yytext);
+    yylval.nice = strdup("ERROR");
+    return INVALID_OCT;
+}
+
+{UNTERMINATED_STRING} {
+    lexicalError("Unterminated string literal '%s'", yytext);
+    displayLexer(UNTERM_STRING, yytext);
+    yylval.nice = strdup("ERROR");
+    return UNTERM_STRING;
+}
+
+{INVALID_CHARACTER} {
+    lexicalError("Invalid character '%s' in input", yytext);
+    displayLexer(INVALID_CHAR, yytext);
+    yylval.nice = strdup("ERROR");
+    return INVALID_CHAR;
+}
 
 "auto"      { displayLexer(AUTO, yytext);      yylval.nice = strdup(getTokenName(AUTO));      return AUTO; }
 "break"     { displayLexer(BREAK, yytext);     yylval.nice = strdup(getTokenName(BREAK));     return BREAK; }
@@ -54,7 +91,7 @@ IS          (u|U|ul|Ul|uL|UL|ull|Ull|uLl|UlL|uLL|ULL)
 {L}({L}|{D})* {
     displayLexer(IDENTIFIER, yytext);
     yylval.nice = strdup(yytext);
-    return check_type();
+    return IDENTIFIER;
 }
 
 
@@ -119,8 +156,8 @@ L?\"(\\.|[^\\"])*\"              { displayLexer(STRING_LITERAL, yytext); yylval.
 "|"         { displayLexer(PIPE, yytext);         yylval.nice = strdup(getTokenName(PIPE));         return PIPE; }
 "?"         { displayLexer(QUESTION, yytext);     yylval.nice = strdup(getTokenName(QUESTION));     return QUESTION; }
 
-[ \t\v\n\f] { }
-. {  }
+([ \t\v\n\f])* { }
+. {}
 
 %%
 
@@ -159,11 +196,23 @@ void comment() {
 }
 
 void displayLexer(int token, const char* text) {
-    printf("Token: %s, Text: %s\n", getTokenName(token), text);
+    static int first_call = 1;
+    if (first_call) {
+        printf("+----------------------+----------------------+\n");
+        printf("| %-20s | %-20s |\n", "Token", "Text");
+        printf("+----------------------+----------------------+\n");
+        first_call = 0;
+    }
+    printf("| %-20s | %-20s |\n", getTokenName(token), text);
 }
 
-int column = 0;
-
-int check_type() {
-    return(IDENTIFIER);
+/* Add this function at the end */
+void lexicalError(const char* message, ...) {
+    va_list args;
+    va_start(args, message);
+    fprintf(stderr, "Lexical error at line %d: ", yylineno);
+    vfprintf(stderr, message, args);
+    fprintf(stderr, "\n");
+    va_end(args);
+    errorCount++;
 }

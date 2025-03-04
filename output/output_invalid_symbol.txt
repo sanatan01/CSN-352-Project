@@ -1,14 +1,32 @@
-Token: INT, Text: int
-Token: IDENTIFIER, Text: main
-Token: LEFT_PAREN, Text: (
-Token: RIGHT_PAREN, Text: )
-Token: LEFT_BRACE, Text: {
-Token: INT, Text: int
-Token: IDENTIFIER, Text: x
-Token: ASSIGN, Text: =
-Token: CONSTANT, Text: 12
-Token: IDENTIFIER, Text: a
-+-----------------+-----------------+-----------------+-----------------+
++----------------------+----------------------+
+| Token                | Text                 |
++----------------------+----------------------+
+| INT                  | int                  |
+| IDENTIFIER           | main                 |
+| LEFT_PAREN           | (                    |
+| RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| INT                  | int                  |
+| IDENTIFIER           | x                    |
+| ASSIGN               | =                    |
+| INVALID_ID           | 12a                  |
+| SEMICOLON            | ;                    |
+| IDENTIFIER           | printf               |
+| LEFT_PAREN           | (                    |
+| STRING_LITERAL       | "%d\n"               |
+| COMMA                | ,                    |
+| IDENTIFIER           | x                    |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+| RETURN               | return               |
+| CONSTANT             | 0                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+
+SYMBOL TABLE:
++-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
-+-----------------+-----------------+-----------------+-----------------+
-+-----------------+-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+
+| x               | variable        | INT             |
+| main            | function        | INT             |
++-----------------+-----------------+-----------------+

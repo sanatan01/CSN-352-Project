@@ -100,43 +100,46 @@ extern int yydebug;
     UNION = 301,                   /* UNION  */
     ENUM = 302,                    /* ENUM  */
     ELLIPSIS = 303,                /* ELLIPSIS  */
-    INVALID_CHARACTER = 304,       /* INVALID_CHARACTER  */
-    SEMICOLON = 305,               /* SEMICOLON  */
-    LEFT_BRACE = 306,              /* LEFT_BRACE  */
-    RIGHT_BRACE = 307,             /* RIGHT_BRACE  */
-    COMMA = 308,                   /* COMMA  */
-    COLON = 309,                   /* COLON  */
-    ASSIGN = 310,                  /* ASSIGN  */
-    LEFT_PAREN = 311,              /* LEFT_PAREN  */
-    RIGHT_PAREN = 312,             /* RIGHT_PAREN  */
-    LEFT_BRACKET = 313,            /* LEFT_BRACKET  */
-    RIGHT_BRACKET = 314,           /* RIGHT_BRACKET  */
-    DOT = 315,                     /* DOT  */
-    AMPERSAND = 316,               /* AMPERSAND  */
-    EXCLAMATION = 317,             /* EXCLAMATION  */
-    TILDE = 318,                   /* TILDE  */
-    MINUS = 319,                   /* MINUS  */
-    PLUS = 320,                    /* PLUS  */
-    ASTERISK = 321,                /* ASTERISK  */
-    SLASH = 322,                   /* SLASH  */
-    PERCENT = 323,                 /* PERCENT  */
-    LESS_THAN = 324,               /* LESS_THAN  */
-    GREATER_THAN = 325,            /* GREATER_THAN  */
-    CARET = 326,                   /* CARET  */
-    PIPE = 327,                    /* PIPE  */
-    QUESTION = 328,                /* QUESTION  */
-    CASE = 329,                    /* CASE  */
-    DEFAULT = 330,                 /* DEFAULT  */
-    IF = 331,                      /* IF  */
-    ELSE = 332,                    /* ELSE  */
-    SWITCH = 333,                  /* SWITCH  */
-    WHILE = 334,                   /* WHILE  */
-    DO = 335,                      /* DO  */
-    FOR = 336,                     /* FOR  */
-    GOTO = 337,                    /* GOTO  */
-    CONTINUE = 338,                /* CONTINUE  */
-    BREAK = 339,                   /* BREAK  */
-    RETURN = 340                   /* RETURN  */
+    SEMICOLON = 304,               /* SEMICOLON  */
+    LEFT_BRACE = 305,              /* LEFT_BRACE  */
+    RIGHT_BRACE = 306,             /* RIGHT_BRACE  */
+    COMMA = 307,                   /* COMMA  */
+    COLON = 308,                   /* COLON  */
+    ASSIGN = 309,                  /* ASSIGN  */
+    LEFT_PAREN = 310,              /* LEFT_PAREN  */
+    RIGHT_PAREN = 311,             /* RIGHT_PAREN  */
+    LEFT_BRACKET = 312,            /* LEFT_BRACKET  */
+    RIGHT_BRACKET = 313,           /* RIGHT_BRACKET  */
+    DOT = 314,                     /* DOT  */
+    AMPERSAND = 315,               /* AMPERSAND  */
+    EXCLAMATION = 316,             /* EXCLAMATION  */
+    TILDE = 317,                   /* TILDE  */
+    MINUS = 318,                   /* MINUS  */
+    PLUS = 319,                    /* PLUS  */
+    ASTERISK = 320,                /* ASTERISK  */
+    SLASH = 321,                   /* SLASH  */
+    PERCENT = 322,                 /* PERCENT  */
+    LESS_THAN = 323,               /* LESS_THAN  */
+    GREATER_THAN = 324,            /* GREATER_THAN  */
+    CARET = 325,                   /* CARET  */
+    PIPE = 326,                    /* PIPE  */
+    QUESTION = 327,                /* QUESTION  */
+    INVALID_ID = 328,              /* INVALID_ID  */
+    INVALID_CHAR = 329,            /* INVALID_CHAR  */
+    INVALID_OCT = 330,             /* INVALID_OCT  */
+    UNTERM_STRING = 331,           /* UNTERM_STRING  */
+    CASE = 332,                    /* CASE  */
+    DEFAULT = 333,                 /* DEFAULT  */
+    IF = 334,                      /* IF  */
+    ELSE = 335,                    /* ELSE  */
+    SWITCH = 336,                  /* SWITCH  */
+    WHILE = 337,                   /* WHILE  */
+    DO = 338,                      /* DO  */
+    FOR = 339,                     /* FOR  */
+    GOTO = 340,                    /* GOTO  */
+    CONTINUE = 341,                /* CONTINUE  */
+    BREAK = 342,                   /* BREAK  */
+    RETURN = 343                   /* RETURN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -145,11 +148,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 11 "src/mylang.y"
+#line 12 "src/mylang.y"
 
     char *nice;
 
-#line 153 "src/y.tab.h"
+#line 156 "src/y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

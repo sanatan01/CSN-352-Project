@@ -1,47 +1,52 @@
-Token: INT, Text: int
-Token: IDENTIFIER, Text: main
-Token: LEFT_PAREN, Text: (
-Token: RIGHT_PAREN, Text: )
-Token: LEFT_BRACE, Text: {
-Token: INT, Text: int
-Token: IDENTIFIER, Text: c
-Token: SEMICOLON, Text: ;
-Token: INT, Text: int
-Token: IDENTIFIER, Text: d
-Token: ASSIGN, Text: =
-Token: CONSTANT, Text: 100
-Token: SEMICOLON, Text: ;
-Token: INT, Text: int
-Token: IDENTIFIER, Text: a
-Token: COMMA, Text: ,
-Token: IDENTIFIER, Text: b
-Token: ASSIGN, Text: =
-Token: CONSTANT, Text: 10
-Token: SEMICOLON, Text: ;
-Token: IDENTIFIER, Text: a
-Token: ASSIGN, Text: =
-Token: MINUS, Text: -
-Token: IDENTIFIER, Text: b
-Token: DEC_OP, Text: --
-Token: SEMICOLON, Text: ;
-Token: IDENTIFIER, Text: printf
-Token: LEFT_PAREN, Text: (
-Token: STRING_LITERAL, Text: "a = %d, b = %d"
-Token: COMMA, Text: ,
-Token: IDENTIFIER, Text: a
-Token: COMMA, Text: ,
-Token: IDENTIFIER, Text: b
-Token: RIGHT_PAREN, Text: )
-Token: SEMICOLON, Text: ;
-Token: RETURN, Text: return
-Token: CONSTANT, Text: 0
-Token: SEMICOLON, Text: ;
-Token: RIGHT_BRACE, Text: }
-+-----------------+-----------------+-----------------+-----------------+
++----------------------+----------------------+
+| Token                | Text                 |
++----------------------+----------------------+
+| INT                  | int                  |
+| IDENTIFIER           | main                 |
+| LEFT_PAREN           | (                    |
+| RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| INT                  | int                  |
+| IDENTIFIER           | c                    |
+| SEMICOLON            | ;                    |
+| INT                  | int                  |
+| IDENTIFIER           | d                    |
+| ASSIGN               | =                    |
+| CONSTANT             | 100                  |
+| SEMICOLON            | ;                    |
+| INT                  | int                  |
+| IDENTIFIER           | a                    |
+| COMMA                | ,                    |
+| IDENTIFIER           | b                    |
+| ASSIGN               | =                    |
+| CONSTANT             | 10                   |
+| SEMICOLON            | ;                    |
+| IDENTIFIER           | a                    |
+| ASSIGN               | =                    |
+| MINUS                | -                    |
+| IDENTIFIER           | b                    |
+| DEC_OP               | --                   |
+| SEMICOLON            | ;                    |
+| IDENTIFIER           | printf               |
+| LEFT_PAREN           | (                    |
+| STRING_LITERAL       | "a = %d, b = %d"     |
+| COMMA                | ,                    |
+| IDENTIFIER           | a                    |
+| COMMA                | ,                    |
+| IDENTIFIER           | b                    |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+| RETURN               | return               |
+| CONSTANT             | 0                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+
+SYMBOL TABLE:
++-----------------+-----------------+-----------------+
 | Name            | Type            | Return Type     |
-+-----------------+-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+
 | c               | variable        | INT             |
 | d               | variable        | INT             |
 | a               | variable        | INT             |
 | main            | function        | INT             |
-+-----------------+-----------------+-----------------+-----------------+
++-----------------+-----------------+-----------------+
