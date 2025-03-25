@@ -1,5 +1,4 @@
-#ifndef __STATEMENT_H__
-#define __STATEMENT_H__
+#pragma once
 
 #include <ast.h>
 #include <deque>
@@ -9,14 +8,14 @@
 #include <3ac.h>
 
 
-class Statement : public Non_Terminal {
+class Statement : public NonTerminal {
     public:
         std::vector<GoTo*> nextlist; /* NextList Doubles up as TrueList */
         std::vector<GoTo*> breaklist;
         std::vector<GoTo*> continuelist;
         std::vector<GoTo*> caselist;
         std::vector<GoTo*> returnlist;
-    Statement() : Non_Terminal("") {};   
+    Statement() : NonTerminal("") {};   
     ~Statement() {
         nextlist.clear();
         breaklist.clear();
@@ -25,35 +24,25 @@ class Statement : public Non_Terminal {
     }
 };
 
+union StatementType {
+    Expression* e;
+    Statement* s;
+};
+
 class TopLevelStatement : public Statement {
     public:
-        Statement *s1;
-
-    TopLevelStatement() {};
-    
-};
-
-class StatementList : public Statement{
-    public :
-};
-
-Statement * create_statement_list( Statement * st1 );
-Statement * add_to_statement_list( Statement * stl, Statement * st1 );
-
-class ExpressionStatement : public Statement{
-    public:
-        Expression *e1;
-        ExpressionStatement(){
-            e1=nullptr;
+        StatementType type;
+        TopLevelStatement() {
+            type.s = nullptr;
         }
-
 };
 
-Statement* create_expression_statement(Expression* e1);
+Statement* add_to_statement_list( Statement * stl = nullptr, StatementType* st1 );
 
 class SelectionStatement : public Statement{
     public :
 };
+
 Statement *create_selection_statement_if( Expression *ex, GoTo * _false, Label * l1, Statement *st1, GoTo * _goto, Label * l2, Statement *st2 );
 
 void create_switch( Expression * ex );
@@ -107,11 +96,12 @@ Statement* create_labeled_statement_def(Label *l,Statement* s1);
 extern std::map<std::string,Label *> label_iden;
 extern std::map<std::string,std::vector<GoTo *> & > goto_iden;
 extern std::map<std::string, Label *> switch_label;
-extern Type* switch_type;
+extern GlobalType* switch_type;
 extern Label * switch_temp;
+
 class CompoundStatement : public Statement{
     public:
-        StatementList *sl1;
+        Statement *sl1;
         DeclarationList *dl1;
         std::string st;
         CompoundStatement() {
@@ -121,9 +111,6 @@ class CompoundStatement : public Statement{
         };
 };
 
-Statement* create_compound_statement_1(std::string st,StatementList* sl1);
-Statement* create_compound_statement_2(std::string st,DeclarationList* dl1);
-Statement* create_compound_statement_3(std::string st,DeclarationList* dl1,StatementList* sl1);
+Statement* create_compound_statement(std::string st, Statement* sl1 = nullptr, DeclarationList* dl1 = nullptr);
 
 void backpatch_fn( Statement * s ) ;
-#endif
