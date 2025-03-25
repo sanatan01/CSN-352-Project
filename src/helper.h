@@ -122,6 +122,8 @@ char *currentScope();
 void displayTables();
 void comment();
 
+// 
+
 // Other necessary declarations
 
 #endif // GENERATOR_H
