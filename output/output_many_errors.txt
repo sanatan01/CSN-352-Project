@@ -180,23 +180,6 @@ SYMBOL TABLE:
 | num             | variable        | INT             |
 | _value          | variable        | FLOAT           |
 | str             | variable        | CHAR*           |
-| 3num            | variable        | INT             |
-| 123a            | variable        | FLOAT           |
-| hex_num         | variable        | INT             |
-| long_num        | variable        | LONG            |
-| sci_num         | variable        | DOUBLE          |
-| invalid_hex     | variable        | INT             |
-| invalid_oct     | variable        | INT             |
-| invalid_float   | variable        | FLOAT           |
-| valid_str1      | variable        | CHAR*           |
-| valid_str2      | variable        | CHAR*           |
-| unterminated_str | variable        | CHAR*           |
-| a               | variable        | INT             |
-| sum             | variable        | INT             |
-| diff            | variable        | INT             |
-| prod            | variable        | INT             |
-| quotient        | variable        | INT             |
-| remainder       | variable        | INT             |
 | i               | variable        | INT             |
 | main            | function        | INT             |
 +-----------------+-----------------+-----------------+

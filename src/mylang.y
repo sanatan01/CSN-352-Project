@@ -101,8 +101,37 @@ int grammarErrorCount = 0;
 %type<nice> iteration_statement
 %type<nice> jump_statement
 %type<nice> primary_expression
+%type<nice> error_statement_closed
+%type<nice> error_statement_open
 
 %%
+
+/* Handling multiple errors */
+error_statement_open
+    : error
+	| ERROR 
+    | error_statement_open primary_expression 
+	| error_statement_open type_specifier 
+	| error_statement_open unary_operator 
+	| error_statement_open storage_class_specifier
+	| error_statement_open struct_or_union
+	| error_statement_open type_qualifier	
+	| error_statement_open declarator
+	| error_statement_open direct_declarator
+	| error_statement_open pointer
+	| error_statement_open type_qualifier_list
+    ;
+
+error_statement_closed
+    : error_statement_open SEMICOLON {
+        fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
+        yyerrok;
+    }
+	| error_statement_open RIGHT_BRACE {
+		fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
+		yyerrok;
+	}
+    ;
 
 /* Primary expressions */
 primary_expression
@@ -110,10 +139,6 @@ primary_expression
 	| CONSTANT
 	| STRING_LITERAL
 	| LEFT_PAREN expression RIGHT_PAREN
-	| ERROR {
-		yyerror($1);
-		yyerrok;
-	}
 	;
 
 /* Postfix expressions */
@@ -251,14 +276,6 @@ assignment_operator
 expression
 	: assignment_expression
 	| expression COMMA assignment_expression
-	| ERROR COMMA assignment_expression {
-		yyerror($1);
-		yyerrok;
-	}
-	| assignment_expression COMMA ERROR {
-		yyerror($1);
-		yyerrok;
-	}
 	;
 
 constant_expression
@@ -282,18 +299,6 @@ declaration
 		strcat(temp, $3);
 		$$ = temp;
 		insertSymbol($2, "variable", $$);
-	}
-	| ERROR SEMICOLON {
-		yyerror($1);
-		yyerrok;
-	}
-	| ERROR init_declarator_list SEMICOLON {
-		yyerror($1);
-		yyerrok;
-	}
-	| declaration_specifiers ERROR SEMICOLON {
-		yyerror($1);
-		yyerrok;
 	}
 	;
 
@@ -334,14 +339,6 @@ init_declarator_list
 init_declarator
 	: declarator
 	| declarator ASSIGN initializer
-	| ERROR ASSIGN initializer {
-		yyerror($1);
-		yyerrok;
-	}
-	| declarator ASSIGN ERROR {
-		yyerror($1);
-		yyerrok;
-	}
 	;
 
 /* Storage classes */
@@ -529,6 +526,7 @@ statement
 	| selection_statement
 	| iteration_statement
 	| jump_statement
+	| error_statement_closed
 	;
 
 labeled_statement
@@ -591,6 +589,7 @@ jump_statement
 translation_unit
 	: external_declaration
 	| translation_unit external_declaration
+	| translation_unit error_statement_closed
 	;
 
 external_declaration
@@ -610,17 +609,11 @@ function_definition
 	  }
 	| declarator compound_statement {
 		  insertSymbol($1, "function", "auto");
-	  }
-	| ERROR compound_statement {
-		yyerror($1);
-		yyerrok;
 	}
-
 	;
 
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "Syntax Error at line %d: %s\n", yylineno, s);
-    grammarErrorCount++;
+	fprintf(stderr, "Syntax Error: %s at line %d\n", s, yylineno);
 }

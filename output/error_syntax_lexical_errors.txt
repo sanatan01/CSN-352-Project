@@ -1,0 +1,77 @@
+Lexical error at line 5: Invalid character '@' in input
+Syntax Error: syntax error at line 5
+Syntax error recovered at line 5
+Syntax Error: syntax error at line 6
+Syntax error recovered at line 6
+Syntax Error: syntax error at line 9
+Syntax Error: syntax error at line 10
+Syntax error recovered at line 10
+Syntax Error: syntax error at line 13
+Syntax error recovered at line 13
+Syntax Error: syntax error at line 14
+Syntax Error: syntax error at line 14
+Syntax error recovered at line 14
+Syntax Error: syntax error at line 15
+Syntax error recovered at line 15
+Syntax Error: syntax error at line 28
+Syntax Error: syntax error at line 28
+Syntax error recovered at line 29
+Syntax Error: syntax error at line 35
+Syntax error recovered at line 35
+Syntax Error: syntax error at line 37
+Syntax error recovered at line 37
+Syntax Error: syntax error at line 37
+Syntax error recovered at line 37
+Syntax Error: syntax error at line 40
+Syntax error recovered at line 40
+Syntax Error: syntax error at line 43
+Syntax error recovered at line 43
+Syntax Error: syntax error at line 43
+Syntax error recovered at line 44
+Syntax Error: syntax error at line 45
+Syntax error recovered at line 45
+Syntax Error: syntax error at line 48
+Syntax error recovered at line 48
+Syntax Error: syntax error at line 51
+Syntax error recovered at line 51
+Syntax Error: syntax error at line 51
+Syntax error recovered at line 51
+Syntax Error: syntax error at line 54
+Syntax error recovered at line 54
+Syntax Error: syntax error at line 57
+Syntax Error: syntax error at line 57
+Syntax error recovered at line 59
+Syntax Error: syntax error at line 60
+Syntax error recovered at line 60
+Syntax Error: syntax error at line 63
+Syntax error recovered at line 63
+Syntax Error: syntax error at line 69
+Syntax error recovered at line 70
+Syntax Error: syntax error at line 73
+Syntax error recovered at line 74
+Syntax Error: syntax error at line 75
+Syntax error recovered at line 75
+Syntax Error: syntax error at line 93
+Syntax error recovered at line 93
+Syntax Error: syntax error at line 94
+Syntax error recovered at line 94
+Syntax Error: syntax error at line 98
+Syntax Error: syntax error at line 98
+Syntax error recovered at line 98
+Syntax Error: syntax error at line 99
+Syntax Error: syntax error at line 99
+Syntax error recovered at line 99
+Syntax Error: syntax error at line 102
+Syntax Error: syntax error at line 104
+Syntax error recovered at line 106
+Syntax Error: syntax error at line 108
+Lexical error at line 108: Unterminated string literal '"This string is not terminated;'
+Syntax Error: syntax error at line 111
+Syntax Error: syntax error at line 112
+Syntax error recovered at line 114
+Syntax Error: syntax error at line 115
+Syntax error recovered at line 116
+Syntax Error: syntax error at line 118
+Syntax error recovered at line 118
+Syntax Error: syntax error at line 120
+Syntax error recovered at line 120
