@@ -144,7 +144,7 @@ enum PrimitiveTypes {
   
   // -------------------------------------GLOBAL TYPES----------------------------------------
   
-  union GlobalType {
+union GlobalType {
     StandardType *standard_type;
     Struct *struct_type;
     Union *union_type;
@@ -152,7 +152,19 @@ enum PrimitiveTypes {
     FunctionType *function_type;
     PointerType *pointer_type;
     InvalidType *invalid_type;
-  };
+
+    // Method to find out which type is not null
+    std::string getType() const {
+        if (standard_type) return "StandardType";
+        if (struct_type) return "Struct";
+        if (union_type) return "Union";
+        if (array_type) return "ArrayType";
+        if (function_type) return "FunctionType";
+        if (pointer_type) return "PointerType";
+        if (invalid_type) return "InvalidType";
+        return "None";
+    }
+};
   
   extern InvalidType INVALID_TYPE;
   

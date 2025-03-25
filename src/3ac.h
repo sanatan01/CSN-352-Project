@@ -74,7 +74,7 @@ std::ostream& operator<<(std::ostream& os, const Address& a);
 
 extern unsigned long long instructions;
 Address * new_temp();
-Address * new_mem( Type & t );
+Address * new_mem( GlobalType & t );
 
 
 typedef enum _const_type {

@@ -1,5 +1,6 @@
 %{
 #include "helper.h"
+#include "types.h"
 void yyerror(const char *s);
 extern int yylex();
 extern int yylineno;

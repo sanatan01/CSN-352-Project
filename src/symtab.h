@@ -1,10 +1,10 @@
 #pragma once
 
-#include <ast.h>
 #include <deque>
 #include <map>
 #include <string>
 #include <sstream>
+#include "ast.h"
 #include "types.h"
 #include "ast_entries.h"
 
@@ -32,8 +32,6 @@ class CastExpression;
 class Constant;
 class StringLiteral;
 class TopLevelExpression;
-
-class StandardType;
 
 #define WORD_SIZE 4
 
