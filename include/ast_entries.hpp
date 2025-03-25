@@ -1,12 +1,14 @@
 #pragma once
 
-#include <ast.h>
 #include <deque>
+#include <vector>
 #include <map>
 #include <string>
 #include <sstream>
-#include "types.h"
-#include "symtab.h"
+
+#include <types.hpp>
+#include <symtab.hpp>
+#include <ast.hpp>
 
 typedef int TYPE_QUALIFIER;
 
