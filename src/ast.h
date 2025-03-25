@@ -1,5 +1,4 @@
-#ifndef __AST_H__
-#define __AST_H__
+#pragma once
 
 #include <string>
 #include <vector>
@@ -52,5 +51,3 @@ Terminal * create_terminal(const char * name, const char * value, unsigned int l
 NonTerminal * create_non_terminal (const char* name, std::initializer_list<Node*> nodes);
 
 void file_writer(std::string s);
-
-#endif

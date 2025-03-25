@@ -107,7 +107,7 @@ add_to_init_declarator_list( DeclaratorList *init_declarator_list,
 
 typedef int STORAGE_CLASS;
 class TypeSpecifier;
-int get_index( Type t );
+int get_index( GlobalType t );
 int set_index( DeclarationSpecifiers *ds );
 
 class DeclarationSpecifiers : public NonTerminal {
@@ -222,7 +222,7 @@ class TypeName : public NonTerminal {
   public:
     SpecifierQualifierList *sq_list;
     AbstractDeclarator *abstract_declarator;
-    Type type;
+    GlobalType type;
     TypeName();
 };
 
@@ -233,7 +233,7 @@ class ParameterDeclaration : public NonTerminal {
     DeclarationSpecifiers *declaration_specifiers;
     Declarator *declarator;
     AbstractDeclarator *abstract_declarator;
-    Type type;
+    GlobalType type;
     ParameterDeclaration();
     void create_type();
 };
@@ -267,15 +267,20 @@ SpecifierQualifierList *
 create_type_specifier_sq( TypeSpecifier *type_specifier );
 SpecifierQualifierList *
 create_type_qualifier_sq( TYPE_QUALIFIER type_qualifier );
-SpecifierQualifierList *add_type_specifier_sq( SpecifierQualifierList *sq_list,
-                                               TypeSpecifier *type_specifier );
-SpecifierQualifierList *add_type_qualifier_sq( SpecifierQualifierList *sq_list,
-                                               TYPE_QUALIFIER type_qualifier );
+SpecifierQualifierList *add_type_specifier_sq( SpecifierQualifierList *sq_list, TypeSpecifier *type_specifier );
+SpecifierQualifierList *add_type_qualifier_sq( SpecifierQualifierList *sq_list, TYPE_QUALIFIER type_qualifier );
 
-
+class StructDeclaration : public NonTerminal {
+  public:
+    DeclarationSpecifiers *declaration_specifiers;
+    DeclaratorList *declarator_list;
+    StructDeclaration();
+};
 
 StructDeclarationList * add_to_struct_declaration_list( StructDeclarationList *struct_declaration_list = nullptr, StructDeclaration *struct_declaration );
 int verify_struct_declarator( StructDeclarationList *st );
+
+// -------------------------------------ENUM----------------------------------------
 
 class Enumerator : public NonTerminal {
   public:
@@ -292,8 +297,7 @@ class EnumeratorList : public NonTerminal {
     EnumeratorList();
 };
 
-EnumeratorList *create_enumerator_list( Enumerator *enumerator );
-EnumeratorList *add_to_enumerator_list( EnumeratorList *enumerator_list, Enumerator *enumerator );
+EnumeratorList *add_to_enumerator_list( EnumeratorList *enumerator_list = nullptr, Enumerator *enumerator );
 
 typedef int TYPE_SPECIFIER;
 
@@ -319,5 +323,3 @@ Node *add_to_global_symbol_table( Declaration *declaration );
 
 void error_msg( std::string str, unsigned int line_num, unsigned int column = -1);
 void warning_msg( std::string str, unsigned int line_num, unsigned int column = -1);
-
-#endif

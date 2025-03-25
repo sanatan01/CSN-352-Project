@@ -16,17 +16,15 @@ class Constant;
 class StringLiteral;
 class TopLevelExpression;
 
-class Expression : public Non_Terminal {
+class Expression : public NonTerminal {
   public:
-    Type type;
-    /* Change this later */
+    GlobalType type;
     int num_operands;
-    // Expression( Types * type, int num_op );
-	Address  * res;
-  std::vector<GoTo*> truelist;
-  std::vector<GoTo*> falselist;
+	  Address  *res;
+    std::vector<GoTo*> truelist;
+    std::vector<GoTo*> falselist;
 
-    Expression() : Non_Terminal( "" ), res ( nullptr ){};
+    Expression() : NonTerminal( "" ), res ( nullptr ){};
 };
 
 // Expression::Expression(){}
@@ -361,9 +359,9 @@ class Constant : public Terminal {
   public:
     Constant( const char *name ,const char* value, unsigned int line_num, unsigned int column);
     union data val;
-    Type ConstantType;
+    GlobalType ConstantType;
 
-    Type getConstantType() {
+    GlobalType getConstantType() {
         return ConstantType;
     }
     void negate();
