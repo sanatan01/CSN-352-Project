@@ -1,2 +1,5 @@
 syntax_analyser
 lexer
+src/lex.yy.c
+src/y.tab.c
+include/y.tab.h
