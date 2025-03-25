@@ -4,9 +4,9 @@
 #include <map>
 #include <string>
 #include <sstream>
-#include "ast.h"
-#include "types.h"
-#include "ast_entries.h"
+#include <ast.hpp>
+#include <types.hpp>
+#include <ast_entries.hpp>
 
 void yyerror( const char *s );
 extern int error_flag;

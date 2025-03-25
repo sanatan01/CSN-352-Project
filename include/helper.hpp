@@ -1,10 +1,9 @@
-#ifndef HELPER_H
-#define HELPER_H
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "y.tab.h"
+#include <y.tab.h>
 #include <stdarg.h>
 
 
@@ -125,5 +124,3 @@ void comment();
 // 
 
 // Other necessary declarations
-
-#endif // GENERATOR_H

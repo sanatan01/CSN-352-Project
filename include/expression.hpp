@@ -1,11 +1,11 @@
 #pragma once
 
-#include <ast.h>
+#include <ast.hpp>
 #include <deque>
 #include <map>
 #include <string>
-#include <symtab.h>
-#include <3ac.h>
+#include <symtab.hpp>
+#include <3ac.hpp>
 
 // --------------------------------------------------------------------------------------------
 class Expression : public NonTerminal {

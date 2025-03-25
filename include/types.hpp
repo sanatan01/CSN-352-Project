@@ -1,11 +1,11 @@
 #pragma once
 
-#include <ast.h>
+#include <ast.hpp>
 #include <deque>
 #include <map>
 #include <string>
 #include <sstream>
-#include "ast_entries.h"
+#include <ast_entries.hpp>
 
 // --------------------------------------PRIMITVE TYPES----------------------------------------
 enum PrimitiveTypes {

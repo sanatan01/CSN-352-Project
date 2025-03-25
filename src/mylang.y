@@ -1,6 +1,13 @@
 %{
-#include "helper.h"
-#include "types.h"
+#include <helper.hpp>
+#include <types.hpp>
+#include <symtab.hpp>
+#include <statement.hpp>
+#include <expression.hpp>
+#include <ast_entries.hpp>
+#include <ast.hpp>
+#include <3ac.hpp>
+
 void yyerror(const char *s);
 extern int yylex();
 extern int yylineno;
@@ -13,12 +20,24 @@ int grammarErrorCount = 0;
 
 %union {
     char *nice;
+	Expression* expression;
+	PrimaryExpression* primary_expression;
+	ArguemmentExpressionList* argument_expression_list;
+	UnaryExpression* unary_expression;
+	CastExpression* cast_expression;
+	PostfixExpression* postfix_expression;
+	OpExpression* op_expression;
+	Identifier* Identifier;
+	Constant* constant;
+	StringLiteral* string_literal;
 }
 
 
 
-
-%token<nice> IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
+%token<identifier> IDENTIFIER
+%token<constant> CONSTANT
+%token<string_literal> STRING_LITERAL
+%token<nice> SIZEOF
 %token<nice> PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
 %token<nice> AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
 %token<nice> SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
@@ -48,21 +67,21 @@ int grammarErrorCount = 0;
 %type<nice> declaration_list
 %type<nice> statement
 %type<nice> statement_list
-%type<nice> expression
-%type<nice> assignment_expression
-%type<nice> conditional_expression
-%type<nice> logical_or_expression
-%type<nice> logical_and_expression
-%type<nice> inclusive_or_expression
-%type<nice> exclusive_or_expression
-%type<nice> and_expression
-%type<nice> equality_expression
-%type<nice> relational_expression
-%type<nice> shift_expression
-%type<nice> additive_expression
-%type<nice> multiplicative_expression
-%type<nice> cast_expression
-%type<nice> unary_expression
+%type<expression> expression
+%type<expression> assignment_expression
+%type<expression> conditional_expression
+%type<expression> logical_or_expression
+%type<expression> logical_and_expression
+%type<expression> inclusive_or_expression
+%type<expression> exclusive_or_expression
+%type<expression> and_expression
+%type<expression> equality_expression
+%type<expression> relational_expression
+%type<expression> shift_expression
+%type<expression> additive_expression
+%type<expression> multiplicative_expression
+%type<expression> cast_expression
+%type<expression> unary_expression
 %type<nice> unary_operator
 %type<nice> postfix_expression
 %type<nice> argument_expression_list
@@ -136,10 +155,10 @@ error_statement_closed
 
 /* Primary expressions */
 primary_expression
-	: IDENTIFIER
-	| CONSTANT
-	| STRING_LITERAL
-	| LEFT_PAREN expression RIGHT_PAREN
+	: IDENTIFIER						{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
+	| CONSTANT 							{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
+	| STRING_LITERAL 					{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
+	| LEFT_PAREN expression RIGHT_PAREN {$$ = $2 }
 	;
 
 /* Postfix expressions */

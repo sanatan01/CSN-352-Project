@@ -1,13 +1,12 @@
-#ifndef __3AC_H__
-#define __3AC_H__
+#pragma once
 
-#include <ast.h>
+#include <ast.hpp>
 #include <iostream>
 #include <sstream>
 #include <deque>
 #include <map>
 #include <string>
-#include <symtab.h>
+#include <symtab.hpp>
 #include <unordered_set>
 
 extern unsigned long long instructions;
@@ -273,4 +272,3 @@ void optimise_pass1();
 void create_basic_blocks();
 void create_next_use_info();
 void reset_tac_info_table();
-#endif

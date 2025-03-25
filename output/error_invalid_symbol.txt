@@ -1,3 +1,0 @@
-Lexical error at line 2: Invalid identifier '12a' - cannot start with digit
-Syntax Error: syntax error at line 2
-Syntax error recovered at line 2
