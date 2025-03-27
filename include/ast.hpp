@@ -20,7 +20,7 @@ class Node {
         virtual void add_children(std::initializer_list<Node*> nodes);
         unsigned long long int get_id();
     protected:
-        Node (unsigned int line_num = -1, unsigned int column = -1);
+        Node (unsigned int line_num = 0, unsigned int column = 0);
         virtual ~Node() {}
 };;
 
@@ -29,7 +29,7 @@ class Terminal : public Node {
 	public:
 		std::string name;
 		std::string value;
-		Terminal(const char * name_, const char * value_,  unsigned int _line_num = -1, unsigned int _column = -1);
+		Terminal(const char * name_, const char * value_,  unsigned int _line_num = 0, unsigned int _column = 0);
 		void dotify();
 		
 };
@@ -47,7 +47,7 @@ class NonTerminal : public Node {
 };
 
 unsigned long long int get_next_node_id();
-Terminal * create_terminal(const char * name, const char * value, unsigned int line_num = -1, unsigned int column = -1);
+Terminal * create_terminal(const char * name, const char * value, unsigned int line_num = 0, unsigned int column = 0);
 NonTerminal * create_non_terminal (const char* name, std::initializer_list<Node*> nodes);
 
 void file_writer(std::string s);
