@@ -15,7 +15,7 @@ typedef int TYPE_QUALIFIER;
 // Creates a node in the AST called "IDENTIFIER" followed by name
 class Identifier : public Terminal {
   public:
-    Identifier( const char *name, unsigned int _line_num = -1, unsigned int _column = -1);
+    Identifier( const char *name, unsigned int _line_num = 0, unsigned int _column = 0);
 };
 
 class TypeQualifierList : public NonTerminal {
@@ -60,7 +60,6 @@ class Declarator : public NonTerminal {
 };
 
 Declarator *add_initializer_to_declarator( Declarator *declarator, Terminal *eq, Expression *init_expr );
-
 Declarator *create_declarator( Pointer *pointer, DirectDeclarator *direct_declarator );
 
 typedef enum direct_declartor_enum {
@@ -83,18 +82,10 @@ class DirectDeclarator : public NonTerminal {
     DirectDeclarator();
 };
 
-DirectDeclarator *create_dir_declarator_id( DIRECT_DECLARATOR_TYPE type,
-                                            Identifier *id );
-DirectDeclarator *create_dir_declarator_dec( DIRECT_DECLARATOR_TYPE type,
-                                             Declarator *declarator );
-DirectDeclarator *
-append_dir_declarator_arr( DIRECT_DECLARATOR_TYPE type,
-                           DirectDeclarator *direct_declarator,
-                           Constant *const_expr );
-DirectDeclarator *
-append_dir_declarator_fun( DIRECT_DECLARATOR_TYPE type,
-                           DirectDeclarator *direct_declarator,
-                           ParameterTypeList *params );
+DirectDeclarator *create_dir_declarator_id( DIRECT_DECLARATOR_TYPE type, Identifier *id );
+DirectDeclarator *create_dir_declarator_dec( DIRECT_DECLARATOR_TYPE type, Declarator *declarator );
+DirectDeclarator *append_dir_declarator_arr( DIRECT_DECLARATOR_TYPE type, DirectDeclarator *direct_declarator, Constant *const_expr );
+DirectDeclarator *append_dir_declarator_fun( DIRECT_DECLARATOR_TYPE type, DirectDeclarator *direct_declarator, ParameterTypeList *params );
 
 class DeclaratorList : public NonTerminal {
   public:
@@ -103,14 +94,11 @@ class DeclaratorList : public NonTerminal {
 };
 
 DeclaratorList *create_init_declarator_list( Declarator *init_declarator );
-DeclaratorList *
-add_to_init_declarator_list( DeclaratorList *init_declarator_list,
-                             Declarator *init_declarator );
+DeclaratorList *add_to_init_declarator_list( DeclaratorList *init_declarator_list, Declarator *init_declarator );
 
 typedef int STORAGE_CLASS;
 class TypeSpecifier;
-int get_index( GlobalType t );
-int set_index( DeclarationSpecifiers *ds );
+int get_index (GlobalType t );
 
 class DeclarationSpecifiers : public NonTerminal {
   public:
@@ -129,27 +117,22 @@ DeclarationSpecifiers *new_storage_class( STORAGE_CLASS sc );
 DeclarationSpecifiers *new_type_specifier( TypeSpecifier *ts );
 DeclarationSpecifiers *new_type_qualifier( TYPE_QUALIFIER tq );
 
-DeclarationSpecifiers *add_storage_class( DeclarationSpecifiers *ds,
-                                          STORAGE_CLASS sc );
-DeclarationSpecifiers *add_type_specifier( DeclarationSpecifiers *ds,
-                                           TypeSpecifier *ts );
-DeclarationSpecifiers *add_type_qualifier( DeclarationSpecifiers *ds,
-                                           TYPE_QUALIFIER tq );
+DeclarationSpecifiers *add_storage_class( DeclarationSpecifiers *ds, STORAGE_CLASS sc );
+DeclarationSpecifiers *add_type_specifier( DeclarationSpecifiers *ds, TypeSpecifier *ts );
+DeclarationSpecifiers *add_type_qualifier( DeclarationSpecifiers *ds, TYPE_QUALIFIER tq );
 
 class Declaration : public NonTerminal {
   public:
     DeclarationSpecifiers *declaration_specifiers;
     DeclaratorList *init_declarator_list;
     int type;
-    Declaration( DeclarationSpecifiers *declaration_specifiers_,
-                 DeclaratorList *init_declarator_list_ );
+    Declaration( DeclarationSpecifiers *declaration_specifiers_, DeclaratorList *init_declarator_list_ );
     void add_to_symbol_table( LocalSymbolTable &sym_tab );
     void add_to_symbol_table( GlobalSymbolTable &sym_tab );
     void dotify();
 };
 
-Declaration *new_declaration( DeclarationSpecifiers *declaraion_specifiers,
-                              DeclaratorList *init_declarator_list );
+Declaration *new_declaration( DeclarationSpecifiers *declaraion_specifiers, DeclaratorList *init_declarator_list );
 
 class DeclarationList : public NonTerminal {
   public:
@@ -160,8 +143,7 @@ class DeclarationList : public NonTerminal {
 };
 
 DeclarationList *create_declaration_list( Declaration *declaraiton );
-DeclarationList *add_to_declaration_list( DeclarationList *declaraiton_list,
-                                          Declaration *Declaration );
+DeclarationList *add_to_declaration_list( DeclarationList *declaraiton_list, Declaration *Declaration );
 
 class FunctionDefinition : public NonTerminal {
   public:
@@ -170,16 +152,11 @@ class FunctionDefinition : public NonTerminal {
     Node *compound_statement;
     int error;
 
-    FunctionDefinition( DeclarationSpecifiers *declaration_specifiers_,
-                        Declarator *declarator_, Node *compound_statement_ );
+    FunctionDefinition( DeclarationSpecifiers *declaration_specifiers_, Declarator *declarator_, Node *compound_statement_ );
 };
 
-FunctionDefinition *
-create_function_defintion( DeclarationSpecifiers *declaration_specifiers,
-                           Declarator *declarator, Node *compound_statement );
-
-FunctionDefinition *add_stmt_to_function_definition( FunctionDefinition *fd,
-                                                     Node *compound_stmt );
+FunctionDefinition *create_function_defintion( DeclarationSpecifiers *declaration_specifiers, Declarator *declarator, Node *compound_statement );
+FunctionDefinition *add_stmt_to_function_definition( FunctionDefinition *fd, Node *compound_stmt );
 
 int isValid(); // Type Checking         ;
 
@@ -265,18 +242,27 @@ class SpecifierQualifierList : public NonTerminal {
     SpecifierQualifierList();
 };
 
-SpecifierQualifierList *
-create_type_specifier_sq( TypeSpecifier *type_specifier );
-SpecifierQualifierList *
-create_type_qualifier_sq( TYPE_QUALIFIER type_qualifier );
+SpecifierQualifierList *create_type_specifier_sq( TypeSpecifier *type_specifier );
+SpecifierQualifierList *create_type_qualifier_sq( TYPE_QUALIFIER type_qualifier );
 SpecifierQualifierList *add_type_specifier_sq( SpecifierQualifierList *sq_list, TypeSpecifier *type_specifier );
 SpecifierQualifierList *add_type_qualifier_sq( SpecifierQualifierList *sq_list, TYPE_QUALIFIER type_qualifier );
 
 class StructDeclaration : public NonTerminal {
   public:
-    DeclarationSpecifiers *declaration_specifiers;
+    SpecifierQualifierList *sq_list;
     DeclaratorList *declarator_list;
-    StructDeclaration();
+
+    StructDeclaration( SpecifierQualifierList *sq_list_, DeclaratorList *declarator_list_ );
+    void add_to_struct_definition( StructDefinition * );
+};
+
+StructDeclaration *
+create_struct_declaration( SpecifierQualifierList *sq_list, DeclaratorList *struct_declarator_list );
+
+class StructDeclarationList : public NonTerminal {
+  public:
+    std::vector<StructDeclaration *> struct_declaration_list;
+    StructDeclarationList();
 };
 
 StructDeclarationList * add_to_struct_declaration_list( StructDeclarationList *struct_declaration_list = nullptr, StructDeclaration *struct_declaration );
@@ -323,5 +309,5 @@ TypeSpecifier *create_type_specifier( TYPE_SPECIFIER type, Identifier *id, Enume
 
 Node *add_to_global_symbol_table( Declaration *declaration );
 
-void error_msg( std::string str, unsigned int line_num, unsigned int column = -1);
-void warning_msg( std::string str, unsigned int line_num, unsigned int column = -1);
+void error_msg( std::string str, unsigned int line_num, unsigned int column = 0);
+void warning_msg( std::string str, unsigned int line_num, unsigned int column = 0);
