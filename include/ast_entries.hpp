@@ -63,7 +63,7 @@ Declarator *add_initializer_to_declarator( Declarator *declarator, Terminal *eq,
 Declarator *create_declarator( Pointer *pointer, DirectDeclarator *direct_declarator );
 
 typedef enum direct_declartor_enum {
-    ID,
+    STANDARD,
     DECLARATOR,
     ARRAY,
     FUNCTION,
@@ -106,7 +106,7 @@ class DeclarationSpecifiers : public NonTerminal {
     std::vector<TypeSpecifier *> type_specifier;
     std::vector<TYPE_QUALIFIER> type_qualifier;
     bool is_const;
-    int type_index;
+    GlobalType *type;
 
     void create_type(); // Type Checking
 
@@ -235,7 +235,7 @@ class SpecifierQualifierList : public NonTerminal {
     std::vector<TYPE_QUALIFIER> type_qualifiers;
 
     bool is_const;
-    int type_index;
+    GlobalType *type;
 
     void create_type(); // Type Checking
 
@@ -247,6 +247,28 @@ SpecifierQualifierList *create_type_qualifier_sq( TYPE_QUALIFIER type_qualifier 
 SpecifierQualifierList *add_type_specifier_sq( SpecifierQualifierList *sq_list, TypeSpecifier *type_specifier );
 SpecifierQualifierList *add_type_qualifier_sq( SpecifierQualifierList *sq_list, TYPE_QUALIFIER type_qualifier );
 
+class UnionDeclaration : public NonTerminal {
+  public:
+    SpecifierQualifierList *sq_list;
+    DeclaratorList *declarator_list;
+
+    UnionDeclaration( SpecifierQualifierList *sq_list_, DeclaratorList *declarator_list_ );
+    void add_to_union_definition( UnionDefinition * );
+};
+
+UnionDeclaration *create_union_declaration( SpecifierQualifierList *sq_list, DeclaratorList *union_declarator_list );
+
+class UnionDeclarationList : public NonTerminal {
+  public:
+    std::vector<UnionDeclaration *> union_declaration_list;
+    UnionDeclarationList();
+};
+
+UnionDeclarationList *add_to_union_declaration_list( UnionDeclarationList *union_declaration_list = nullptr, UnionDeclaration *union_declaration );
+int verify_union_declarator( UnionDeclarationList *un );
+
+// -------------------------------------STRUCT----------------------------------------
+
 class StructDeclaration : public NonTerminal {
   public:
     SpecifierQualifierList *sq_list;
@@ -256,8 +278,7 @@ class StructDeclaration : public NonTerminal {
     void add_to_struct_definition( StructDefinition * );
 };
 
-StructDeclaration *
-create_struct_declaration( SpecifierQualifierList *sq_list, DeclaratorList *struct_declarator_list );
+StructDeclaration *create_struct_declaration( SpecifierQualifierList *sq_list, DeclaratorList *struct_declarator_list );
 
 class StructDeclarationList : public NonTerminal {
   public:
@@ -295,7 +316,7 @@ class TypeSpecifier : public Terminal {
     Identifier *id;
     StructDeclarationList *struct_declaration_list;
     EnumeratorList *enumerator_list;
-    int type_index;
+    GlobalType *type;
 
     TypeSpecifier( TYPE_SPECIFIER typ, unsigned int line_num, unsigned int column );
     TypeSpecifier( TYPE_SPECIFIER type, Identifier *Id, StructDeclarationList *struct_declaration_list );
