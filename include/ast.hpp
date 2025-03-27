@@ -48,6 +48,6 @@ class NonTerminal : public Node {
 
 unsigned long long int get_next_node_id();
 Terminal * create_terminal(const char * name, const char * value, unsigned int line_num = 0, unsigned int column = 0);
-NonTerminal * create_non_terminal (const char* name, std::initializer_list<Node*> nodes);
+Node * create_non_terminal (const char* name, std::initializer_list<Node*> nodes);
 
 void file_writer(std::string s);
