@@ -56,17 +56,14 @@ GlobalType *StructDefinition::get_member( Identifier *id ) {
 
 Struct::Struct(std::string name) : StandardType(name, 0), definition(nullptr) {}
 
-Struct *create_struct_definition( StructDeclarationList *sdl ) {
+Struct *create_struct( StructDeclarationList *sdl ) {
+
     StructDefinition *sd = new StructDefinition();
 	size_t offset = 0;
 
     for ( auto it = sdl->struct_declaration_list.begin(); it != sdl->struct_declaration_list.end(); it++ ) {
-        int type_index = ( *it )->sq_list->type_index;
+        GlobalType* dec_type = ( *it )->sq_list->type;
         bool is_const = ( *it )->sq_list->is_const;
-        assert( type_index != -1 );
-        if ( type_index == -2 ) {
-            continue;
-        }
 
         std::vector<Declarator *> dl = ( *it )->declarator_list->declarator_list;
 
@@ -75,34 +72,22 @@ Struct *create_struct_definition( StructDeclarationList *sdl ) {
             DirectDeclarator *dd = ( *jt )->direct_declarator;
             GlobalType type;
 
-            if ( dd->type == ID ) {
-                ;
+            if ( dd->type == STANDARD ) {
+                type.standard_type = dec_type->standard_type;
+
             } else if ( dd->type == ARRAY ) {
-                
-                type = Type( type_index, dd->array_dims.size(), true );
-                type.is_array = true;
-                type.is_pointer = true;
-                type.array_dim = dd->array_dims.size();
-                type.array_dims = dd->array_dims;
+                type.array_type = new ArrayType( dd->array_dims.size(), dec_type, dd->array_dims, dd->id->value );
 
-                type.array_type = new ArrayType( dd->array_dims.size(), )
-            }
-
-            else if ( dd->type == FUNCTION ) {
-                error_msg( "Function cannot be member of struct/union", ( *jt )->id->line_num, ( *jt )->id->column );
+            } else if ( dd->type == FUNCTION ) {
+                error_msg("Function cannot be member of struct/union", ( *jt )->id->line_num, ( *jt )->id->column );
                 continue;
-            }
-			sd->offsets.insert( {(*jt)->id->value, offset} );
-			size_t size = type.get_size();
-			if ( size % WORD_SIZE != 0 ) {
 
-				size = size + WORD_SIZE - (size % WORD_SIZE );
-			}
-			offset += size;
+            }
             sd->members.insert( {( *jt )->id->value, type} );
         }
     }
-    return sd;
+    
+    return new Struct(sd);
 }
 
 UnionDefinition::UnionDefinition() {}
@@ -118,16 +103,12 @@ GlobalType *UnionDefinition::get_member( Identifier *id ) {
 
 Union::Union(std::string name) : StandardType(name, 0), definition(nullptr) {}
 
-UnionDefinition *create_union_definition( UnionDeclarationList *udl ) {
+Union *create_union( UnionDeclarationList *udl ) {
     UnionDefinition *ud = new UnionDefinition();
 
     for ( auto it = udl->union_declaration_list.begin(); it != udl->union_declaration_list.end(); it++ ) {
-        int type_index = ( *it )->sq_list->type_index;
+        GlobalType* dec_type = ( *it )->sq_list->type;
         bool is_const = ( *it )->sq_list->is_const;
-        assert( type_index != -1 );
-        if ( type_index == -2 ) {
-            continue;
-        }
 
         std::vector<Declarator *> dl =
             ( *it )->declarator_list->declarator_list;
@@ -135,28 +116,23 @@ UnionDefinition *create_union_definition( UnionDeclarationList *udl ) {
         for ( auto jt = dl.begin(); jt != dl.end(); jt++ ) {
             int pointer_level = ( *jt )->get_pointer_level();
             DirectDeclarator *dd = ( *jt )->direct_declarator;
-            Type type( type_index, pointer_level, is_const );
+            GlobalType type;
 
-            if ( dd->type == ID ) {
-                ;
+            if ( dd->type == STANDARD ) {
+                type.standard_type = dec_type->standard_type;
+
             } else if ( dd->type == ARRAY ) {
-                type = Type( type_index, dd->array_dims.size(), true );
-                type.is_array = true;
-                type.is_pointer = true;
-                type.array_dim = dd->array_dims.size();
-                type.array_dims = dd->array_dims;
-            }
-
-            else if ( dd->type == FUNCTION ) {
-                error_msg( "Function cannot be member of struct/union",
-                           ( *jt )->id->line_num, ( *jt )->id->column );
+                type.array_type = new ArrayType( dd->array_dims.size(), dec_type, dd->array_dims, dd->id->value );
+        
+            } else if ( dd->type == FUNCTION ) {
+                error_msg( "Function cannot be member of struct/union", ( *jt )->id->line_num, ( *jt )->id->column );
                 continue;
             }
 
             ud->members.insert( {( *jt )->id->value, type} );
         }
     }
-    return ud;
+    return new Union(ud);
 }
 
 ArrayType::ArrayType( unsigned int dim, GlobalType *type, std::vector<unsigned int> dims, std::string name) : dim(dim), return_type(type), dims(dims) {

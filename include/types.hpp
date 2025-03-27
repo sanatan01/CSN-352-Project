@@ -63,10 +63,10 @@ class Struct : public StandardType {
   public:
     StructDefinition *definition;
     Struct(std::string name);
+    Struct(StructDefinition *definition) : definition(definition) {}
 };
 
 Struct *create_struct( StructDeclarationList *sdl );
-StructDefinition *create_struct_definition( StructDeclarationList *sdl );
 
 // -------------------------------------UNION----------------------------------------
 class UnionDeclarationList;
@@ -83,9 +83,10 @@ class Union : public StandardType {
   public:
     UnionDefinition *definition;
     Union(std::string name);
+    Union(UnionDefinition *definition) : definition(definition) {}
 };
 
-UnionDefinition *create_union_definition( UnionDeclarationList *udl );
+Union *create_union( UnionDeclarationList *udl );
   
 // -------------------------------------COMPLEX TYPES----------------------------------------
 
