@@ -19,6 +19,8 @@ int grammarErrorCount = 0;
 
 
 %union {
+	Node* node;
+	Terminal* terminal;
     char *nice;
 	Expression* expression;
 	PrimaryExpression* primary_expression;
@@ -27,9 +29,10 @@ int grammarErrorCount = 0;
 	CastExpression* cast_expression;
 	PostfixExpression* postfix_expression;
 	OpExpression* op_expression;
-	Identifier* Identifier;
+	Identifier* identifier;
 	Constant* constant;
 	StringLiteral* string_literal;
+
 }
 
 
@@ -39,15 +42,15 @@ int grammarErrorCount = 0;
 %token<string_literal> STRING_LITERAL
 %token<nice> SIZEOF
 %token<nice> PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
-%token<nice> AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
-%token<nice> SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
-%token<nice> XOR_ASSIGN OR_ASSIGN TYPE_NAME
+%token<nice> AND_OP OR_OP
+%token<nice> TYPE_NAME
+%token<node> ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 
 %token<nice> TYPEDEF EXTERN STATIC AUTO REGISTER
 %token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
 %token<nice> STRUCT UNION ENUM ELLIPSIS
 
-%token<nice> SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON ASSIGN 
+%token<nice> SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON 
 %token<nice> LEFT_PAREN RIGHT_PAREN LEFT_BRACKET RIGHT_BRACKET DOT AMPERSAND EXCLAMATION 
 %token<nice> TILDE MINUS PLUS ASTERISK SLASH PERCENT LESS_THAN GREATER_THAN CARET PIPE QUESTION
 
@@ -87,15 +90,17 @@ int grammarErrorCount = 0;
 %type<expression> primary_expression
 %type<expression> expression_statement
 %type<argument_expression_list> argument_expression_list
+%type<expression> constant_expression
 
+%type<node> assignment_operator
 %type<nice> unary_operator
 %type<nice> declaration_specifiers
 %type<nice> init_declarator_list
 %type<nice> init_declarator
 %type<nice> storage_class_specifier
 %type<nice> type_specifier
-%type<nice> struct_or_union_specifier
-%type<nice> struct_or_union
+%type<nice> union_specifier
+%type<nice> struct_specifier
 %type<nice> struct_declaration_list
 %type<nice> struct_declaration
 %type<nice> specifier_qualifier_list
@@ -296,12 +301,12 @@ assignment_operator
 
 /* Expressions */
 expression
-	: assignment_expression
-	| expression COMMA assignment_expression
+	: assignment_expression { $$ = $1; }
+	| expression COMMA assignment_expression { $$ = create_expression(TOPLEVEL, ' ', $1, $3); }
 	;
 
 constant_expression
-	: conditional_expression
+	: conditional_expression { $$ = $1; }
 	;
 
 /* Declarations */
@@ -383,7 +388,8 @@ type_specifier
 	| DOUBLE   { $$ = strdup("DOUBLE");}
 	| SIGNED   { $$ = strdup("SIGNED");}
 	| UNSIGNED { $$ = strdup("UNSIGNED");}
-	| struct_or_union_specifier { $$ = $1; }
+	| struct_specifier { $$ = $1; }
+	| union_specifier { $$ = $1; }
 	| enum_specifier { $$ = $1; }
 	| TYPE_NAME { $$ = strdup("TYPE_NAME");}
 	| type_specifier pointer {
@@ -394,15 +400,16 @@ type_specifier
 	;
 
 /* Struct and union specifiers */
-struct_or_union_specifier
-	: struct_or_union IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = $2; }
-	| struct_or_union LEFT_BRACE struct_declaration_list RIGHT_BRACE
-	| struct_or_union IDENTIFIER { $$ = $2; }
+struct_specifier
+	| STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = $2; }
+	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE
+	| STRUCT IDENTIFIER { $$ = $2; }
 	;
 
-struct_or_union
-	: STRUCT
-	| UNION
+union_specifier
+	| UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = $2; }
+	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE
+	| UNION IDENTIFIER { $$ = $2; }
 	;
 
 struct_declaration_list
