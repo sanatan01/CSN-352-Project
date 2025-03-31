@@ -15,6 +15,7 @@ typedef int TYPE_QUALIFIER;
 // Creates a node in the AST called "IDENTIFIER" followed by name
 class Identifier : public Terminal {
   public:
+    GlobalType *type;
     Identifier( const char *name, unsigned int _line_num = 0, unsigned int _column = 0);
 };
 
@@ -316,7 +317,7 @@ class TypeSpecifier : public Terminal {
     EnumeratorList *enumerator_list;
     GlobalType *type;
 
-    TypeSpecifier( TYPE_SPECIFIER typ, unsigned int line_num, unsigned int column );
+    TypeSpecifier( TYPE_SPECIFIER type, unsigned int line_num, unsigned int column );
     TypeSpecifier( TYPE_SPECIFIER type, Identifier *Id, StructDeclarationList *struct_declaration_list );
     TypeSpecifier( TYPE_SPECIFIER type, Identifier *Id, EnumeratorList *enumerator_list );
 };

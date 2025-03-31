@@ -61,6 +61,7 @@ class StructDefinition {
 
 class Struct : public StandardType {
   public:
+
     StructDefinition *definition;
     Struct(std::string name);
     Struct(StructDefinition *definition) : definition(definition) {}
@@ -98,6 +99,8 @@ class ArrayType : public StandardType {
     ArrayType( unsigned int dim, GlobalType *type, std::vector<unsigned int> dims , std::string name);
 };
 
+// -------------------------------------FUNCTION----------------------------------------
+
 class FunctionType : public StandardType {
   public:
     unsigned int num_args;
@@ -107,13 +110,23 @@ class FunctionType : public StandardType {
     FunctionType( unsigned int num_args, std::unordered_map<std::string, GlobalType> args, std::string name );
 };
 
+// -------------------------------------POINTER----------------------------------------
+
 class PointerType : public StandardType {
   public:
     GlobalType *type;
     int ptr_level;
     PointerType( GlobalType *type, std::string name);
 };
-  
+
+// -------------------------------------ENUM----------------------------------------
+
+class EnumType : public StandardType {
+  public:
+    std::unordered_map<std::string, int> enum_values;
+    EnumType(std::string name);
+};
+
 // -------------------------------------INVALID TYPE----------------------------------------
 
 // Important : Not an extension of StandardType
@@ -134,6 +147,7 @@ union GlobalType {
     ArrayType *array_type;
     FunctionType *function_type;
     PointerType *pointer_type;
+    EnumType *enum_type;
     InvalidType *invalid_type;
 
     // Method to find out which type is not null
@@ -144,6 +158,7 @@ union GlobalType {
         if (array_type) return "ArrayType";
         if (function_type) return "FunctionType";
         if (pointer_type) return "PointerType";
+        if (enum_type) return "EnumType";
         if (invalid_type) return "InvalidType";
         return "None";
     }
@@ -155,6 +170,7 @@ union GlobalType {
         if (array_type) return array_type->size;
         if (function_type) return function_type->size;
         if (pointer_type) return pointer_type->size;
+        if (enum_type) return enum_type->size;
         return 0;
     }
 
