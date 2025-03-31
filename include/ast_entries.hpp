@@ -181,8 +181,7 @@ class DirectAbstractDeclarator : public NonTerminal {
 };
 
 DirectAbstractDeclarator *create_direct_abstract_declarator( Constant *_const );
-DirectAbstractDeclarator *
-append_direct_abstract_declarator( DirectAbstractDeclarator *dabs, Constant *_const );
+DirectAbstractDeclarator *append_direct_abstract_declarator( DirectAbstractDeclarator *dabs, Constant *_const );
 
 class AbstractDeclarator : public NonTerminal {
   public:
@@ -192,8 +191,7 @@ class AbstractDeclarator : public NonTerminal {
     int get_pointer_level();
 };
 
-AbstractDeclarator *
-create_abstract_declarator( Pointer *pointer, DirectAbstractDeclarator *dabs );
+AbstractDeclarator *create_abstract_declarator( Pointer *pointer, DirectAbstractDeclarator *dabs );
 
 class SpecifierQualifierList;
 

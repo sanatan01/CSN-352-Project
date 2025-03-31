@@ -67,6 +67,7 @@ int grammarErrorCount = 0;
 %type<nice> declaration_list
 %type<nice> statement
 %type<nice> statement_list
+
 %type<expression> expression
 %type<expression> assignment_expression
 %type<expression> conditional_expression
@@ -82,9 +83,12 @@ int grammarErrorCount = 0;
 %type<expression> multiplicative_expression
 %type<expression> cast_expression
 %type<expression> unary_expression
+%type<expression> postfix_expression
+%type<expression> primary_expression
+%type<expression> expression_statement
+%type<argument_expression_list> argument_expression_list
+
 %type<nice> unary_operator
-%type<nice> postfix_expression
-%type<nice> argument_expression_list
 %type<nice> declaration_specifiers
 %type<nice> init_declarator_list
 %type<nice> init_declarator
@@ -116,11 +120,9 @@ int grammarErrorCount = 0;
 %type<nice> initializer_list
 %type<nice> labeled_statement
 %type<nice> compound_statement
-%type<nice> expression_statement
 %type<nice> selection_statement
 %type<nice> iteration_statement
 %type<nice> jump_statement
-%type<nice> primary_expression
 %type<nice> error_statement_closed
 %type<nice> error_statement_open
 
@@ -155,38 +157,38 @@ error_statement_closed
 
 /* Primary expressions */
 primary_expression
-	: IDENTIFIER						{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
-	| CONSTANT 							{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
-	| STRING_LITERAL 					{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
-	| LEFT_PAREN expression RIGHT_PAREN {$$ = $2 }
+	: IDENTIFIER							{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
+	| CONSTANT 								{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
+	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
+	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
 	;
 
 /* Postfix expressions */
 postfix_expression
-	: primary_expression
-	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET
-	| postfix_expression LEFT_PAREN RIGHT_PAREN
-	| postfix_expression LEFT_PAREN argument_expression_list RIGHT_PAREN
-	| postfix_expression DOT IDENTIFIER
-	| postfix_expression PTR_OP IDENTIFIER
-	| postfix_expression INC_OP
-	| postfix_expression DEC_OP
+	: primary_expression 											{ $$ = $1; }
+	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
+	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
+	| IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
+	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
+	| postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
+	| postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
+	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
 	;
 
 /* Argument expression list for function calls */
 argument_expression_list
-	: assignment_expression
-	| argument_expression_list COMMA assignment_expression
+	: assignment_expression 								{ $$ = create_argument_expr_assignement($1); }
+	| argument_expression_list COMMA assignment_expression 	{ $$ = create_argument_expr_list($1, $3); }
 	;
 
 /* Unary expressions */
 unary_expression
-	: postfix_expression
-	| INC_OP unary_expression
-	| DEC_OP unary_expression
-	| unary_operator cast_expression
-	| SIZEOF unary_expression
-	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN
+	: postfix_expression 						{ $$ = $1; }
+	| INC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
+	| DEC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
+	| unary_operator cast_expression 			{ $$ = create_unary_expression_cast($1, $2); }
+	| SIZEOF unary_expression 					{ $$ = create_unary_expression($1, $2); }
+	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	{ $$ = create_unary_expression($1, $3); }
 	;
 
 unary_operator
@@ -200,96 +202,96 @@ unary_operator
 
 /* Type casting */
 cast_expression
-	: unary_expression
-	| LEFT_PAREN type_name RIGHT_PAREN cast_expression
+	: unary_expression 										{ $$ = $1; }
+	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ $$ = create_cast_expression_typename($2, $4); }
 	;
 
 /* Arithmetic expressions */
 multiplicative_expression
-	: cast_expression
-	| multiplicative_expression ASTERISK cast_expression
-	| multiplicative_expression SLASH cast_expression
-	| multiplicative_expression PERCENT cast_expression
+	: cast_expression 										{ $$ = $1; }
+	| multiplicative_expression ASTERISK cast_expression 	{ $$ = create_expression(MULTIPLICATIVE, "*", $1, $3); }
+	| multiplicative_expression SLASH cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "/", $1, $3); }
+	| multiplicative_expression PERCENT cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "%", $1, $3); }
 	;
 
 additive_expression
-	: multiplicative_expression
-	| additive_expression PLUS multiplicative_expression
-	| additive_expression MINUS multiplicative_expression
+	: multiplicative_expression 							{ $$ = $1; }
+	| additive_expression PLUS multiplicative_expression 	{ $$ = create_expression(ADDITIVE, "+", $1, $3); }
+	| additive_expression MINUS multiplicative_expression	{ $$ = create_expression(ADDITIVE, "-", $1, $3); }
 	;
 
 shift_expression
-	: additive_expression
-	| shift_expression LEFT_OP additive_expression
-	| shift_expression RIGHT_OP additive_expression
+	: additive_expression									{ $$ = $1; }
+	| shift_expression LEFT_OP additive_expression			{ $$ = create_expression(SHIFT, "<<", $1, $3); }
+	| shift_expression RIGHT_OP additive_expression			{ $$ = create_expression(SHIFT, ">>", $1, $3); }
 	;
 
 /* Relational expressions */
 relational_expression
-	: shift_expression
-	| relational_expression LESS_THAN shift_expression
-	| relational_expression GREATER_THAN shift_expression
-	| relational_expression LE_OP shift_expression
-	| relational_expression GE_OP shift_expression
+	: shift_expression										{ $$ = $1; }
+	| relational_expression LESS_THAN shift_expression		{ $$ = create_expression(RELATIONAL, "<", $1, $3); }
+	| relational_expression GREATER_THAN shift_expression	{ $$ = create_expression(RELATIONAL, ">", $1, $3); }
+	| relational_expression LE_OP shift_expression			{ $$ = create_expression(RELATIONAL, "<=", $1, $3); }
+	| relational_expression GE_OP shift_expression			{ $$ = create_expression(RELATIONAL, ">=", $1, $3); }
 	;
 
 equality_expression
-	: relational_expression
-	| equality_expression EQ_OP relational_expression
-	| equality_expression NE_OP relational_expression
+	: relational_expression									{ $$ = $1; }
+	| equality_expression EQ_OP relational_expression		{ $$ = create_expression(EQUALITY, "==", $1, $3); }
+	| equality_expression NE_OP relational_expression		{ $$ = create_expression(EQUALITY, "!=", $1, $3); }
 	;
 
 /* Bitwise expressions */
 and_expression
-	: equality_expression
-	| and_expression AMPERSAND equality_expression
+	: equality_expression									{ $$ = $1; }
+	| and_expression AMPERSAND equality_expression			{ $$ = create_expression(AND, "&", $1, $3); }
 	;
 
 exclusive_or_expression
-	: and_expression
-	| exclusive_or_expression CARET and_expression
+	: and_expression 										{ $$ = $1; }
+	| exclusive_or_expression CARET and_expression			{ $$ = create_expression(XOR, "^", $1, $3); }
 	;
 
 inclusive_or_expression
-	: exclusive_or_expression
-	| inclusive_or_expression PIPE exclusive_or_expression
+	: exclusive_or_expression								{ $$ = $1; }
+	| inclusive_or_expression PIPE exclusive_or_expression	{ $$ = create_expression(OR, "|", $1, $3); }
 	;
 
 /* Logical expressions */
 logical_and_expression
-	: inclusive_or_expression
-	| logical_and_expression AND_OP inclusive_or_expression
+	: inclusive_or_expression								{ $$ = $1; }
+	| logical_and_expression AND_OP inclusive_or_expression	
 	;
 
 logical_or_expression
-	: logical_and_expression
-	| logical_or_expression OR_OP logical_and_expression
+	: logical_and_expression								{ $$ = $1; }
+	| logical_or_expression OR_OP logical_and_expression	
 	;
 
 /* Conditional expression (ternary operator) */
 conditional_expression
-	: logical_or_expression
-	| logical_or_expression QUESTION expression COLON conditional_expression
+	: logical_or_expression									{ $$ = $1; }
+	| logical_or_expression QUESTION expression COLON conditional_expression { $$ = create_expression(CONDITIONAL, "?:", $1, $3, $5); }
 	;
 
 /* Assignment */
 assignment_expression
-	: conditional_expression
-	| unary_expression assignment_operator assignment_expression
+	: conditional_expression								{ $$ = $1; }
+	| unary_expression assignment_operator assignment_expression { $$ = create_expression(ASSIGNMENT, $1, $2, $3); }
 	;
 
 assignment_operator
-	: ASSIGN
-	| MUL_ASSIGN
-	| DIV_ASSIGN
-	| MOD_ASSIGN
-	| ADD_ASSIGN
-	| SUB_ASSIGN
-	| LEFT_ASSIGN
-	| RIGHT_ASSIGN
-	| AND_ASSIGN
-	| XOR_ASSIGN
-	| OR_ASSIGN
+	: ASSIGN		{ $$ = $1; }
+	| MUL_ASSIGN	{ $$ = $1; }
+	| DIV_ASSIGN	{ $$ = $1; }
+	| MOD_ASSIGN	{ $$ = $1; }
+	| ADD_ASSIGN	{ $$ = $1; }
+	| SUB_ASSIGN	{ $$ = $1; }
+	| LEFT_ASSIGN	{ $$ = $1; }
+	| RIGHT_ASSIGN	{ $$ = $1; }
+	| AND_ASSIGN	{ $$ = $1; }
+	| XOR_ASSIGN	{ $$ = $1; }
+	| OR_ASSIGN		{ $$ = $1; }
 	;
 
 /* Expressions */
