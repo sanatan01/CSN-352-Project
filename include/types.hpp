@@ -168,6 +168,53 @@ union GlobalType {
         if (pointer_type) return *pointer_type == *obj.pointer_type;
         return false;
     }
+    void make_unsigned() {
+        if (standard_type) {
+          if (standard_type->name == "char"){
+            standard_type->name = "unsigned char";
+            standard_type->size = sizeof(unsigned char);
+          } 
+          else if (standard_type->name == "short")
+          {
+            standard_type->name = "unsigned short";
+            standard_type->size = sizeof(unsigned short);
+          }
+          else if (standard_type->name == "int")
+          {
+            standard_type->name = "unsigned int";
+            standard_type->size = sizeof(unsigned int);
+          }
+          else if (standard_type->name == "long")
+          {
+            standard_type->name = "unsigned long";
+            standard_type->size = sizeof(unsigned long);
+          }
+        }
+    }
+
+    void make_signed() {
+        if (standard_type) {
+            if (standard_type->name == "unsigned char"){
+              standard_type->name = "char";
+              standard_type->size = sizeof(char);
+            }
+            else if (standard_type->name == "unsigned short")
+            {
+              standard_type->name = "signed short";
+              standard_type->size = sizeof(signed short);
+            }
+            else if (standard_type->name == "unsigned int")
+            {
+              standard_type->name = "int";
+              standard_type->size = sizeof(int);
+            }
+            else if (standard_type->name == "unsigned long")
+            {
+              standard_type->name = "long";
+              standard_type->size = sizeof(long);
+            }
+        }
+    }
 };
   
 extern InvalidType INVALID_TYPE;

@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <types.hpp>
 
+extern std::unordered_map<PrimitiveTypes, StandardType> type_specifiers=createStandardTypes();
 // Creates unordered map of standard types that can be accessed in O(1) time
 std::unordered_map<PrimitiveTypes, StandardType> createStandardTypes() {
     std::unordered_map<PrimitiveTypes, StandardType> type_specifiers = {
@@ -165,3 +166,4 @@ int add_to_defined_types( GlobalType *typ ) {
     defined_types.push_back( *typ );
     return defined_types.size() - 1;
 }
+

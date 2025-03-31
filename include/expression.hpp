@@ -34,7 +34,7 @@ class PrimaryExpression : public Expression {
 };
 
 // Grammar warppers for PrimaryExpression
-Expression *create_primary_expression( ExpressionType *typ );
+Expression *create_primary_expression( ExpressionType *typ ); //done
 
 // --------------------------------------------------------------------------------------------
 class ArgumentExprList : public Expression {
@@ -44,8 +44,8 @@ class ArgumentExprList : public Expression {
 };
 
 // Grammar warppers for ArguementExpressionList
-ArgumentExprList *create_argument_expr_assignement( Expression *ase );
-ArgumentExprList *create_argument_expr_list( ArgumentExprList *ae_list, Expression *ase );
+ArgumentExprList *create_argument_expr_assignement( Expression *ase ); //done
+ArgumentExprList *create_argument_expr_list( ArgumentExprList *ae_list, Expression *ase ); //done
 
 // --------------------------------------------------------------------------------------------
 enum ExpressionOpType {
@@ -62,7 +62,6 @@ enum ExpressionOpType {
     CONDITIONAL,
     CONSTANT,
     TOPLEVEL,
-    ASSIGNMENT
 };
 
 class OpExpression : public Expression {
@@ -77,7 +76,7 @@ class OpExpression : public Expression {
 };
 
 // Grammar wrapper for OpExpression
-Expression* create_expression(ExpressionOpType op_type, std::string op, std::initializer_list<Expression> operands);
+Expression* create_expression(ExpressionOpType op_type, std::string op, std::initializer_list<Expression> operands);//done 
 
 //-------------------------------------------------
 class UnaryExpression : public Expression {
@@ -92,9 +91,9 @@ class UnaryExpression : public Expression {
 };
 
 // Grammar warppers for UnaryExpression
-Expression *create_unary_expression( Terminal * op, Expression *ue ); // INC_OP, DEC_OP, SIZEOF
-Expression *create_unary_expression_cast( Node *n_op, Expression *ce );
-Expression *create_unary_expression( Terminal *, TypeName *t_name );
+Expression *create_unary_expression( Terminal * op, Expression *ue ); // INC_OP, DEC_OP, SIZEOF //done
+Expression *create_unary_expression_cast( Node *n_op, Expression *ce ); //done
+Expression *create_unary_expression( Terminal *op, TypeName *t_name ); //done
 
 // --------------------------------------------------------------------------------------------
 
@@ -114,7 +113,7 @@ class CastExpression : public Expression {
 };
 
 // Grammar wrapper for CastExpression
-Expression *create_cast_expression_typename( TypeName *tn, Expression *ce ); // type_name wala add krna hai// can change string to node* later for assignment operator
+Expression *create_cast_expression_typename( TypeName *tn, Expression *ce ); // type_name wala add krna hai// can change string to node* later for assignment operator //done
 
 // --------------------------------------------------------------------------------------------
 class PostfixExpression : public Expression {
@@ -135,11 +134,11 @@ class PostfixExpression : public Expression {
 };
 
 // Grammar for PostfixExpression
-Expression *create_postfix_expr_arr( Expression *pe, Expression *exp );
-Expression *create_postfix_expr_voidfun( Identifier *fi );
-Expression *create_postfix_expr_fun( Identifier *fi, ArgumentExprList *ae );
-Expression *create_postfix_expr_struct( std::string access_op, Expression *pe, Identifier *id );
-Expression *create_postfix_expr_ido( Terminal * op, Expression *pe );
+Expression *create_postfix_expr_arr( Expression *pe, Expression *exp ); //done
+Expression *create_postfix_expr_voidfun( Identifier *fi ); //done
+Expression *create_postfix_expr_fun( Identifier *fi, ArgumentExprList *ae ); //done
+Expression *create_postfix_expr_struct( std::string access_op, Expression *pe, Identifier *id ); //done
+Expression *create_postfix_expr_ido( Terminal * op, Expression *pe ); //done
 
 // --------------------------------------------------------------------------------------------
 class Constant : public Terminal {
@@ -161,3 +160,5 @@ class StringLiteral : public Terminal {
   public:
     StringLiteral( const char *name );
 };
+
+Expression *create_assignment_expression(OpExpression *oe, Node *n_op);
