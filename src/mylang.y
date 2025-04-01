@@ -32,15 +32,15 @@ void yyerror(const char *s);
 // 	StringLiteral* string_literal;
  	class GlobalType* global_type;
  	class PointerType* pointer_type;
-// 	StructType* struct_type;
-// 	UnionType* union_type;
+ 	class Struct* struct_type;
+ 	class Union* union_type;
 // 	EnumType* enum_type;
  	class Specifiers* specifiers;
 // 	EnumElement* enum_element;
 // 	std::vector<EnumElement>* vector_enum_element;
-// 	std::vector<StructElement>* struct_element_list;
+ 	class VectorStructElement* struct_element_list;
  	class VectorIdentifiers* vector_identifiers;
-// 	StructElement* struct_element;
+ 	class StructElement* struct_element;
 // 	FunctionType* function_type;
 // 	ArrayType* array_type;
  }
@@ -107,17 +107,17 @@ void yyerror(const char *s);
  %type<nice> assignment_operator
  %type<nice> unary_operator
  %type<global_type> declaration_specifiers
-// %type<vector_identifiers> init_declarator_list
-// %type<identifier> init_declarator
+ %type<vector_identifiers> init_declarator_list
+ %type<identifier> init_declarator
 // %type<specifiers> storage_class_specifier
  %type<global_type> type_specifier
-// %type<union_type> union_specifier
-// %type<struct_type> struct_specifier
-// %type<struct_element_list> struct_declaration_list
-// %type<struct_element_list> struct_declaration
-// %type<global_type> specifier_qualifier_list
-// %type<struct_element_list> struct_declarator_list
-// %type<struct_element> struct_declarator
+ %type<union_type> union_specifier
+ %type<struct_type> struct_specifier
+ %type<struct_element_list> struct_declaration_list
+ %type<struct_element_list> struct_declaration
+ %type<global_type> specifier_qualifier_list
+ %type<struct_element_list> struct_declarator_list
+ %type<struct_element> struct_declarator
 // %type<enum_type> enum_specifier
 // %type<vector_enum_element> enumerator_list
 // %type<enum_element> enumerator
@@ -329,14 +329,14 @@ declaration
  		  $$->add_identifier(new Identifier($1));
  		  SymbolTable::add_symbols($$);
  	  }
-// 	| declaration_specifiers init_declarator_list SEMICOLON {
-// 		  /* Use the variable name from init_declarator */
-// 		  $$ = $2;
-// 		  for(auto &element : *$$) {
-// 			  element->type = $1;
-// 			  SymbolTable::add_symbol(element);
-// 		  }
-// 	  }
+ 	| declaration_specifiers init_declarator_list SEMICOLON {
+ 		  /* Use the variable name from init_declarator */
+ 		  for(auto &element : $2->identifiers) {
+ 			  element.type = $1;
+ 		  }
+		  $$=$2;
+		  SymbolTable::add_symbols($$);
+ 	  }
 // 	/* | declaration_specifiers IDENTIFIER array_declaration SEMICOLON {
 // 		$$ = new std::vector<Identifier>();
 // 		$$->push_back(new Identifier(std::string($2)));
@@ -385,26 +385,26 @@ declaration_specifiers
 // 		// TODO: implement later: storage_class_specifier { $$ = new GlobalType(); }
 // 	;
 
-// init_declarator_list
-// 	: init_declarator{
-// 		$$ = new std::vector<Identifier>();
-// 		$$->push_back($1);
-// 	}
-// 	| init_declarator_list COMMA init_declarator{
-// 		$$ = $1;
-// 		$$->push_back($3);
-// 	}
-// 	;
+ init_declarator_list
+ 	: init_declarator{
+ 		$$ = new VectorIdentifiers();
+ 		$$->add_identifier($1);
+ 	}
+ 	| init_declarator_list COMMA init_declarator{
+ 		$$ = $1;
+ 		$$->add_identifier($3);
+ 	}
+ 	;
 
-// init_declarator
-// 	: declarator{
-// 		$$ = $1;
-// 	}
-// 	| declarator ASSIGN initializer{
-// 		// TODO: type checking
-// 		$$ = $1;
-// 	}
-// 	;
+ init_declarator
+ 	: declarator{
+ 		$$ = $1;
+ 	}
+ 	/* | declarator ASSIGN initializer{
+ 		// TODO: type checking
+ 		$$ = $1;
+ 	} */
+ 	;
 
 // /* Storage classes */
 // storage_class_specifier
@@ -426,7 +426,7 @@ type_specifier
 	| DOUBLE   { $$ = create_primitive_type(DOUBLE_T); }
 // 	/* | SIGNED   { $$ = new GlobalType(); $$->standard_type = type_specifiers[SIGNED_T]; } */
 // 	/* | UNSIGNED { $$ = new GlobalType(); $$->standard_type = type_specifiers[UNSIGNED_T]; } */
-// 	| struct_specifier { $$ = new GlobalType(); $$->struct_type = $1; }
+ 	| struct_specifier { $$ = create_struct_type($1); }
 // 	| union_specifier { $$ = new GlobalType(); $$->union_type = $1; }
 // 	| enum_specifier { $$ = new GlobalType(); $$->enum_type = $1; }
 // 	/* | TYPE_NAME { $$ = new GlobalType(); $$->type_name = $1; } */
@@ -438,64 +438,71 @@ type_specifier
 // 	;
 
 // /* Struct and union specifiers */
-// struct_specifier
-// 	: STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(std::string($2), *$4); }
-// 	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(*$3); }
-// 	| STRUCT IDENTIFIER { $$ = new Struct(std::string($2)); }
-// 	;
+struct_specifier
+  	: STRUCT IDENTIFIER { $$ = new Struct(std::string($2)); }
+ 	| STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(std::string($2), $4); }
+ 	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct($3); }
 
-// union_specifier
-// 	: UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), *$4); }
-// 	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(*$3); }
-// 	| UNION IDENTIFIER { $$ = new Union(std::string($2)); }
-// 	;
+ 	;
 
-// struct_declaration_list
-// 	: struct_declaration { $$ = $1; }
-// 	| struct_declaration_list struct_declaration {
-// 		$$ = $1;
-// 		for (auto &element : *$2) {
-// 			$$->push_back(element);
-// 		}
-// 	}
-// 	;
+ union_specifier
+ 	: UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), *$4); }
+ 	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(*$3); }
+ 	| UNION IDENTIFIER { $$ = new Union(std::string($2)); }
+ 	;
 
-// struct_declaration
-// 	: specifier_qualifier_list struct_declarator_list SEMICOLON {
-// 		$$ = new std::vector<StructElement>();
-// 		for (auto &declarator : *$2) {
-// 			StructElement *element = new StructElement(declarator->id, declarator->size);
-// 			element->id->type = $1;  // Set the globalType of each element to specifier_qualifier_list
-// 			$$->push_back(*element);
-// 		}
-// 	}
-// 	;
+struct_declaration_list
+ 	: struct_declaration { $$ = $1; }
+ 	| struct_declaration_list struct_declaration {
+ 		$$ = $1;
+ 		$$->add_elements($2);
+ 	}
+ 	;
 
-// struct_declarator_list
-// 	: struct_declarator {
-// 		$$ = new std::vector<StructElement>();
-// 		$$->push_back($1);
-// 	}
-// 	| struct_declarator_list COMMA struct_declarator {
-// 		$$ = $1;
-// 		$$->push_back($3);
-// 	}
-// 	;
+struct_declaration
+ 	: specifier_qualifier_list struct_declarator_list SEMICOLON {
+ 		$$ = new VectorStructElement();
+ 		for (auto &declarator : $2->elements) {
+ 			declarator.id->type = $1;
+ 		}
+		$$->add_elements($2);
+ 	}
+ 	;
 
-// specifier_qualifier_list
-// 	: type_specifier specifier_qualifier_list {
-// 		$$ = $2;
+ struct_declarator_list
+ 	: struct_declarator {
+ 		$$ = new VectorStructElement();
+ 		$$->add_element($1);
+ 	}
+ 	| struct_declarator_list COMMA struct_declarator {
+ 		$$ = $1;
+ 		$$->add_element($3);
+ 	}
+ 	;
 
-// 	}
-// 	| type_specifier
-// 	| type_qualifier specifier_qualifier_list
-// 	| type_qualifier
-// 	;
+ specifier_qualifier_list
+ 	: type_specifier specifier_qualifier_list {
+ 		// TODO: 
+		$$ = combine_global_type($1, $2);
+ 	}
+ 	| type_specifier{
+			$$ = $1;
+	}
+ 	| type_qualifier specifier_qualifier_list{
+		$$=$2;
+		$$->setSpecifiers($1);
+	}
+	//TODO: later
+ 	/* | type_qualifier{
+		$$ = new GlobalType();
+		$$->setSpecifiers($1);
+	} */
+ 	;
 
-// struct_declarator
-// 	: declarator {
-// 		$$ = new StructElement($1, $1->type.getSize()); // TODO: Fix this as declarator should not return Identifier
-// 	}
+ struct_declarator
+ 	: declarator {
+ 		$$ = new StructElement($1, $1->type->getSize()); 
+	}
 // 	| COLON constant_expression {
 // 		$$ = new StructElement($1, 0 /* Get return value from constant expression*/);
 // 	}
@@ -652,7 +659,7 @@ parameter_list
  	: declaration_specifiers declarator {
  		// Todo: fix later
  		$$ = $2;
- 		$$->type = combine_types($1, $2->type);
+ 		$$->type = combine_global_type($1, $2->type);
  	}
 // 	// Todo: | declaration_specifiers abstract_declarator
 // 	// todo: later| declaration_specifiers
@@ -719,10 +726,10 @@ parameter_list
 // 	;
 
  compound_statement
- 	: increment_scope LEFT_BRACE RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	| increment_scope LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
- 	| increment_scope LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	| increment_scope LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
+ 	: INC_SCOPE LEFT_BRACE RIGHT_BRACE { SymbolTable::exit_scope(); }
+// 	| INC_SCOPE LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
+ 	| INC_SCOPE LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
+// 	| INC_SCOPE LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
  	;
 
  declaration_list
@@ -779,9 +786,7 @@ parameter_list
  	;
 
  external_declaration
- 	: function_declaration SEMICOLON { 
- 		SymbolTable::add_symbol($1); 
- 	}
+ 	: function_declaration
  	| function_definition
 	| declaration
  	;
@@ -821,8 +826,9 @@ function_declaration
 ;
 
  function_definition
- 	 :  increment_scope function_declaration compound_statement	 { 
- 		SymbolTable::exit_scope();
+ 	 : function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));} compound_statement	 { 
+ 		$$ = $1;
+		SymbolTable::exit_scope();
  		SymbolTable::add_symbol($$);
  		}/*{ 
  		$$ = $2;
@@ -846,10 +852,7 @@ function_declaration
 // 	//} 
  ; 
 
- increment_scope
- 	: %empty { SymbolTable::enter_scope(); }
- ;
-
+ INC_SCOPE: { SymbolTable::enter_scope(); };
  %%
 
 void yyerror(const char *s) {

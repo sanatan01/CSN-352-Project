@@ -2,26 +2,33 @@
 | Token                | Text                 |
 +----------------------+----------------------+
 | INT                  | int                  |
-| ASTERISK             | *                    |
-| CONST                | const                |
 | IDENTIFIER           | a                    |
 | LEFT_PAREN           | (                    |
 | INT                  | int                  |
 | IDENTIFIER           | a                    |
 | COMMA                | ,                    |
-| LONG                 | long                 |
+| INT                  | int                  |
 | IDENTIFIER           | b                    |
 | RIGHT_PAREN          | )                    |
+| LEFT_BRACE           | {                    |
+| INT                  | int                  |
+| IDENTIFIER           | c                    |
 | SEMICOLON            | ;                    |
-Symbol:        a|Scope:         0|Line:          0
-Column:        0
-Return Type:   Function: const *int
-Specifiers:    Specifiers: 
-is_typedef: 0
-is_extern: 0
-is_static: 0
-is_auto: 0
-is_register: 0
-is_const: 1
-is_volatile: 0
-----------------------------------------
+| VOID                 | void                 |
+| IDENTIFIER           | d                    |
+| SEMICOLON            | ;                    |
+| STRUCT               | struct               |
+| IDENTIFIER           | nice                 |
+| LEFT_BRACE           | {                    |
+| INT                  | int                  |
+| IDENTIFIER           | a                    |
+| SEMICOLON            | ;                    |
+| INT                  | int                  |
+| IDENTIFIER           | fuck                 |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |
+| SEMICOLON            | ;                    |
+| STRUCT               | struct               |
+| IDENTIFIER           | s                    |
+| SEMICOLON            | ;                    |
+| RIGHT_BRACE          | }                    |

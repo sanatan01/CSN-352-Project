@@ -208,22 +208,31 @@ enum yysymbol_kind_t
   YYSYMBOL_YYACCEPT = 90,                  /* $accept  */
   YYSYMBOL_declaration = 91,               /* declaration  */
   YYSYMBOL_declaration_specifiers = 92,    /* declaration_specifiers  */
-  YYSYMBOL_type_specifier = 93,            /* type_specifier  */
-  YYSYMBOL_type_qualifier = 94,            /* type_qualifier  */
-  YYSYMBOL_declarator = 95,                /* declarator  */
-  YYSYMBOL_direct_declarator = 96,         /* direct_declarator  */
-  YYSYMBOL_pointer = 97,                   /* pointer  */
-  YYSYMBOL_type_qualifier_list = 98,       /* type_qualifier_list  */
-  YYSYMBOL_parameter_list = 99,            /* parameter_list  */
-  YYSYMBOL_parameter_declaration = 100,    /* parameter_declaration  */
-  YYSYMBOL_compound_statement = 101,       /* compound_statement  */
-  YYSYMBOL_declaration_list = 102,         /* declaration_list  */
-  YYSYMBOL_translation_unit = 103,         /* translation_unit  */
-  YYSYMBOL_external_declaration = 104,     /* external_declaration  */
-  YYSYMBOL_function_identifier = 105,      /* function_identifier  */
-  YYSYMBOL_function_declaration = 106,     /* function_declaration  */
-  YYSYMBOL_function_definition = 107,      /* function_definition  */
-  YYSYMBOL_increment_scope = 108           /* increment_scope  */
+  YYSYMBOL_init_declarator_list = 93,      /* init_declarator_list  */
+  YYSYMBOL_init_declarator = 94,           /* init_declarator  */
+  YYSYMBOL_type_specifier = 95,            /* type_specifier  */
+  YYSYMBOL_struct_specifier = 96,          /* struct_specifier  */
+  YYSYMBOL_struct_declaration_list = 97,   /* struct_declaration_list  */
+  YYSYMBOL_struct_declaration = 98,        /* struct_declaration  */
+  YYSYMBOL_struct_declarator_list = 99,    /* struct_declarator_list  */
+  YYSYMBOL_specifier_qualifier_list = 100, /* specifier_qualifier_list  */
+  YYSYMBOL_struct_declarator = 101,        /* struct_declarator  */
+  YYSYMBOL_type_qualifier = 102,           /* type_qualifier  */
+  YYSYMBOL_declarator = 103,               /* declarator  */
+  YYSYMBOL_direct_declarator = 104,        /* direct_declarator  */
+  YYSYMBOL_pointer = 105,                  /* pointer  */
+  YYSYMBOL_type_qualifier_list = 106,      /* type_qualifier_list  */
+  YYSYMBOL_parameter_list = 107,           /* parameter_list  */
+  YYSYMBOL_parameter_declaration = 108,    /* parameter_declaration  */
+  YYSYMBOL_compound_statement = 109,       /* compound_statement  */
+  YYSYMBOL_declaration_list = 110,         /* declaration_list  */
+  YYSYMBOL_translation_unit = 111,         /* translation_unit  */
+  YYSYMBOL_external_declaration = 112,     /* external_declaration  */
+  YYSYMBOL_function_identifier = 113,      /* function_identifier  */
+  YYSYMBOL_function_declaration = 114,     /* function_declaration  */
+  YYSYMBOL_function_definition = 115,      /* function_definition  */
+  YYSYMBOL_116_1 = 116,                    /* $@1  */
+  YYSYMBOL_INC_SCOPE = 117                 /* INC_SCOPE  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -549,18 +558,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  21
+#define YYFINAL  28
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   89
+#define YYLAST   141
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  90
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  19
+#define YYNNTS  28
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  38
+#define YYNRULES  56
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  54
+#define YYNSTATES  81
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   344
@@ -618,10 +627,12 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   302,   327,   368,   420,   421,   422,   423,   424,   425,
-     426,   542,   543,   548,   564,   604,   605,   612,   616,   627,
-     630,   647,   648,   652,   722,   724,   729,   730,   776,   777,
-     782,   785,   786,   790,   791,   803,   812,   824,   850
+       0,   302,   327,   332,   368,   389,   393,   400,   420,   421,
+     422,   423,   424,   425,   426,   429,   442,   443,   444,   455,
+     456,   463,   473,   477,   484,   488,   491,   503,   549,   550,
+     555,   571,   611,   612,   619,   623,   634,   637,   654,   655,
+     659,   729,   731,   736,   737,   783,   784,   789,   790,   791,
+     795,   796,   808,   817,   829,   829,   855
 };
 #endif
 
@@ -652,12 +663,15 @@ static const char *const yytname[] =
   "QUESTION", "INVALID_ID", "INVALID_CHAR", "INVALID_OCT", "UNTERM_STRING",
   "CASE", "DEFAULT", "IF", "ELSE", "SWITCH", "WHILE", "DO", "FOR", "GOTO",
   "CONTINUE", "BREAK", "RETURN", "ERROR", "$accept", "declaration",
-  "declaration_specifiers", "type_specifier", "type_qualifier",
+  "declaration_specifiers", "init_declarator_list", "init_declarator",
+  "type_specifier", "struct_specifier", "struct_declaration_list",
+  "struct_declaration", "struct_declarator_list",
+  "specifier_qualifier_list", "struct_declarator", "type_qualifier",
   "declarator", "direct_declarator", "pointer", "type_qualifier_list",
   "parameter_list", "parameter_declaration", "compound_statement",
   "declaration_list", "translation_unit", "external_declaration",
   "function_identifier", "function_declaration", "function_definition",
-  "increment_scope", YY_NULLPTR
+  "$@1", "INC_SCOPE", YY_NULLPTR
 };
 
 static const char *
@@ -667,12 +681,12 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-40)
+#define YYPACT_NINF (-63)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF (-1)
+#define YYTABLE_NINF (-57)
 
 #define yytable_value_is_error(Yyn) \
   0
@@ -681,12 +695,15 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      44,   -40,   -40,   -40,   -40,   -40,   -40,   -40,   -40,    -3,
-     -40,     3,   -40,   -36,   -40,    44,   -40,   -40,   -39,    -2,
-     -34,   -40,   -40,   -40,    -2,   -40,   -40,   -40,   -40,   -40,
-     -39,   -40,   -29,   -40,   -28,   -40,   -40,   -40,    21,   -38,
-     -40,    14,   -40,   -40,   -40,    44,   -40,   -40,   -40,   -33,
-      32,   -40,   -40,   -40
+      95,   -63,   -63,   -63,   -63,   -63,   -63,   -63,    -1,   -63,
+      -3,   -63,   -63,     3,   -63,   -37,   -63,   -31,    83,   -30,
+     -63,   -35,   -32,   -63,   -63,   -63,    -2,   -22,   -63,   -63,
+     -63,    83,   -63,   -63,    83,    35,   -63,    21,    83,   -63,
+     -63,   -35,   -63,    21,   -63,   -63,    19,   -63,    47,   -63,
+     -63,   -63,   -63,    -7,   -63,   -63,   -63,   -63,   -63,   -63,
+     -63,    21,    13,   -63,   -63,   -17,   -63,   -63,    21,   -63,
+      95,   -63,    59,   -63,   -63,   -63,   -63,     1,    71,   -63,
+     -63
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -694,26 +711,31 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     6,     7,     4,     8,     9,    10,     5,    32,     0,
-       3,     0,    28,     0,    31,     0,    33,     2,    15,     0,
-       0,     1,    29,    30,     0,    38,    11,    12,    19,    17,
-      16,    34,     0,    37,     0,    20,    18,    35,     0,     0,
-      21,     0,    14,    23,    13,     0,    36,    24,    26,     0,
-       0,    22,    25,    27
+       0,    10,    11,     8,    12,    13,    14,     9,     0,    49,
+       0,     4,    15,     0,    45,    47,    48,    16,     0,    31,
+       2,    32,     0,     5,     7,    30,     0,     0,     1,    46,
+      54,     0,    28,    29,    25,     0,    19,     0,     0,    36,
+      34,    33,     3,     0,    50,    51,     0,    56,     0,    24,
+      18,    20,    31,     0,    22,    27,    26,    37,    35,     6,
+      52,     0,     0,    38,    55,     0,    17,    21,     0,    40,
+       0,    53,     0,    23,    39,    41,    43,     0,     0,    42,
+      44
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -40,   -30,   -13,   -40,    -5,   -40,   -40,    -8,   -40,   -40,
-     -16,   -40,   -40,   -40,    19,    12,    18,   -40,     9
+     -63,   -62,   -41,   -63,     9,   -12,   -63,    22,   -20,   -63,
+     -21,   -10,   -14,   -26,   -63,    -9,   -63,   -63,   -11,   -63,
+     -63,   -63,    54,    42,   -63,   -63,   -63,    27
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     8,     9,    10,    28,    43,    44,    19,    30,    39,
-      40,    33,    50,    11,    12,    20,    13,    14,    15
+       0,     9,    10,    22,    23,    11,    12,    35,    36,    53,
+      37,    54,    38,    24,    25,    26,    41,    62,    63,    64,
+      78,    13,    14,    27,    15,    16,    47,    30
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -721,58 +743,77 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      16,    16,    24,    21,    26,    27,     1,     2,     3,     4,
-      29,    48,     5,     6,    23,    45,     7,    17,    46,    38,
-      53,    32,    36,    41,    42,    35,    18,    37,    49,    51,
-      22,    31,    38,    25,    34,     0,     0,    49,     1,     2,
-       3,     4,     0,     0,     5,     6,     0,    17,     7,     1,
-       2,     3,     4,     0,     0,     5,     6,     0,     0,     7,
-       0,     0,    18,    18,     0,     0,    47,     1,     2,     3,
-       4,     0,     0,     5,     6,     0,     0,     7,     0,     1,
-       2,     3,     4,     0,    52,     5,     6,     0,     0,     7
+      19,    44,    17,    28,    52,    61,    34,    39,    32,    33,
+      76,    55,    40,    49,   -56,    51,    80,    56,    42,    34,
+      31,    43,    34,    34,    52,   -50,    34,    57,    51,    61,
+      21,    77,    58,    46,    72,    69,    34,    77,     1,     2,
+       3,     4,    55,    67,     5,     6,    68,    20,     7,     8,
+      18,    20,    59,    48,     1,     2,     3,     4,    73,    74,
+       5,     6,    21,    21,     7,     8,    70,    29,    45,    71,
+       1,     2,     3,     4,    65,    60,     5,     6,    32,    33,
+       7,     8,     1,     2,     3,     4,     0,    50,     5,     6,
+      32,    33,     7,     8,     1,     2,     3,     4,     0,    66,
+       5,     6,     0,     0,     7,     8,     1,     2,     3,     4,
+       0,    75,     5,     6,     0,     0,     7,     8,     1,     2,
+       3,     4,     0,    79,     5,     6,    32,    33,     7,     8,
+       1,     2,     3,     4,     0,     0,     5,     6,     0,     0,
+       7,     8
 };
 
 static const yytype_int8 yycheck[] =
 {
-       3,     3,    15,     0,    43,    44,    35,    36,    37,    38,
-      18,    41,    41,    42,    50,    53,    45,    50,    56,    32,
-      50,    55,    30,    51,     3,    30,    65,    56,    41,    45,
-      11,    19,    45,    15,    25,    -1,    -1,    50,    35,    36,
-      37,    38,    -1,    -1,    41,    42,    -1,    50,    45,    35,
-      36,    37,    38,    -1,    -1,    41,    42,    -1,    -1,    45,
-      -1,    -1,    65,    65,    -1,    -1,    52,    35,    36,    37,
-      38,    -1,    -1,    41,    42,    -1,    -1,    45,    -1,    35,
-      36,    37,    38,    -1,    52,    41,    42,    -1,    -1,    45
+       3,     3,     3,     0,     3,    46,    18,    21,    43,    44,
+      72,    37,    21,    34,    51,    35,    78,    38,    50,    31,
+      51,    53,    34,    35,     3,    55,    38,    41,    48,    70,
+      65,    72,    41,    55,    51,    61,    48,    78,    35,    36,
+      37,    38,    68,    50,    41,    42,    53,    50,    45,    46,
+      51,    50,    43,    31,    35,    36,    37,    38,    68,    70,
+      41,    42,    65,    65,    45,    46,    53,    13,    26,    56,
+      35,    36,    37,    38,    47,    56,    41,    42,    43,    44,
+      45,    46,    35,    36,    37,    38,    -1,    52,    41,    42,
+      43,    44,    45,    46,    35,    36,    37,    38,    -1,    52,
+      41,    42,    -1,    -1,    45,    46,    35,    36,    37,    38,
+      -1,    52,    41,    42,    -1,    -1,    45,    46,    35,    36,
+      37,    38,    -1,    52,    41,    42,    43,    44,    45,    46,
+      35,    36,    37,    38,    -1,    -1,    41,    42,    -1,    -1,
+      45,    46
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,    35,    36,    37,    38,    41,    42,    45,    91,    92,
-      93,   103,   104,   106,   107,   108,     3,    50,    65,    97,
-     105,     0,   104,    50,    92,   106,    43,    44,    94,    97,
-      98,   105,    55,   101,   108,    94,    97,    56,    92,    99,
-     100,    51,     3,    95,    96,    53,    56,    52,    91,    92,
-     102,   100,    52,    91
+       0,    35,    36,    37,    38,    41,    42,    45,    46,    91,
+      92,    95,    96,   111,   112,   114,   115,     3,    51,     3,
+      50,    65,    93,    94,   103,   104,   105,   113,     0,   112,
+     117,    51,    43,    44,    95,    97,    98,   100,   102,   102,
+     105,   106,    50,    53,     3,   113,    55,   116,    97,   100,
+      52,    98,     3,    99,   101,   103,   100,   102,   105,    94,
+      56,    92,   107,   108,   109,   117,    52,    50,    53,   103,
+      53,    56,    51,   101,   108,    52,    91,    92,   110,    52,
+      91
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    90,    91,    92,    93,    93,    93,    93,    93,    93,
-      93,    94,    94,    95,    96,    97,    97,    97,    97,    98,
-      98,    99,    99,   100,   101,   101,   102,   102,   103,   103,
-     104,   104,   104,   105,   105,   106,   106,   107,   108
+       0,    90,    91,    91,    92,    93,    93,    94,    95,    95,
+      95,    95,    95,    95,    95,    95,    96,    96,    96,    97,
+      97,    98,    99,    99,   100,   100,   100,   101,   102,   102,
+     103,   104,   105,   105,   105,   105,   106,   106,   107,   107,
+     108,   109,   109,   110,   110,   111,   111,   112,   112,   112,
+     113,   113,   114,   114,   116,   115,   117
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     2,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     2,     2,     3,     1,
-       2,     1,     3,     2,     3,     4,     1,     2,     1,     2,
-       2,     1,     1,     1,     2,     4,     5,     3,     0
+       0,     2,     2,     3,     1,     1,     3,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     2,     5,     4,     1,
+       2,     3,     1,     3,     2,     1,     2,     1,     1,     1,
+       1,     1,     1,     2,     2,     3,     1,     2,     1,     3,
+       2,     3,     4,     1,     2,     1,     2,     1,     1,     1,
+       1,     2,     4,     5,     0,     4,     0
 };
 
 
@@ -1242,89 +1283,231 @@ yyreduce:
  		  (yyval.vector_identifiers)->add_identifier(new Identifier((yyvsp[-1].global_type)));
  		  SymbolTable::add_symbols((yyval.vector_identifiers));
  	  }
-#line 1246 "src/y.tab.c"
+#line 1287 "src/y.tab.c"
     break;
 
-  case 3: /* declaration_specifiers: type_specifier  */
-#line 368 "src/mylang.y"
-                         { (yyval.global_type) = (yyvsp[0].global_type); }
-#line 1252 "src/y.tab.c"
-    break;
-
-  case 4: /* type_specifier: INT  */
-#line 420 "src/mylang.y"
-                   { (yyval.global_type) = create_primitive_type(INT_T); }
-#line 1258 "src/y.tab.c"
-    break;
-
-  case 5: /* type_specifier: VOID  */
-#line 421 "src/mylang.y"
-                   { (yyval.global_type) = create_primitive_type(VOID_T); }
-#line 1264 "src/y.tab.c"
-    break;
-
-  case 6: /* type_specifier: CHAR  */
-#line 422 "src/mylang.y"
-                   { (yyval.global_type) = create_primitive_type(CHAR_T); }
-#line 1270 "src/y.tab.c"
-    break;
-
-  case 7: /* type_specifier: SHORT  */
-#line 423 "src/mylang.y"
-                   { (yyval.global_type) = create_primitive_type(SHORT_T); }
-#line 1276 "src/y.tab.c"
-    break;
-
-  case 8: /* type_specifier: LONG  */
-#line 424 "src/mylang.y"
-                   { (yyval.global_type) = create_primitive_type(LONG_T); }
-#line 1282 "src/y.tab.c"
-    break;
-
-  case 9: /* type_specifier: FLOAT  */
-#line 425 "src/mylang.y"
-                   { (yyval.global_type) = create_primitive_type(FLOAT_T); }
-#line 1288 "src/y.tab.c"
-    break;
-
-  case 10: /* type_specifier: DOUBLE  */
-#line 426 "src/mylang.y"
-                   { (yyval.global_type) = create_primitive_type(DOUBLE_T); }
-#line 1294 "src/y.tab.c"
-    break;
-
-  case 11: /* type_qualifier: CONST  */
-#line 542 "src/mylang.y"
-                   { (yyval.specifiers) = new Specifiers(); (yyval.specifiers)->is_const = true; }
+  case 3: /* declaration: declaration_specifiers init_declarator_list SEMICOLON  */
+#line 332 "src/mylang.y"
+                                                                {
+ 		  /* Use the variable name from init_declarator */
+ 		  for(auto &element : (yyvsp[-1].vector_identifiers)->identifiers) {
+ 			  element.type = (yyvsp[-2].global_type);
+ 		  }
+		  (yyval.vector_identifiers)=(yyvsp[-1].vector_identifiers);
+		  SymbolTable::add_symbols((yyval.vector_identifiers));
+ 	  }
 #line 1300 "src/y.tab.c"
     break;
 
-  case 12: /* type_qualifier: VOLATILE  */
-#line 543 "src/mylang.y"
-                   { (yyval.specifiers) = new Specifiers(); (yyval.specifiers)->is_volatile = true; }
+  case 4: /* declaration_specifiers: type_specifier  */
+#line 368 "src/mylang.y"
+                         { (yyval.global_type) = (yyvsp[0].global_type); }
 #line 1306 "src/y.tab.c"
     break;
 
-  case 13: /* declarator: direct_declarator  */
-#line 548 "src/mylang.y"
-                            { (yyval.identifier) = (yyvsp[0].identifier); }
-#line 1312 "src/y.tab.c"
+  case 5: /* init_declarator_list: init_declarator  */
+#line 389 "src/mylang.y"
+                         {
+ 		(yyval.vector_identifiers) = new VectorIdentifiers();
+ 		(yyval.vector_identifiers)->add_identifier((yyvsp[0].identifier));
+ 	}
+#line 1315 "src/y.tab.c"
     break;
 
-  case 14: /* direct_declarator: IDENTIFIER  */
-#line 564 "src/mylang.y"
-                     { (yyval.identifier) = new Identifier(std::string((yyvsp[0].nice))); }
-#line 1318 "src/y.tab.c"
-    break;
-
-  case 15: /* pointer: ASTERISK  */
-#line 604 "src/mylang.y"
-                   { (yyval.pointer_type) = new PointerType(); }
+  case 6: /* init_declarator_list: init_declarator_list COMMA init_declarator  */
+#line 393 "src/mylang.y"
+                                                    {
+ 		(yyval.vector_identifiers) = (yyvsp[-2].vector_identifiers);
+ 		(yyval.vector_identifiers)->add_identifier((yyvsp[0].identifier));
+ 	}
 #line 1324 "src/y.tab.c"
     break;
 
-  case 16: /* pointer: ASTERISK type_qualifier_list  */
-#line 605 "src/mylang.y"
+  case 7: /* init_declarator: declarator  */
+#line 400 "src/mylang.y"
+                    {
+ 		(yyval.identifier) = (yyvsp[0].identifier);
+ 	}
+#line 1332 "src/y.tab.c"
+    break;
+
+  case 8: /* type_specifier: INT  */
+#line 420 "src/mylang.y"
+                   { (yyval.global_type) = create_primitive_type(INT_T); }
+#line 1338 "src/y.tab.c"
+    break;
+
+  case 9: /* type_specifier: VOID  */
+#line 421 "src/mylang.y"
+                   { (yyval.global_type) = create_primitive_type(VOID_T); }
+#line 1344 "src/y.tab.c"
+    break;
+
+  case 10: /* type_specifier: CHAR  */
+#line 422 "src/mylang.y"
+                   { (yyval.global_type) = create_primitive_type(CHAR_T); }
+#line 1350 "src/y.tab.c"
+    break;
+
+  case 11: /* type_specifier: SHORT  */
+#line 423 "src/mylang.y"
+                   { (yyval.global_type) = create_primitive_type(SHORT_T); }
+#line 1356 "src/y.tab.c"
+    break;
+
+  case 12: /* type_specifier: LONG  */
+#line 424 "src/mylang.y"
+                   { (yyval.global_type) = create_primitive_type(LONG_T); }
+#line 1362 "src/y.tab.c"
+    break;
+
+  case 13: /* type_specifier: FLOAT  */
+#line 425 "src/mylang.y"
+                   { (yyval.global_type) = create_primitive_type(FLOAT_T); }
+#line 1368 "src/y.tab.c"
+    break;
+
+  case 14: /* type_specifier: DOUBLE  */
+#line 426 "src/mylang.y"
+                   { (yyval.global_type) = create_primitive_type(DOUBLE_T); }
+#line 1374 "src/y.tab.c"
+    break;
+
+  case 15: /* type_specifier: struct_specifier  */
+#line 429 "src/mylang.y"
+                           { (yyval.global_type) = create_struct_type((yyvsp[0].struct_type)); }
+#line 1380 "src/y.tab.c"
+    break;
+
+  case 16: /* struct_specifier: STRUCT IDENTIFIER  */
+#line 442 "src/mylang.y"
+                            { (yyval.struct_type) = new Struct(std::string((yyvsp[0].nice))); }
+#line 1386 "src/y.tab.c"
+    break;
+
+  case 17: /* struct_specifier: STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE  */
+#line 443 "src/mylang.y"
+                                                                           { (yyval.struct_type) = new Struct(std::string((yyvsp[-3].nice)), (yyvsp[-1].struct_element_list)); }
+#line 1392 "src/y.tab.c"
+    break;
+
+  case 18: /* struct_specifier: STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE  */
+#line 444 "src/mylang.y"
+                                                                { (yyval.struct_type) = new Struct((yyvsp[-1].struct_element_list)); }
+#line 1398 "src/y.tab.c"
+    break;
+
+  case 19: /* struct_declaration_list: struct_declaration  */
+#line 455 "src/mylang.y"
+                             { (yyval.struct_element_list) = (yyvsp[0].struct_element_list); }
+#line 1404 "src/y.tab.c"
+    break;
+
+  case 20: /* struct_declaration_list: struct_declaration_list struct_declaration  */
+#line 456 "src/mylang.y"
+                                                     {
+ 		(yyval.struct_element_list) = (yyvsp[-1].struct_element_list);
+ 		(yyval.struct_element_list)->add_elements((yyvsp[0].struct_element_list));
+ 	}
+#line 1413 "src/y.tab.c"
+    break;
+
+  case 21: /* struct_declaration: specifier_qualifier_list struct_declarator_list SEMICOLON  */
+#line 463 "src/mylang.y"
+                                                                    {
+ 		(yyval.struct_element_list) = new VectorStructElement();
+ 		for (auto &declarator : (yyvsp[-1].struct_element_list)->elements) {
+ 			declarator.id->type = (yyvsp[-2].global_type);
+ 		}
+		(yyval.struct_element_list)->add_elements((yyvsp[-1].struct_element_list));
+ 	}
+#line 1425 "src/y.tab.c"
+    break;
+
+  case 22: /* struct_declarator_list: struct_declarator  */
+#line 473 "src/mylang.y"
+                            {
+ 		(yyval.struct_element_list) = new VectorStructElement();
+ 		(yyval.struct_element_list)->add_element((yyvsp[0].struct_element));
+ 	}
+#line 1434 "src/y.tab.c"
+    break;
+
+  case 23: /* struct_declarator_list: struct_declarator_list COMMA struct_declarator  */
+#line 477 "src/mylang.y"
+                                                         {
+ 		(yyval.struct_element_list) = (yyvsp[-2].struct_element_list);
+ 		(yyval.struct_element_list)->add_element((yyvsp[0].struct_element));
+ 	}
+#line 1443 "src/y.tab.c"
+    break;
+
+  case 24: /* specifier_qualifier_list: type_specifier specifier_qualifier_list  */
+#line 484 "src/mylang.y"
+                                                  {
+ 		// TODO: 
+		(yyval.global_type) = combine_global_type((yyvsp[-1].global_type), (yyvsp[0].global_type));
+ 	}
+#line 1452 "src/y.tab.c"
+    break;
+
+  case 25: /* specifier_qualifier_list: type_specifier  */
+#line 488 "src/mylang.y"
+                        {
+			(yyval.global_type) = (yyvsp[0].global_type);
+	}
+#line 1460 "src/y.tab.c"
+    break;
+
+  case 26: /* specifier_qualifier_list: type_qualifier specifier_qualifier_list  */
+#line 491 "src/mylang.y"
+                                                 {
+		(yyval.global_type)=(yyvsp[0].global_type);
+		(yyval.global_type)->setSpecifiers((yyvsp[-1].specifiers));
+	}
+#line 1469 "src/y.tab.c"
+    break;
+
+  case 27: /* struct_declarator: declarator  */
+#line 503 "src/mylang.y"
+                     {
+ 		(yyval.struct_element) = new StructElement((yyvsp[0].identifier), (yyvsp[0].identifier)->type->getSize()); 
+	}
+#line 1477 "src/y.tab.c"
+    break;
+
+  case 28: /* type_qualifier: CONST  */
+#line 549 "src/mylang.y"
+                   { (yyval.specifiers) = new Specifiers(); (yyval.specifiers)->is_const = true; }
+#line 1483 "src/y.tab.c"
+    break;
+
+  case 29: /* type_qualifier: VOLATILE  */
+#line 550 "src/mylang.y"
+                   { (yyval.specifiers) = new Specifiers(); (yyval.specifiers)->is_volatile = true; }
+#line 1489 "src/y.tab.c"
+    break;
+
+  case 30: /* declarator: direct_declarator  */
+#line 555 "src/mylang.y"
+                            { (yyval.identifier) = (yyvsp[0].identifier); }
+#line 1495 "src/y.tab.c"
+    break;
+
+  case 31: /* direct_declarator: IDENTIFIER  */
+#line 571 "src/mylang.y"
+                     { (yyval.identifier) = new Identifier(std::string((yyvsp[0].nice))); }
+#line 1501 "src/y.tab.c"
+    break;
+
+  case 32: /* pointer: ASTERISK  */
+#line 611 "src/mylang.y"
+                   { (yyval.pointer_type) = new PointerType(); }
+#line 1507 "src/y.tab.c"
+    break;
+
+  case 33: /* pointer: ASTERISK type_qualifier_list  */
+#line 612 "src/mylang.y"
                                        { 
  		(yyval.pointer_type) = new PointerType();
  		if ((yyval.pointer_type)->specifiers == NULL) {
@@ -1332,20 +1515,20 @@ yyreduce:
 		}
  		(yyval.pointer_type)->specifiers = combine_specs((yyval.pointer_type)->specifiers, (yyvsp[0].specifiers));
  	 }
-#line 1336 "src/y.tab.c"
+#line 1519 "src/y.tab.c"
     break;
 
-  case 17: /* pointer: ASTERISK pointer  */
-#line 612 "src/mylang.y"
+  case 34: /* pointer: ASTERISK pointer  */
+#line 619 "src/mylang.y"
                            { 
  		(yyval.pointer_type) = (yyvsp[0].pointer_type);
  		(yyval.pointer_type)->ptr_level++;
  	}
-#line 1345 "src/y.tab.c"
+#line 1528 "src/y.tab.c"
     break;
 
-  case 18: /* pointer: ASTERISK type_qualifier_list pointer  */
-#line 616 "src/mylang.y"
+  case 35: /* pointer: ASTERISK type_qualifier_list pointer  */
+#line 623 "src/mylang.y"
                                                { 
  		(yyval.pointer_type) = (yyvsp[0].pointer_type);
  		(yyval.pointer_type)->ptr_level++;
@@ -1354,90 +1537,82 @@ yyreduce:
 		}
  		(yyval.pointer_type)->specifiers = combine_specs((yyval.pointer_type)->specifiers, (yyvsp[-1].specifiers));
 	}
-#line 1358 "src/y.tab.c"
+#line 1541 "src/y.tab.c"
     break;
 
-  case 19: /* type_qualifier_list: type_qualifier  */
-#line 627 "src/mylang.y"
+  case 36: /* type_qualifier_list: type_qualifier  */
+#line 634 "src/mylang.y"
                          { 
  		(yyval.specifiers) = (yyvsp[0].specifiers);
  	}
-#line 1366 "src/y.tab.c"
+#line 1549 "src/y.tab.c"
     break;
 
-  case 20: /* type_qualifier_list: type_qualifier_list type_qualifier  */
-#line 630 "src/mylang.y"
+  case 37: /* type_qualifier_list: type_qualifier_list type_qualifier  */
+#line 637 "src/mylang.y"
                                             {
  		(yyval.specifiers) = combine_specs((yyvsp[-1].specifiers), (yyvsp[0].specifiers));
  	}
-#line 1374 "src/y.tab.c"
+#line 1557 "src/y.tab.c"
     break;
 
-  case 21: /* parameter_list: parameter_declaration  */
-#line 647 "src/mylang.y"
+  case 38: /* parameter_list: parameter_declaration  */
+#line 654 "src/mylang.y"
                                 { (yyval.vector_identifiers) = new VectorIdentifiers; (yyval.vector_identifiers)->add_identifier((yyvsp[0].identifier)); }
-#line 1380 "src/y.tab.c"
+#line 1563 "src/y.tab.c"
     break;
 
-  case 22: /* parameter_list: parameter_list COMMA parameter_declaration  */
-#line 648 "src/mylang.y"
+  case 39: /* parameter_list: parameter_list COMMA parameter_declaration  */
+#line 655 "src/mylang.y"
                                                      { (yyval.vector_identifiers) = (yyvsp[-2].vector_identifiers); (yyval.vector_identifiers)->add_identifier((yyvsp[0].identifier)); }
-#line 1386 "src/y.tab.c"
+#line 1569 "src/y.tab.c"
     break;
 
-  case 23: /* parameter_declaration: declaration_specifiers declarator  */
-#line 652 "src/mylang.y"
+  case 40: /* parameter_declaration: declaration_specifiers declarator  */
+#line 659 "src/mylang.y"
                                             {
  		// Todo: fix later
  		(yyval.identifier) = (yyvsp[0].identifier);
- 		(yyval.identifier)->type = combine_types((yyvsp[-1].global_type), (yyvsp[0].identifier)->type);
+ 		(yyval.identifier)->type = combine_global_type((yyvsp[-1].global_type), (yyvsp[0].identifier)->type);
  	}
-#line 1396 "src/y.tab.c"
+#line 1579 "src/y.tab.c"
     break;
 
-  case 24: /* compound_statement: increment_scope LEFT_BRACE RIGHT_BRACE  */
-#line 722 "src/mylang.y"
-                                                 { SymbolTable::exit_scope(); }
-#line 1402 "src/y.tab.c"
-    break;
-
-  case 25: /* compound_statement: increment_scope LEFT_BRACE declaration_list RIGHT_BRACE  */
-#line 724 "src/mylang.y"
-                                                                  { SymbolTable::exit_scope(); }
-#line 1408 "src/y.tab.c"
-    break;
-
-  case 26: /* declaration_list: declaration  */
+  case 41: /* compound_statement: INC_SCOPE LEFT_BRACE RIGHT_BRACE  */
 #line 729 "src/mylang.y"
-                      { (yyval.vector_identifiers) = (yyvsp[0].vector_identifiers); }
-#line 1414 "src/y.tab.c"
+                                           { SymbolTable::exit_scope(); }
+#line 1585 "src/y.tab.c"
     break;
 
-  case 27: /* declaration_list: declaration_list declaration  */
-#line 730 "src/mylang.y"
+  case 42: /* compound_statement: INC_SCOPE LEFT_BRACE declaration_list RIGHT_BRACE  */
+#line 731 "src/mylang.y"
+                                                            { SymbolTable::exit_scope(); }
+#line 1591 "src/y.tab.c"
+    break;
+
+  case 43: /* declaration_list: declaration  */
+#line 736 "src/mylang.y"
+                      { (yyval.vector_identifiers) = (yyvsp[0].vector_identifiers); }
+#line 1597 "src/y.tab.c"
+    break;
+
+  case 44: /* declaration_list: declaration_list declaration  */
+#line 737 "src/mylang.y"
                                       {
 		(yyval.vector_identifiers) = (yyvsp[-1].vector_identifiers);
 		(yyval.vector_identifiers)->add_identifiers((yyvsp[0].vector_identifiers));
 	}
-#line 1423 "src/y.tab.c"
+#line 1606 "src/y.tab.c"
     break;
 
-  case 30: /* external_declaration: function_declaration SEMICOLON  */
-#line 782 "src/mylang.y"
-                                         { 
- 		SymbolTable::add_symbol((yyvsp[-1].identifier)); 
- 	}
-#line 1431 "src/y.tab.c"
-    break;
-
-  case 33: /* function_identifier: IDENTIFIER  */
-#line 790 "src/mylang.y"
+  case 50: /* function_identifier: IDENTIFIER  */
+#line 795 "src/mylang.y"
                      { (yyval.identifier) = new Identifier((yyvsp[0].nice)); }
-#line 1437 "src/y.tab.c"
+#line 1612 "src/y.tab.c"
     break;
 
-  case 34: /* function_identifier: pointer function_identifier  */
-#line 791 "src/mylang.y"
+  case 51: /* function_identifier: pointer function_identifier  */
+#line 796 "src/mylang.y"
                                      { 
  		(yyval.identifier) = (yyvsp[0].identifier); 
  		if((yyval.identifier)->type->type_tag == NONE) {
@@ -1447,11 +1622,11 @@ yyreduce:
  		}
 		
  	}
-#line 1451 "src/y.tab.c"
+#line 1626 "src/y.tab.c"
     break;
 
-  case 35: /* function_declaration: declaration_specifiers function_identifier LEFT_PAREN RIGHT_PAREN  */
-#line 803 "src/mylang.y"
+  case 52: /* function_declaration: declaration_specifiers function_identifier LEFT_PAREN RIGHT_PAREN  */
+#line 808 "src/mylang.y"
                                                                             {
 		(yyval.identifier) = (yyvsp[-2].identifier);
 		if((yyval.identifier)->type->type_tag == NONE) {
@@ -1461,11 +1636,11 @@ yyreduce:
 			(yyval.identifier)->type = create_function_type(temp, new VectorIdentifiers(), (yyvsp[-2].identifier)->type->getSpecifiers());
 		}
 	}
-#line 1465 "src/y.tab.c"
+#line 1640 "src/y.tab.c"
     break;
 
-  case 36: /* function_declaration: declaration_specifiers function_identifier LEFT_PAREN parameter_list RIGHT_PAREN  */
-#line 812 "src/mylang.y"
+  case 53: /* function_declaration: declaration_specifiers function_identifier LEFT_PAREN parameter_list RIGHT_PAREN  */
+#line 817 "src/mylang.y"
                                                                                           {
 		(yyval.identifier) = (yyvsp[-3].identifier);
 		if((yyval.identifier)->type->type_tag == NONE) {
@@ -1475,26 +1650,33 @@ yyreduce:
 			(yyval.identifier)->type = create_function_type(temp, (yyvsp[-1].vector_identifiers), (yyvsp[-3].identifier)->type->getSpecifiers());
 		}
 	}
-#line 1479 "src/y.tab.c"
+#line 1654 "src/y.tab.c"
     break;
 
-  case 37: /* function_definition: increment_scope function_declaration compound_statement  */
-#line 824 "src/mylang.y"
-                                                                         { 
- 		SymbolTable::exit_scope();
+  case 54: /* $@1: %empty  */
+#line 829 "src/mylang.y"
+                                          { SymbolTable::add_symbols(&((yyvsp[-1].identifier)->type->function_type->args));}
+#line 1660 "src/y.tab.c"
+    break;
+
+  case 55: /* function_definition: function_declaration INC_SCOPE $@1 compound_statement  */
+#line 829 "src/mylang.y"
+                                                                                                                                 { 
+ 		(yyval.identifier) = (yyvsp[-3].identifier);
+		SymbolTable::exit_scope();
  		SymbolTable::add_symbol((yyval.identifier));
  		}
-#line 1488 "src/y.tab.c"
+#line 1670 "src/y.tab.c"
     break;
 
-  case 38: /* increment_scope: %empty  */
-#line 850 "src/mylang.y"
-                 { SymbolTable::enter_scope(); }
-#line 1494 "src/y.tab.c"
+  case 56: /* INC_SCOPE: %empty  */
+#line 855 "src/mylang.y"
+            { SymbolTable::enter_scope(); }
+#line 1676 "src/y.tab.c"
     break;
 
 
-#line 1498 "src/y.tab.c"
+#line 1680 "src/y.tab.c"
 
       default: break;
     }
@@ -1687,7 +1869,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 853 "src/mylang.y"
+#line 856 "src/mylang.y"
 
 
 void yyerror(const char *s) {

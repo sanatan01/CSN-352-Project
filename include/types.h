@@ -118,16 +118,24 @@ public:
 	StructElement(Identifier* id, size_t size); // Add implementation if the identifier pointer is NULL
 };
 
+class VectorStructElement {
+public:
+	std::vector<StructElement> elements;
+	VectorStructElement();
+	void add_element(StructElement* id);
+	void add_elements(VectorStructElement* other);
+};
+
 
 class Struct: public StandardType {
 public:
 
-	std::vector<StructElement> members;
+	VectorStructElement members;
 	std::string struct_name;
 	//TODO: remember to add the "struct" as the name of the standard type
-	Struct(std::string name, std::vector<StructElement> members);
+	Struct(std::string name, VectorStructElement *members);
 	Struct(std::string name);
-	Struct(std::vector<StructElement> members);
+	Struct(VectorStructElement *members);
 };
 
 // -------------------------------------UNION----------------------------------------
@@ -163,6 +171,7 @@ public:
 	void add_identifier(Identifier* id);
 	void add_identifiers(VectorIdentifiers* other);
 };
+
 
 // -------------------------------------FUNCTION----------------------------------------
 
@@ -341,15 +350,28 @@ public:
 		default: return nullptr;
 		}
 	}
+
+	void setSpecifiers(Specifiers* specifiers) {
+		switch (type_tag) {
+		case STANDARD_TYPE: standard_type->specifiers = specifiers; break;
+		case STRUCT_TYPE: struct_type->specifiers = specifiers; break;
+		case UNION_TYPE: union_type->specifiers = specifiers; break;
+		case ARRAY_TYPE: array_type->specifiers = specifiers; break;
+		case FUNCTION_TYPE: function_type->specifiers = specifiers; break;
+		case POINTER_TYPE: pointer_type->specifiers = specifiers; break;
+		case ENUM_TYPE: enum_type->specifiers = specifiers; break;
+		default: break;
+		}
+	}
 };
 
-
+class GlobalType* create_struct_type(Struct* _struct, Specifiers* specifiers = nullptr);
 class GlobalType* create_primitive_type(PrimitiveTypes type, Specifiers* specifiers = nullptr);
 class GlobalType* create_function_type(class GlobalType* return_type, class VectorIdentifiers* args, Specifiers* specifiers = nullptr);
 class GlobalType* create_pointer_type(class GlobalType* return_type, int ptr_level = 1, Specifiers* specifiers = nullptr);
 class GlobalType* create_default_pointer_type();
 
-class GlobalType* combine_types(class GlobalType* type1, class GlobalType* type2);
+class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* right);
 
 extern InvalidType INVALID_TYPE;
 

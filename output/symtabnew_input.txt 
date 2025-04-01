@@ -1,0 +1,9 @@
+Symbol:        |Scope:         |Line:          |Column:        |Return Type:   
+---------------------------------------------------------------------
+a              |1              |0              |0              |None           
+b              |1              |0              |0              |None           
+c              |2              |0              |0              |int            
+d              |2              |0              |0              |void           
+nice           |2              |0              |0              |struct         
+s              |2              |0              |0              |struct         
+a              |0              |0              |0              |Function: int  

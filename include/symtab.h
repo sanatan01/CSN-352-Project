@@ -5,8 +5,11 @@
 #include <unordered_map>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 
 class Identifier;
+
+extern std::fstream symbol_table_file;
 
 class Symbol {
 public:

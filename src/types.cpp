@@ -73,6 +73,38 @@ void VectorIdentifiers::add_identifiers(VectorIdentifiers* other) {
     }
 }
 
+// Struct
+
+Struct::Struct(std::string name) : StandardType("struct", 0), struct_name(name), members(VectorStructElement()) {}
+
+Struct::Struct(std::string name, VectorStructElement *members1) : StandardType("struct", 0), struct_name(name), members(*(members1)) {
+    this->size = 0;
+    for (auto& member : members1->elements) {
+        this->size += member.size;
+    }
+}
+
+Struct::Struct(VectorStructElement *members1) : StandardType("struct", 0), struct_name("Default"), members(*(members1)) {
+    this->size = 0;
+    for (auto& member : members1->elements) {
+        this->size += member.size;
+    }
+}
+
+StructElement::StructElement(Identifier* id, size_t size) : id(id), size(size) {}
+
+VectorStructElement::VectorStructElement() : elements(std::vector<StructElement>()) {}
+
+void VectorStructElement::add_element(StructElement* element) {
+    this->elements.push_back(*element);
+}
+
+void VectorStructElement::add_elements(VectorStructElement* other) {
+    for (auto& element : other->elements) {
+        this->elements.push_back(element);
+    }
+}
+
 //Pointer
 
 PointerType::PointerType() {
@@ -110,6 +142,16 @@ class GlobalType* create_function_type(class GlobalType* return_type, class Vect
     return type;
 }
 
+class GlobalType* create_struct_type(Struct* _struct, Specifiers* specifiers) {
+    class GlobalType *type = new GlobalType();
+    type->type_tag = STRUCT_TYPE;
+    type->struct_type = _struct;
+    if (specifiers != nullptr) {
+        type->struct_type->specifiers = specifiers;
+    }
+    return type;
+}
+
 class GlobalType* create_pointer_type(class GlobalType* return_type, int ptr_level, Specifiers* specifiers) {
     class GlobalType *type = new GlobalType();
     type->type_tag = POINTER_TYPE;
@@ -123,6 +165,17 @@ class GlobalType* create_pointer_type(class GlobalType* return_type, int ptr_lev
 
 class GlobalType* create_default_pointer_type() {
     return create_pointer_type(new GlobalType(), 1);
+}
+
+class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* right) {
+    
+    // This function assumes that left was written before right
+
+    return right;
+}
+
+void sample_function(class GlobalType* left, class GlobalType* right) {
+    
 }
 
 Specifiers* combine_specs(Specifiers* spec1, Specifiers* spec2) {

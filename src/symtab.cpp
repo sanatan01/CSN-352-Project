@@ -31,6 +31,10 @@ void SymbolTable::exit_scope() {
 }
 
 void SymbolTable::add_symbol(Identifier* id, int line, int column) {
+    // Check if identifier is a struct
+    if (id->type->type_tag == STRUCT_TYPE) {
+        id->name = id->type->struct_type->struct_name;
+    }
     Symbol symbol(*id, current_scope_level, line, column);
     std::string name = symbol.identifier.name;
     symbol_map[name].push_back(symbol);
@@ -55,13 +59,11 @@ Symbol* SymbolTable::get_symbol(const std::string& identifier) {
 }
 
 void SymbolTable::print_symbol(Symbol symbol) {
-    std::cout << std::left << std::setw(15) << "Symbol:" << symbol.identifier.name << '|'
-              << std::left << std::setw(15) << "Scope:" << symbol.current_level << '|'
-              << std::left << std::setw(15) << "Line:" << symbol.line_number << '\n'
-              << std::left << std::setw(15) << "Column:" << symbol.column_number << '\n'
-              << std::left << std::setw(15) << "Return Type:" << symbol.identifier.type->getType() << '\n';
-
-    std::cout << "----------------------------------------" << std::endl;
+    symbol_table_file << std::left << std::setw(15) << symbol.identifier.name << '|'
+              << std::left << std::setw(15) << symbol.current_level << '|'
+              << std::left << std::setw(15) << symbol.line_number << '|'
+              << std::left << std::setw(15) << symbol.column_number << '|'
+              << std::left << std::setw(15) << symbol.identifier.type->getType() << '\n';
 
 
 }

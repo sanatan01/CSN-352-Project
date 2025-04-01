@@ -165,15 +165,15 @@ union YYSTYPE
 // 	StringLiteral* string_literal;
  	class GlobalType* global_type;
  	class PointerType* pointer_type;
-// 	StructType* struct_type;
+ 	class Struct* struct_type;
 // 	UnionType* union_type;
 // 	EnumType* enum_type;
  	class Specifiers* specifiers;
 // 	EnumElement* enum_element;
 // 	std::vector<EnumElement>* vector_enum_element;
-// 	std::vector<StructElement>* struct_element_list;
+ 	class VectorStructElement* struct_element_list;
  	class VectorIdentifiers* vector_identifiers;
-// 	StructElement* struct_element;
+ 	class StructElement* struct_element;
 // 	FunctionType* function_type;
 // 	ArrayType* array_type;
  
