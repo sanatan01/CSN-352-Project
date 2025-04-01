@@ -1,6 +1,7 @@
 #include <expression.hpp>
 #include <symtab.hpp>
-extern std::unordered_map<PrimitiveTypes, StandardType> type_specifiers;
+#include <cassert>
+#include "types.cpp"
 
 PrimaryExpression::PrimaryExpression() : Expression() {}
 
@@ -1209,7 +1210,7 @@ Expression *create_postfix_expr_struct( std::string access_op, Expression *pe, I
             }
             // whether i exists in Struct
             GlobalType iType = *peT.union_type->definition->get_member( id );
-            if ( iType==nullptr ) {
+            if ( iType == nullptr ) {
                 // Error
                 error_msg( id->value + " is not a member of " + peT.getType(),
                            id->line_num, id->column );
@@ -1266,8 +1267,8 @@ Expression *create_postfix_expr_ido(Terminal *op, Expression *pe){
         P->pe = nullptr;
     }
 
-    if ( pe->type.is_invalid() ) {
-        P->type = INVALID_TYPE;
+    if ( pe->type.getType() == "InvalidType" ) {
+        P->type.invalid_type = &INVALID_TYPE;
         return P;
     }
 
@@ -1281,8 +1282,7 @@ Expression *create_postfix_expr_ido(Terminal *op, Expression *pe){
     std::string op_code = op->name.substr( 0, 1 );
 
     Address *inc_value;
-    
-    if (  op->name != "++" && op->name != "--" ) {
+        if (  op->name != "++" && op->name != "--" ) {
 		std::cerr << "PANIC: Invalid operation " << op->name <<"\n";
 		assert(0);
 		return P;
@@ -1290,56 +1290,28 @@ Expression *create_postfix_expr_ido(Terminal *op, Expression *pe){
 	if ( pe->type.is_const == true ) {
 		error_msg( "Invalid operand " + op->name + " with constant type",
 				   op->line_num, op->column );
-		P->type = INVALID_TYPE;
+		P->type.invalid_type = &INVALID_TYPE;
 		return P;
 	}
 
-	if ( pe->type.isPointer() ) {
+	if ( pe->type.pointer_type->ptr_level > 0 ) {
 		P->type = pe->type;
-		P->res = new_mem(P->type);
-		Type t = pe->type;
-		t.ptr_level--;
-		inc_value = new_3const( t.get_size() , INT3);
-	} else if ( pe->type.isInt() ) {
-		P->res = new_temp();
+		GlobalType t = pe->type;
+		t.pointer_type->ptr_level--;
+	} else if ( type_specifiers[INT_T].isEqual(*pe->type.standard_type) ) {
 		P->type = pe->type;
-		inc_value = new_3const( 1, INT3 );
-	} else if ( pe->type.isFloat() ) {
-		P->res = new_temp();
+	} else if ( type_specifiers[FLOAT_T].isEqual(*pe->type.standard_type) ) {
 		P->type = pe->type;
-		inc_value = new_3const( 1.0 , FLOAT3 );
 	} else {
 		// Error postfix operator
 		error_msg( "Invalid operand " + op->name + " with type " +
-					   pe->type.get_name(),
+					   pe->type.getType(),
 				   op->line_num, op->column );
-		delete P->res;
-		P->res = nullptr;
-		P->type = INVALID_TYPE;
+		P->type.invalid_type = &INVALID_TYPE;
 		return P;
 	}
 
-    P->add_child( pe );
-
-    if ( pe->res->type == MEM ) {
-        Address *t1 = new_temp();
-        emit( P->res, "()", pe->res, nullptr );
-        emit( t1, "=", P->res, nullptr);
-        emit( t1, op_code, t1, inc_value );
-        emit( pe->res, "()s", t1, nullptr );
-    } else if ( pe->res->type == ID3 ) {
-        emit( P->res, "=", pe->res, nullptr );
-        emit( pe->res, op_code, pe->res, inc_value );
-    } else {
-		delete inc_value;
-		delete P->res;
-		P->res = nullptr;
-		inc_value = nullptr;
-        error_msg( "lvalue required as operand to" + op->name, op->line_num,
-                   op->column + 1 );
-        P->type = INVALID_TYPE;
-        return P;
-    }
+    P->add_children({pe});
     return P;
 }
 
