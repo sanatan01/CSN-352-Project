@@ -37,26 +37,26 @@ class TopLevelStatement : public Statement {
         }
 };
 
-Statement* add_to_statement_list( Statement * stl = nullptr, StatementType* st1 );
+Statement* add_to_statement_list( Statement * stl = nullptr, StatementType* st1 ); // done 
 
 class SelectionStatement : public Statement{
     public :
 };
 
-Statement *create_selection_statement_if( Expression *ex, GoTo * _false, Label * l1, Statement *st1, GoTo * _goto, Label * l2, Statement *st2 );
+Statement *create_selection_statement_if( Expression *ex, GoTo * _false, Label * l1, Statement *st1, GoTo * _goto, Label * l2, Statement *st2 );// done
 
-void create_switch( Expression * ex );
-Statement *create_selection_statement_switch(Expression *ex1, GoTo * _test, Statement* st1, GoTo * _goto);
+void create_switch( Expression * ex ); //done
+Statement *create_selection_statement_switch(Expression *ex1, GoTo * _test, Statement* st1, GoTo * _goto);//done
 
 class IterationStatement : public Statement {
     public:
     IterationStatement(){}
 };
 
-Statement* create_iteration_statement_while(Label * l1, Expression *e1, GoTo * _false, Label * l2, Statement *s1 );
-Statement* create_iteration_statement_do_while(Label *l1,Statement *s1,  Label *l2,Expression *e1, GoTo * _false );
-Statement* create_iteration_statement_for( Expression * ex1, Label * l1,  Expression * ex2, Label * l2, Statement*s1 );
-Statement* create_iteration_statement_for( Expression * ex1, Label * l1, Expression * ex2, GoTo * _goto1, Label * l2, Expression * ex3, GoTo * _goto2 , Label * l3, Statement*s1 );
+Statement* create_iteration_statement_while(Label * l1, Expression *e1, GoTo * _false, Label * l2, Statement *s1 ); //done
+Statement* create_iteration_statement_do_while(Label *l1,Statement *s1,  Label *l2,Expression *e1, GoTo * _false ); //done
+Statement* create_iteration_statement_for( Expression * ex1, Label * l1,  Expression * ex2, Label * l2, Statement*s1 ); //done          
+Statement* create_iteration_statement_for( Expression * ex1, Label * l1, Expression * ex2, GoTo * _goto1, Label * l2, Expression * ex3, GoTo * _goto2 , Label * l3, Statement*s1 );//done
 
 class JumpStatement : public Statement {
     public:
@@ -70,9 +70,9 @@ class JumpStatement : public Statement {
         };
 };
 
-Statement* create_jump_statement_go_to(Identifier* id);
-Statement* create_jump_statement( int type_ );
-Statement* create_jump_statement_exp(Expression* ex);
+Statement* create_jump_statement_go_to(Identifier* id); //done
+Statement* create_jump_statement( int type_ ); //done
+Statement* create_jump_statement_exp(Expression* ex); //done
 
 class LabeledStatement: public Statement{
     public:
@@ -89,9 +89,9 @@ class LabeledStatement: public Statement{
 
 };
 
-Statement* create_labeled_statement_iden(Identifier *id,Label * l1, Statement* s1);
-Statement* create_labeled_statement_case(Constant *con,Label* l,Statement* s1);
-Statement* create_labeled_statement_def(Label *l,Statement* s1);
+Statement* create_labeled_statement_iden(Identifier *id,Label * l1, Statement* s1); //done
+Statement* create_labeled_statement_case(Constant *con,Label* l,Statement* s1); //done
+Statement* create_labeled_statement_def(Label *l,Statement* s1); //done
 
 extern std::map<std::string,Label *> label_iden;
 extern std::map<std::string,std::vector<GoTo *> & > goto_iden;
