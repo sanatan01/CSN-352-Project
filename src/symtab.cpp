@@ -37,6 +37,12 @@ void SymbolTable::add_symbol(Identifier* id, int line, int column) {
     SymbolTable::print_symbol(symbol);
 }
 
+void SymbolTable::add_symbols(VectorIdentifiers* ids, int line, int column) {
+    for (auto& id : ids->identifiers) {
+        add_symbol(&id, line, column);
+    }
+}
+
 bool SymbolTable::lookup_symbol(const std::string& identifier) {
     return symbol_map.find(identifier) != symbol_map.end() && !symbol_map[identifier].empty();
 }
@@ -49,9 +55,17 @@ Symbol* SymbolTable::get_symbol(const std::string& identifier) {
 }
 
 void SymbolTable::print_symbol(Symbol symbol) {
-    std::cout << "Symbol: " << symbol.identifier.name 
-              << " | Scope: " << symbol.current_level 
-              << " | Line: " << symbol.line_number
-              << " | Column: " << symbol.column_number << std::endl
-              << " | Return Type: " << symbol.identifier.type->getType() << std::endl;
+    std::cout << std::left << std::setw(15) << "Symbol:" << symbol.identifier.name << '|'
+              << std::left << std::setw(15) << "Scope:" << symbol.current_level << '|'
+              << std::left << std::setw(15) << "Line:" << symbol.line_number << '\n'
+              << std::left << std::setw(15) << "Column:" << symbol.column_number << '\n'
+              << std::left << std::setw(15) << "Return Type:" << symbol.identifier.type->getType() << '\n';
+
+    std::cout << "----------------------------------------" << std::endl;
+
+
 }
+
+
+
+

@@ -1,5 +1,1 @@
-int a(int a, int b);
-
-void nice (char khushal);
-
-short gay(faltu nilu);
+int *const a(int a, long b);

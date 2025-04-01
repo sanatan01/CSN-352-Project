@@ -31,11 +31,11 @@ void yyerror(const char *s);
 // 	Constant* constant;
 // 	StringLiteral* string_literal;
  	class GlobalType* global_type;
-// 	PointerType* pointer_type;
+ 	class PointerType* pointer_type;
 // 	StructType* struct_type;
 // 	UnionType* union_type;
 // 	EnumType* enum_type;
-// 	Specifiers* specifiers;
+ 	class Specifiers* specifiers;
 // 	EnumElement* enum_element;
 // 	std::vector<EnumElement>* vector_enum_element;
 // 	std::vector<StructElement>* struct_element_list;
@@ -76,10 +76,10 @@ void yyerror(const char *s);
  %type<nice> translation_unit
  %type<nice> external_declaration
  %type<identifier> function_identifier
-// %type<identifier> function_definition
+ %type<identifier> function_definition
  %type<identifier> function_declaration
-// %type<vector_identifiers> declaration
- %type<nice> declaration_list
+ %type<vector_identifiers> declaration
+ %type<vector_identifiers> declaration_list
  %type<nice> statement
  %type<nice> statement_list
 
@@ -121,11 +121,11 @@ void yyerror(const char *s);
 // %type<enum_type> enum_specifier
 // %type<vector_enum_element> enumerator_list
 // %type<enum_element> enumerator
-// %type<specifiers> type_qualifier
- %type<identifier> declarator
- %type<identifier> direct_declarator
-// %type<pointer_type> pointer
-// %type<specifiers> type_qualifier_list
+%type<specifiers> type_qualifier
+%type<identifier> declarator
+%type<identifier> direct_declarator
+%type<pointer_type> pointer
+%type<specifiers> type_qualifier_list
 // %type<vector_identifiers> parameter_type_list
  %type<vector_identifiers> parameter_list
  %type<identifier> parameter_declaration
@@ -298,19 +298,19 @@ void yyerror(const char *s);
 // 	| unary_expression assignment_operator assignment_expression { $$ = create_expression(ASSIGNMENT, std::string($1), $2, $3); }
 // 	;
 
-// assignment_operator
-// 	: ASSIGN		{ $$ = strdup("="); }
-// 	| MUL_ASSIGN	{ $$ = strdup("*="); }
-// 	| DIV_ASSIGN	{ $$ = strdup("/="); }
-// 	| MOD_ASSIGN	{ $$ = $1; }
-// 	| ADD_ASSIGN	{ $$ = $1; }
-// 	| SUB_ASSIGN	{ $$ = $1; }
-// 	| LEFT_ASSIGN	{ $$ = $1; }
-// 	| RIGHT_ASSIGN	{ $$ = $1; }
-// 	| AND_ASSIGN	{ $$ = $1; }
-// 	| XOR_ASSIGN	{ $$ = $1; }
-// 	| OR_ASSIGN		{ $$ = $1; }
-// 	;
+ assignment_operator
+ 	: ASSIGN		{ $$ = strdup("="); }
+ 	| MUL_ASSIGN	{ $$ = strdup("*="); }
+ 	| DIV_ASSIGN	{ $$ = strdup("/="); }
+ 	| MOD_ASSIGN	{ $$ = $1; }
+ 	| ADD_ASSIGN	{ $$ = $1; }
+ 	| SUB_ASSIGN	{ $$ = $1; }
+ 	| LEFT_ASSIGN	{ $$ = $1; }
+ 	| RIGHT_ASSIGN	{ $$ = $1; }
+ 	| AND_ASSIGN	{ $$ = $1; }
+ 	| XOR_ASSIGN	{ $$ = $1; }
+ 	| OR_ASSIGN		{ $$ = $1; }
+ 	;
 
 // /* Expressions */
 // expression
@@ -323,15 +323,12 @@ void yyerror(const char *s);
 // 	;
 
 // /* Declarations */
-// declaration
-// 	: declaration_specifiers SEMICOLON {
-// 		  $$ = new std::vector<Identifier>();
-// 		  $$->push_back(new Identifier());
-// 		  $$->back()->type = $1;
-// 		  for(auto &element : *$$) {
-// 			  SymbolTable::add_symbol(element);
-// 		  }
-// 	  }
+declaration
+ 	: declaration_specifiers SEMICOLON {
+ 		  $$ = new VectorIdentifiers();
+ 		  $$->add_identifier(new Identifier($1));
+ 		  SymbolTable::add_symbols($$);
+ 	  }
 // 	| declaration_specifiers init_declarator_list SEMICOLON {
 // 		  /* Use the variable name from init_declarator */
 // 		  $$ = $2;
@@ -540,11 +537,11 @@ type_specifier
 // 	}
 // 	;
 
-// /* Type qualifiers */
-// type_qualifier
-// 	: CONST    { $$ = new Specifiers(); $$->is_const = true; }
-// 	| VOLATILE { $$ = new Specifiers(); $$->is_volatile = true; }
-// 	;
+ /* Type qualifiers */
+ type_qualifier
+ 	: CONST    { $$ = new Specifiers(); $$->is_const = true; }
+ 	| VOLATILE { $$ = new Specifiers(); $$->is_volatile = true; }
+ 	;
 
 // /* Declarators */
 declarator
@@ -603,32 +600,37 @@ declarator
 // 	// TODO: | direct_declarator LEFT_PAREN RIGHT_PAREN { $$ = $1; } // Function call
 // 	;
 
-// pointer
-// 	: ASTERISK { $$ = *new PointerType(); }
-// 	| ASTERISK type_qualifier_list { 
-// 		$$ = *new PointerType();
-// 		$$->specifiers = $2;
-// 	 }
-// 	| ASTERISK pointer { 
-// 		$$ = $2;
-// 		$$->ptr_level++;
-// 	 }
-// 	| ASTERISK type_qualifier_list pointer { 
-// 		$$ = $3;
-// 		$$->ptr_level++;
-// 		$$->specifiers->combine($2);
-// 	 }
-// 	;
+pointer
+ 	: ASTERISK { $$ = new PointerType(); }
+ 	| ASTERISK type_qualifier_list { 
+ 		$$ = new PointerType();
+ 		if ($$->specifiers == NULL) {
+			$$->specifiers = new Specifiers();
+		}
+ 		$$->specifiers = combine_specs($$->specifiers, $2);
+ 	 }
+ 	| ASTERISK pointer { 
+ 		$$ = $2;
+ 		$$->ptr_level++;
+ 	}
+ 	| ASTERISK type_qualifier_list pointer { 
+ 		$$ = $3;
+ 		$$->ptr_level++;
+		if ($$->specifiers == NULL) {
+			$$->specifiers = new Specifiers();
+		}
+ 		$$->specifiers = combine_specs($$->specifiers, $2);
+	}
+ 	;
 
-// type_qualifier_list
-// 	: type_qualifier { 
-// 		$$ = $1
-// 	}
-// 	| type_qualifier_list type_qualifier{
-// 		$$ = $1;
-// 		$$->combine($2);
-// 	}
-// 	;
+type_qualifier_list
+ 	: type_qualifier { 
+ 		$$ = $1;
+ 	}
+ 	| type_qualifier_list type_qualifier{
+ 		$$ = combine_specs($1, $2);
+ 	}
+ 	;
 
 // /* Function parameters */
 // parameter_type_list
@@ -701,14 +703,14 @@ parameter_list
 
 // /* Statements */
 // statement
+// 	: expression_statement
 // 	: labeled_statement
 // 	| compound_statement
-// 	| expression_statement
 // 	| selection_statement
 // 	| iteration_statement
 // 	| jump_statement
 // 	| error_statement_closed
-// 	;
+ 	;
 
 // labeled_statement
 // 	: IDENTIFIER COLON statement
@@ -719,14 +721,17 @@ parameter_list
  compound_statement
  	: increment_scope LEFT_BRACE RIGHT_BRACE { SymbolTable::exit_scope(); }
 // 	| increment_scope LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	| increment_scope LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
+ 	| increment_scope LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
 // 	| increment_scope LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	;
+ 	;
 
-// declaration_list
-// 	: declaration
-// 	| declaration_list declaration
-// 	;
+ declaration_list
+ 	: declaration { $$ = $1; }
+ 	| declaration_list declaration{
+		$$ = $1;
+		$$->add_identifiers($2);
+	}
+ 	;
 
 // statement_list
 // 	: statement
@@ -771,50 +776,46 @@ parameter_list
  	: external_declaration
  	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
-// 	;
+ 	;
 
  external_declaration
- 	: function_declaration
-// 	: function_definition
-// 	| declaration
-// 	;
+ 	: function_declaration SEMICOLON { 
+ 		SymbolTable::add_symbol($1); 
+ 	}
+ 	| function_definition
+	| declaration
+ 	;
 
 function_identifier
  	: IDENTIFIER { $$ = new Identifier($1); }
-// 	| pointer function_identifier{ 
-// 		$$ = $2; 
-// 		if($$->type == NULL) {
-// 			$$->type = new GlobalType();
-// 			$$->type->pointer_type = new PointerType();
-// 		}
-// 		else{
-// 			$$->type->pointer_type->ptr_level++;
-// 		}
-// 	}
-// 	;
+ 	| pointer function_identifier{ 
+ 		$$ = $2; 
+ 		if($$->type->type_tag == NONE) {
+ 			$$->type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
+ 		} else{
+ 			$$->type->pointer_type->ptr_level = $1->ptr_level;
+ 		}
+		
+ 	}
+ 	;
 
 function_declaration
 	: declaration_specifiers function_identifier LEFT_PAREN RIGHT_PAREN {
-
 		$$ = $2;
-		if($$->type == NULL) {
-			$$->type = create_function_type($1, new VectorIdentifiers());
-		}
-		else{
-			GlobalType *temp = $$->type;
-			temp->pointer_type->return_type = $1;
-			$$->type = create_function_type(temp, new VectorIdentifiers());
+		if($$->type->type_tag == NONE) {
+			$$->type = create_function_type($1, new VectorIdentifiers(), $2->type->getSpecifiers());
+		} else {
+			class GlobalType* temp = create_pointer_type($1, $$->type->pointer_type->ptr_level);
+			$$->type = create_function_type(temp, new VectorIdentifiers(), $2->type->getSpecifiers());
 		}
 	}
 	| declaration_specifiers function_identifier LEFT_PAREN parameter_list RIGHT_PAREN{
 		$$ = $2;
-		if($$->type == NULL) {
-			$$->type = create_function_type($1, $4);
-		}
-		else{
-			GlobalType *temp = $$->type;
-			temp->pointer_type->return_type = $1;
-			$$->type = create_function_type(temp, $4);
+		if($$->type->type_tag == NONE) {
+			$$->type = create_function_type($1, $4, $2->type->getSpecifiers());
+		} else {
+			class GlobalType* temp = create_pointer_type($1, $$->type->pointer_type->ptr_level);
+			$$->type = create_function_type(temp, $4, $2->type->getSpecifiers());
 		}
 	}
 ;
@@ -829,7 +830,7 @@ function_declaration
  			SymbolTable::add_symbol(element);
  		} */
 	 
-// 	;
+ 	;
 
 // 	//: declaration_specifiers declarator declaration_list compound_statement {
 // 	//	  insertSymbol($2, "function", $1); /* Insert function with its return type */
@@ -843,9 +844,11 @@ function_declaration
 // 	//| declarator compound_statement {
 // 	//	  insertSymbol($1, "function", "auto");
 // 	//} 
-// 	/* ; */
+ ; 
 
- increment_scope: %empty { SymbolTable::enter_scope(); }
+ increment_scope
+ 	: %empty { SymbolTable::enter_scope(); }
+ ;
 
  %%
 

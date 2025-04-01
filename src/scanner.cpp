@@ -1,6 +1,7 @@
 #include <helper.h>
 #include <symtab.h>
 #include <iostream>
+#include <types.h>
 
 extern int yyparse();
 extern FILE* yyin;
@@ -23,7 +24,6 @@ int main(int argc, char** argv) {
     yyin = input_file;
     yyparse(); // Invoke the parser
     fclose(input_file);
-
 
     return 0;
 }

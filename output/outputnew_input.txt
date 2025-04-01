@@ -1,0 +1,27 @@
++----------------------+----------------------+
+| Token                | Text                 |
++----------------------+----------------------+
+| INT                  | int                  |
+| ASTERISK             | *                    |
+| CONST                | const                |
+| IDENTIFIER           | a                    |
+| LEFT_PAREN           | (                    |
+| INT                  | int                  |
+| IDENTIFIER           | a                    |
+| COMMA                | ,                    |
+| LONG                 | long                 |
+| IDENTIFIER           | b                    |
+| RIGHT_PAREN          | )                    |
+| SEMICOLON            | ;                    |
+Symbol:        a|Scope:         0|Line:          0
+Column:        0
+Return Type:   Function: const *int
+Specifiers:    Specifiers: 
+is_typedef: 0
+is_extern: 0
+is_static: 0
+is_auto: 0
+is_register: 0
+is_const: 1
+is_volatile: 0
+----------------------------------------

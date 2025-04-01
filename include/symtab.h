@@ -4,6 +4,7 @@
 #include <types.h>
 #include <unordered_map>
 #include <iostream>
+#include <iomanip>
 
 class Identifier;
 
@@ -35,6 +36,7 @@ public:
   static int current_scope();
   static void exit_scope();
   static void add_symbol(Identifier* id, int line = 0, int column = 0);
+  static void add_symbols(VectorIdentifiers* ids, int line = 0, int column = 0);
   static bool lookup_symbol(const std::string& identifier);
   static Symbol* get_symbol(const std::string& identifier);
   static void print_symbol(Symbol symbol);

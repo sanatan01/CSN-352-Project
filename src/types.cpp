@@ -28,14 +28,18 @@ std::unordered_map<PrimitiveTypes, StandardType*> createStandardTypes() {
     return type_specifiers;
 }
 
-Identifier::Identifier(std::string name, unsigned int _line_num, unsigned int _column) {
+Identifier::Identifier(std::string name, unsigned int _line_num, unsigned int _column) : type(new GlobalType()) {
     this->name = name;
-    this->type = nullptr;
+}
+
+Identifier::Identifier(class GlobalType* type) :
+    type(type) {
+    this->name = "";
 }
 
 std::unordered_map<PrimitiveTypes, StandardType*> type_specifiers = createStandardTypes();
 
-StandardType::StandardType(): name(""), size(0) {}
+StandardType::StandardType(): name(""), size(0), specifiers(new Specifiers()){}
 
 StandardType::StandardType(std::string name, size_t size): name(name), size(size) {}
 
@@ -53,7 +57,6 @@ ArrayType::ArrayType(unsigned int dim, class GlobalType* type, std::vector<unsig
 }
 
 FunctionType::FunctionType(class GlobalType* return_type, class VectorIdentifiers *args): return_type(return_type), args(*(args)) {
-
 }
 
 //VectorIdentifier to handle vectors in c
@@ -73,7 +76,7 @@ void VectorIdentifiers::add_identifiers(VectorIdentifiers* other) {
 //Pointer
 
 PointerType::PointerType() {
-    this->ptr_level = 0;
+    this->ptr_level = 1;
 }
 
 PointerType::PointerType(class GlobalType* return_type) {
@@ -92,7 +95,7 @@ class GlobalType* create_primitive_type(PrimitiveTypes type, Specifiers* specifi
     typ->type_tag = STANDARD_TYPE;
     typ->standard_type = type_specifiers[type];
     if (specifiers != nullptr) {
-        typ->standard_type->specifiers = *specifiers;
+        typ->standard_type->specifiers = specifiers;
     }
     return typ;
 }
@@ -102,13 +105,37 @@ class GlobalType* create_function_type(class GlobalType* return_type, class Vect
     type->type_tag = FUNCTION_TYPE;
     type->function_type = new FunctionType(return_type, args);
     if (specifiers != nullptr) {
-        type->function_type->specifiers = *specifiers;
+        type->function_type->specifiers = specifiers;
     }
     return type;
 }
 
+class GlobalType* create_pointer_type(class GlobalType* return_type, int ptr_level, Specifiers* specifiers) {
+    class GlobalType *type = new GlobalType();
+    type->type_tag = POINTER_TYPE;
+    type->pointer_type = new PointerType(return_type);
+    type->pointer_type->ptr_level = ptr_level;
+    if (specifiers != nullptr) {
+        type->pointer_type->specifiers = specifiers;
+    }
+    return type;
+}
 
+class GlobalType* create_default_pointer_type() {
+    return create_pointer_type(new GlobalType(), 1);
+}
 
+Specifiers* combine_specs(Specifiers* spec1, Specifiers* spec2) {
+	Specifiers* combined = new Specifiers();
+	combined->is_typedef = spec1->is_typedef || spec2->is_typedef;
+	combined->is_extern = spec1->is_extern || spec2->is_extern;
+	combined->is_static = spec1->is_static || spec2->is_static;
+	combined->is_auto = spec1->is_auto || spec2->is_auto;
+	combined->is_register = spec1->is_register || spec2->is_register;
+	combined->is_const = spec1->is_const || spec2->is_const;
+	combined->is_volatile = spec1->is_volatile || spec2->is_volatile;
+	return combined;
+}
 
 std::vector<GlobalType> defined_types;
 
