@@ -1,5 +1,6 @@
 %{
-#include "helper.h"
+#include <helper.h>
+#include <y.tab.h>
 
 void displayLexer(int token, const char* text);
 int check_type();
@@ -170,33 +171,33 @@ int yywrap(void) {
 }
 
 void comment() {
-    char c, c1;
+    // char c, c1;
 
-    while (1) {
-        while ((c = input()) != '*' && c != 0) {
-            if (c == '\n') {
-                // Handle new lines if needed
-            }
-            putchar(c);
-        }
+    // while (1) {
+    //     while ((c = input()) != '*' && c != 0) {
+    //         if (c == '\n') {
+    //             // Handle new lines if needed
+    //         }
+    //         putchar(c);
+    //     }
 
-        if (c == 0) {
-            // End of file within comment
-            break;
-        }
+    //     if (c == 0) {
+    //         // End of file within comment
+    //         break;
+    //     }
 
-        c1 = input();
-        if (c1 == '/') {
-            putchar(c1);
-            break;
-        } else if (c1 == 0) {
-            // End of file
-            break;
-        } else {
-            unput(c1);
-            putchar(c); // put the '*' back.
-        }
-    }
+    //     c1 = input();
+    //     if (c1 == '/') {
+    //         putchar(c1);
+    //         break;
+    //     } else if (c1 == 0) {
+    //         // End of file
+    //         break;
+    //     } else {
+    //         unput(c1);
+    //         putchar(c); // put the '*' back.
+    //     }
+    // }
 }
 
 void displayLexer(int token, const char* text) {
