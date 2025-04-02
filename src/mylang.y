@@ -34,10 +34,10 @@ void yyerror(const char *s);
  	class PointerType* pointer_type;
  	class Struct* struct_type;
  	class Union* union_type;
-// 	EnumType* enum_type;
+ 	class EnumType* enum_type;
  	class Specifiers* specifiers;
-// 	EnumElement* enum_element;
-// 	std::vector<EnumElement>* vector_enum_element;
+ 	class EnumElement* enum_element;
+ 	class VectorEnumElement *vector_enum_element;
  	class VectorStructElement* struct_element_list;
  	class VectorIdentifiers* vector_identifiers;
  	class StructElement* struct_element;
@@ -104,23 +104,23 @@ void yyerror(const char *s);
 // %type<argument_expression_list> argument_expression_list
 // %type<expression> constant_expression
 
- %type<nice> assignment_operator
- %type<nice> unary_operator
- %type<global_type> declaration_specifiers
- %type<vector_identifiers> init_declarator_list
- %type<identifier> init_declarator
-// %type<specifiers> storage_class_specifier
- %type<global_type> type_specifier
- %type<union_type> union_specifier
- %type<struct_type> struct_specifier
- %type<struct_element_list> struct_declaration_list
- %type<struct_element_list> struct_declaration
- %type<global_type> specifier_qualifier_list
- %type<struct_element_list> struct_declarator_list
- %type<struct_element> struct_declarator
-// %type<enum_type> enum_specifier
-// %type<vector_enum_element> enumerator_list
-// %type<enum_element> enumerator
+%type<nice> assignment_operator
+%type<nice> unary_operator
+%type<global_type> declaration_specifiers
+%type<vector_identifiers> init_declarator_list
+%type<identifier> init_declarator
+%type<specifiers> storage_class_specifier
+%type<global_type> type_specifier
+%type<union_type> union_specifier
+%type<struct_type> struct_specifier
+%type<struct_element_list> struct_declaration_list
+%type<struct_element_list> struct_declaration
+%type<global_type> specifier_qualifier_list
+%type<struct_element_list> struct_declarator_list
+%type<struct_element> struct_declarator
+%type<enum_type> enum_specifier
+%type<vector_enum_element> enumerator_list
+%type<enum_element> enumerator
 %type<specifiers> type_qualifier
 %type<identifier> declarator
 %type<identifier> direct_declarator
@@ -337,6 +337,9 @@ declaration
 		  $$=$2;
 		  SymbolTable::add_symbols($$);
  	  }
+	;
+
+
 // 	/* | declaration_specifiers IDENTIFIER array_declaration SEMICOLON {
 // 		$$ = new std::vector<Identifier>();
 // 		$$->push_back(new Identifier(std::string($2)));
@@ -366,22 +369,20 @@ declaration
 
 declaration_specifiers
  	: type_specifier { $$ = $1; }
-// 	: storage_class_specifier declaration_specifiers {
-// 		char * temp = malloc(strlen($1) + strlen($2) + 3);
-// 		strcpy(temp, $1);
-// 		strcat(temp, strdup(" "));
-// 		strcat(temp, $2);
-// 		$$ = temp;
-// 	}
-// 	| type_specifier declaration_specifiers { 
-// 		$$ = combine_types($1, $2);
-
-// 	}
-// 	// TODO: implement later| type_qualifier 
-// 	| type_qualifier declaration_specifiers {
-// 		$$ = $2;
-// 		$$ = combine_specifiers($1, $2);
-// 	}
+ 	| storage_class_specifier declaration_specifiers {
+		$$ = $2;
+		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
+ 	}
+ 	| type_specifier declaration_specifiers { 
+ 		/* $$ = combine_global_type($1, $2); */
+ 	}
+ 	| type_qualifier declaration_specifiers {
+ 		$$ = $2;
+ 		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
+ 	}
+	;
+// 	// TODO: implement later
+//  | type_qualifier 
 // 		// TODO: implement later: storage_class_specifier { $$ = new GlobalType(); }
 // 	;
 
@@ -406,14 +407,14 @@ declaration_specifiers
  	} */
  	;
 
-// /* Storage classes */
-// storage_class_specifier
-// 	: TYPEDEF { $$ = new Specifier(); $$->is_typedef = true; }
-// 	| EXTERN { $$ = new Specifier(); $$->is_extern = true; }
-// 	| STATIC { $$ = new Specifier(); $$->is_static = true; }
-// 	| AUTO { $$ = new Specifier(); $$->is_auto = true; }
-// 	| REGISTER { $$ = new Specifier(); $$->is_register = true; }
-// 	;
+ /* Storage classes */
+storage_class_specifier
+ 	: TYPEDEF { $$ = new Specifiers(); $$->is_typedef = true; }
+ 	| EXTERN { $$ = new Specifiers(); $$->is_extern = true; }
+ 	| STATIC { $$ = new Specifiers(); $$->is_static = true; }
+ 	| AUTO { $$ = new Specifiers(); $$->is_auto = true; }
+ 	| REGISTER { $$ = new Specifiers(); $$->is_register = true; }
+ 	;
 
 // /* Type specifiers */
 type_specifier
@@ -427,8 +428,8 @@ type_specifier
 // 	/* | SIGNED   { $$ = new GlobalType(); $$->standard_type = type_specifiers[SIGNED_T]; } */
 // 	/* | UNSIGNED { $$ = new GlobalType(); $$->standard_type = type_specifiers[UNSIGNED_T]; } */
  	| struct_specifier { $$ = create_struct_type($1); }
-// 	| union_specifier { $$ = new GlobalType(); $$->union_type = $1; }
-// 	| enum_specifier { $$ = new GlobalType(); $$->enum_type = $1; }
+ 	| union_specifier { $$ = create_union_type($1); }
+ 	| enum_specifier { $$ = create_enum_type($1); }
 // 	/* | TYPE_NAME { $$ = new GlobalType(); $$->type_name = $1; } */
 // 	| type_specifier pointer {
 // 		$$ = new GlobalType();
@@ -446,9 +447,9 @@ struct_specifier
  	;
 
  union_specifier
- 	: UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), *$4); }
- 	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(*$3); }
- 	| UNION IDENTIFIER { $$ = new Union(std::string($2)); }
+  	: UNION IDENTIFIER { $$ = new Union(std::string($2)); }
+ 	| UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), $4); }
+ 	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union($3); }
  	;
 
 struct_declaration_list
@@ -490,8 +491,10 @@ struct_declaration
 	}
  	| type_qualifier specifier_qualifier_list{
 		$$=$2;
-		$$->setSpecifiers($1);
+		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
 	}
+
+
 	//TODO: later
  	/* | type_qualifier{
 		$$ = new GlobalType();
@@ -511,34 +514,34 @@ struct_declaration
 // 	}
 // 	;
 
-// /* Enum specifiers */
-// enum_specifier
-// 	: ENUM LEFT_BRACE enumerator_list RIGHT_BRACE {
-// 		$$ = new EnumType($3);
-// 	}
-// 	| ENUM IDENTIFIER LEFT_BRACE enumerator_list RIGHT_BRACE{
-// 		$$ = new EnumType(std::string($2),$4);
-// 	}
-// 	| ENUM IDENTIFIER{
-// 		$$ = new EnumType(std::string($2));
-// 	}
-// 	;
+ /* Enum specifiers */
+ enum_specifier
+ 	: ENUM LEFT_BRACE enumerator_list RIGHT_BRACE {
+ 		$$ = new EnumType($3);
+ 	}
+ 	| ENUM IDENTIFIER LEFT_BRACE enumerator_list RIGHT_BRACE{
+ 		$$ = new EnumType(std::string($2),$4);
+ 	}
+ 	| ENUM IDENTIFIER{
+ 		$$ = new EnumType(std::string($2));
+ 	}
+ 	;
 
-// enumerator_list
-// 	: enumerator { 
-// 		$$ = new std::vector<EnumElement>();
-// 		$$->push_back($1); 
-// 	}
-// 	| enumerator_list COMMA enumerator{
-// 		$$ = $1;
-// 		$$->push_back($3);
-// 	}
-// 	;
+ enumerator_list
+ 	: enumerator { 
+ 		$$ = new VectorEnumElement();
+ 		$$->add_element($1);
+ 	}
+ 	| enumerator_list COMMA enumerator{
+ 		$$ = $1;
+ 		$$->add_element($3);
+ 	}
+ 	;
 
-// enumerator
-// 	: IDENTIFIER{
-// 		$$ = new EnumElement(std::string($1));
-// 	}
+ enumerator
+ 	: IDENTIFIER{
+ 		$$ = new EnumElement(std::string($1));
+ 	}
 // 	| IDENTIFIER ASSIGN constant_expression{
 // 		$$ = new EnumElement(std::string($1), /* to do $3*/);
 // 	}
@@ -553,23 +556,23 @@ struct_declaration
 // /* Declarators */
 declarator
  	: direct_declarator { $$ = $1; }
-// 	: pointer direct_declarator { 
-// 		$$ = $2;
-// 		if ($$->type->pointer_type == NULL) {
-// 			$$->type->pointer_type = $1;
-// 			$$->type->pointer_type->return_type = $2->type;
-// 		}
-// 		else {
-// 			$$->type->pointer_type->ptr_level+= $1->ptr_level;
-// 		}
+ 	| pointer direct_declarator { 
+ 		$$ = $2; 
+ 		if($$->type->type_tag == NONE) {
+ 			$$->type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
 
-// 	}
+ 		} else{
+ 			$$->type->pointer_type->ptr_level = $1->ptr_level;
+ 		}
 
-// 	;
+		// Combine types
+ 	}
+
+ 	;
 
  direct_declarator
  	: IDENTIFIER { $$ = new Identifier(std::string($1)); }
-// 	| LEFT_PAREN declarator RIGHT_PAREN { $$ = $2; }
+ 	| LEFT_PAREN declarator RIGHT_PAREN { $$ = $2; }
 // 	| direct_declarator LEFT_BRACKET constant_expression RIGHT_BRACKET {
 // 		$$ = $1;
 // 		if ($$->type->array_type == NULL) {
@@ -651,16 +654,21 @@ type_qualifier_list
 // 	;
 
 parameter_list
- 	: parameter_declaration { $$ = new VectorIdentifiers; $$->add_identifier($1); }
+ 	: parameter_declaration { $$ = new VectorIdentifiers(); $$->add_identifier($1); }
  	| parameter_list COMMA parameter_declaration { $$ = $1; $$->add_identifier($3); }
  	;
 
  parameter_declaration
  	: declaration_specifiers declarator {
- 		// Todo: fix later
  		$$ = $2;
- 		$$->type = combine_global_type($1, $2->type);
+		if ($$->type->type_tag == NONE) {
+			$$->type = $1;
+		} else {
+			$$->type = create_pointer_type($1, $$->type->pointer_type->ptr_level, $1->getSpecifiers());
+		}
+		// TODO: Add combine_global_type function here depending on what type is the function
  	}
+	;
 // 	// Todo: | declaration_specifiers abstract_declarator
 // 	// todo: later| declaration_specifiers
 // 	;
@@ -757,10 +765,10 @@ parameter_list
 // 	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
 // 	;
 
-// declaration_statement
-// 	: SEMICOLON
-// 	| declaration
-// 	;
+declaration_statement
+ 	: SEMICOLON
+ 	| declaration
+ 	;
 
 // iteration_statement
 // 	: WHILE LEFT_PAREN expression RIGHT_PAREN statement
@@ -835,26 +843,12 @@ function_declaration
  		for (auto &element : $$->type->function_type->args) {
  			SymbolTable::add_symbol(element);
  		} */
-	 
- 	;
-
-// 	//: declaration_specifiers declarator declaration_list compound_statement {
-// 	//	  insertSymbol($2, "function", $1); /* Insert function with its return type */
-// 	//  }
-// 	// | declaration_specifiers declarator compound_statement {
-// 	//	  insertSymbol($2, "function", $1);
-// 	//  }
-// 	//| declarator declaration_list compound_statement {
-// 	//	  insertSymbol($1, "function", "auto"); /* Default to auto when return type isn't specified */
-// 	//  }
-// 	//| declarator compound_statement {
-// 	//	  insertSymbol($1, "function", "auto");
-// 	//} 
- ; 
+		
+		; 
 
  INC_SCOPE: { SymbolTable::enter_scope(); };
  %%
 
 void yyerror(const char *s) {
  	fprintf(stderr, "Syntax Error: %s at line %d\n", s, yylineno);
- }
+}

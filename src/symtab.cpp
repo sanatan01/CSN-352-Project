@@ -34,6 +34,10 @@ void SymbolTable::add_symbol(Identifier* id, int line, int column) {
     // Check if identifier is a struct
     if (id->type->type_tag == STRUCT_TYPE) {
         id->name = id->type->struct_type->struct_name;
+    } else if (id->type->type_tag == UNION_TYPE) {
+        id->name = id->type->union_type->union_name;
+    } else if (id->type->type_tag == ENUM_TYPE) {
+        id->name = id->type->enum_type->enum_name;
     }
     Symbol symbol(*id, current_scope_level, line, column);
     std::string name = symbol.identifier.name;

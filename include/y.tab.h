@@ -166,11 +166,11 @@ union YYSTYPE
  	class GlobalType* global_type;
  	class PointerType* pointer_type;
  	class Struct* struct_type;
-// 	UnionType* union_type;
-// 	EnumType* enum_type;
+ 	class Union* union_type;
+ 	class EnumType* enum_type;
  	class Specifiers* specifiers;
-// 	EnumElement* enum_element;
-// 	std::vector<EnumElement>* vector_enum_element;
+ 	class EnumElement* enum_element;
+ 	class VectorEnumElement *vector_enum_element;
  	class VectorStructElement* struct_element_list;
  	class VectorIdentifiers* vector_identifiers;
  	class StructElement* struct_element;

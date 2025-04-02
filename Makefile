@@ -14,7 +14,7 @@ EXECUTABLE := $(SRC_DIR)/syntax_analyser
 HEADERS := $(wildcard $(INCLUDE_DIR)/*.h)
 
 # Additional source files for parsing phase
-PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp
+PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp 
 
 all: clean build run
 

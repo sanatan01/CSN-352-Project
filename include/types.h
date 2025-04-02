@@ -142,11 +142,11 @@ public:
 
 class Union: public StandardType {
 public:
-	std::vector<StructElement> members;
-	std::string name;
-	Union(std::string name, std::vector<StructElement> members);
+	VectorStructElement members;
+	std::string union_name;
+	Union(std::string name, VectorStructElement *members);
 	Union(std::string name);
-	Union(std::vector<StructElement> members);
+	Union(VectorStructElement *members);
 };
 
 // -------------------------------------COMPLEX TYPES----------------------------------------
@@ -207,11 +207,20 @@ public:
 	EnumElement(std::string name);
 };
 
+class VectorEnumElement {
+public:
+	std::vector<EnumElement> elements;
+	VectorEnumElement();
+	void add_element(EnumElement* id);
+	void add_elements(VectorEnumElement* other);
+};
+
 class EnumType: public StandardType {
 public:
-	std::vector<EnumElement> enum_values;
-	EnumType(std::string name, std::vector<EnumElement>* enum_values);
-	EnumType(std::vector<EnumElement>* enum_values);
+	VectorEnumElement enum_values;
+	std::string enum_name;
+	EnumType(std::string name, VectorEnumElement *enum_values);
+	EnumType(VectorEnumElement* enum_values);
 	EnumType(std::string name);
 
 };
@@ -225,7 +234,7 @@ public:
 	std::string err_message;
 	int line_num;
 	int column;
-	InvalidType(int _line_num, int _column, std::string _err_message);
+	InvalidType(std::string _err_message, int _line_num=0, int _column=0);
 	InvalidType();
 };
 
@@ -269,10 +278,10 @@ public:
 	std::string getType() const {
 		switch (type_tag) {
 		case STANDARD_TYPE: {
-			return standard_type->getSpecifierName();
+			return "1 " + standard_type->getSpecifierName();
 		}
 		case STRUCT_TYPE: return struct_type->getSpecifierName();
-		case UNION_TYPE: return struct_type->getSpecifierName();
+		case UNION_TYPE: return union_type->getSpecifierName();
 		case ARRAY_TYPE: {
 			std::string st = "";
 
@@ -282,7 +291,7 @@ public:
 			return array_type->getSpecifierName() + array_type->return_type->getType() + st;
 		}
 		case FUNCTION_TYPE: {
-			return "Function: " + function_type->getSpecifierName() + function_type->return_type->getType();
+			return "Function: " +function_type->getSpecifierName() + function_type->return_type->getType();
 		}
 		case POINTER_TYPE: {
 
@@ -290,9 +299,9 @@ public:
 			for (int i = 0;i < pointer_type->ptr_level;i++) {
 				st += "*";
 			}
-			return st + pointer_type->getSpecifierName() + pointer_type->return_type->getType();
+			return "2 " + st + pointer_type->getSpecifierName() + pointer_type->return_type->getType();
 		}
-		case ENUM_TYPE: return "EnumType";
+		case ENUM_TYPE: return enum_type->getSpecifierName();
 		case INVALID: return "InvalidType";
 		default: return "None";
 		}
@@ -365,11 +374,14 @@ public:
 	}
 };
 
+class GlobalType* create_enum_type(EnumType* _enum, Specifiers* specifiers = nullptr);
+class GlobalType* create_union_type(Union* _union, Specifiers* = nullptr);
 class GlobalType* create_struct_type(Struct* _struct, Specifiers* specifiers = nullptr);
 class GlobalType* create_primitive_type(PrimitiveTypes type, Specifiers* specifiers = nullptr);
 class GlobalType* create_function_type(class GlobalType* return_type, class VectorIdentifiers* args, Specifiers* specifiers = nullptr);
 class GlobalType* create_pointer_type(class GlobalType* return_type, int ptr_level = 1, Specifiers* specifiers = nullptr);
 class GlobalType* create_default_pointer_type();
+class GlobalType* create_invalid_type(std::string err_message);
 
 class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* right);
 

@@ -1,9 +1,26 @@
-int a(int a, int b){
+
+int main(){
     int c;
-    void d;
+    int z;
     struct  nice{
         int a;
         int fuck;
     };
     struct s;
+
+    union p{
+        int a;
+    };
+
+    enum fuck{
+        FUCKALL,
+        FUCKYOU
+    };
+
+    enum gay;
+
+    int (a);
+
+    int a;
+
 }
