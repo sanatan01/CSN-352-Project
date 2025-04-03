@@ -18,11 +18,15 @@ std::unordered_map<PrimitiveTypes, StandardType*> createStandardTypes() {
         {INT_T, new StandardType("int", sizeof(int))},
         {U_LONG_T, new StandardType("unsigned long", sizeof(unsigned long))},
         {LONG_T, new StandardType("long", sizeof(long))},
+        {LLONG_T, new StandardType("long long", sizeof(long long))},
+        {U_LLONG_T, new StandardType("unsigned long long", sizeof(unsigned long long))},
         {FLOAT_T, new StandardType("float", sizeof(float))},
         {DOUBLE_T, new StandardType("double", sizeof(double))},
         {LONG_DOUBLE_T, new StandardType("long double", sizeof(long double))},
         {VOID_T, new StandardType("void", 0)},
-        {ERROR_T, new StandardType("error", 0)}
+        {ERROR_T, new StandardType("error", 0)},
+        {SIGNED_T, new StandardType("signed", 0)},
+        {UNSIGNED_T, new StandardType("unsigned", 0)}
     };
 
     return type_specifiers;
@@ -251,7 +255,6 @@ class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* 
     }
 
     // If the right type is complex type -> Function, Array, Pointer make the return type as first one.
-
     switch (right->type_tag) {
     case FUNCTION_TYPE: {
         if (right->function_type->return_type == NULL || right->function_type->return_type->type_tag == NONE) {
@@ -283,10 +286,19 @@ class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* 
         if (left->type_tag == NONE) {
             right->struct_type->specifiers = combine_specs(left->getSpecifiers(), right->struct_type->specifiers);
             return right;
+        } else if (left->type_tag == ENUM_TYPE) {
+            right->enum_type = left->enum_type;
+            right->struct_type = nullptr;
+            right->type_tag = ENUM_TYPE;
+            return right;
         }
         else return create_invalid_type("Cannot combine struct type with other types");
     }
+    case ENUM_TYPE: {
+        // only enum struct can be combined
+        // enum struct Color {RED, GREEN, BLUE}; is valid code
 
+    }
 
     }
     return right;
@@ -309,13 +321,17 @@ Specifiers* combine_specs(Specifiers* spec1, Specifiers* spec2) {
     }
 
     Specifiers* combined = new Specifiers();
-    combined->is_typedef = spec1->is_typedef || spec2->is_typedef;
-    combined->is_extern = spec1->is_extern || spec2->is_extern;
-    combined->is_static = spec1->is_static || spec2->is_static;
-    combined->is_auto = spec1->is_auto || spec2->is_auto;
-    combined->is_register = spec1->is_register || spec2->is_register;
-    combined->is_const = spec1->is_const || spec2->is_const;
-    combined->is_volatile = spec1->is_volatile || spec2->is_volatile;
+    auto combine_flag = [](bool a, bool b, const char* msg) {
+        if (a && b) throw std::runtime_error(msg);
+        return a || b;
+    };
+
+    combined->is_typedef = combine_flag(spec1->is_typedef, spec2->is_typedef, "Error: 'typedef' keyword is used more than once.");
+    combined->is_extern = combine_flag(spec1->is_extern, spec2->is_extern, "Error: 'extern' keyword is used more than once.");
+    combined->is_static = combine_flag(spec1->is_static, spec2->is_static, "Error: 'static' keyword is used more than once.");
+    combined->is_register = combine_flag(spec1->is_register, spec2->is_register, "Error: 'register' keyword is used more than once.");
+    combined->is_const = combine_flag(spec1->is_const, spec2->is_const, "Error: 'const' keyword is used more than once.");
+    combined->is_volatile = combine_flag(spec1->is_volatile, spec2->is_volatile, "Error: 'volatile' keyword is used more than once.");
     return combined;
 }
 

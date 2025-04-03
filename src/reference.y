@@ -414,7 +414,6 @@ storage_class_specifier
 	: TYPEDEF { $$ = new Specifier(); $$->is_typedef = true; }
 	| EXTERN { $$ = new Specifier(); $$->is_extern = true; }
 	| STATIC { $$ = new Specifier(); $$->is_static = true; }
-	| AUTO { $$ = new Specifier(); $$->is_auto = true; }
 	| REGISTER { $$ = new Specifier(); $$->is_register = true; }
 	;
 

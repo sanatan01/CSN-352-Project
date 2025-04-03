@@ -20,7 +20,7 @@ void yyerror(const char *s);
  %union {
 // 	Terminal* terminal;
     char *nice;
-// 	Expression* expression;
+ 	Expression* expression;
 // 	PrimaryExpression* primary_expression;
 // 	ArguemmentExpressionList* argument_expression_list;
 // 	UnaryExpression* unary_expression;
@@ -83,24 +83,24 @@ void yyerror(const char *s);
  %type<nice> statement
  %type<nice> statement_list
 
-// %type<expression> expression
-// %type<expression> assignment_expression
-// %type<expression> conditional_expression
-// %type<expression> logical_or_expression
-// %type<expression> logical_and_expression
-// %type<expression> inclusive_or_expression
-// %type<expression> exclusive_or_expression
-// %type<expression> and_expression
-// %type<expression> equality_expression
-// %type<expression> relational_expression
-// %type<expression> shift_expression
-// %type<expression> additive_expression
-// %type<expression> multiplicative_expression
-// %type<expression> cast_expression
-// %type<expression> unary_expression
-// %type<expression> postfix_expression
-// %type<expression> primary_expression
-// %type<expression> expression_statement
+%type<expression> expression
+%type<expression> assignment_expression
+%type<expression> conditional_expression
+%type<expression> logical_or_expression
+%type<expression> logical_and_expression
+%type<expression> inclusive_or_expression
+%type<expression> exclusive_or_expression
+%type<expression> and_expression
+%type<expression> equality_expression
+%type<expression> relational_expression
+%type<expression> shift_expression
+%type<expression> additive_expression
+%type<expression> multiplicative_expression
+%type<expression> cast_expression
+%type<expression> unary_expression
+%type<expression> postfix_expression
+%type<expression> primary_expression
+%type<expression> expression_statement
 // %type<argument_expression_list> argument_expression_list
 // %type<expression> constant_expression
 
@@ -174,24 +174,24 @@ void yyerror(const char *s);
 //     ;
 
 // /* Primary expressions */
-// primary_expression
-// 	: IDENTIFIER							{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
-// 	| CONSTANT 								{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
-// 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
-// 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
-// 	;
+primary_expression
+ 	: IDENTIFIER							{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
+ 	| CONSTANT 								{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
+ 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
+ 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
+ 	;
 
 // /* Postfix expressions */
-// postfix_expression
-// 	: primary_expression 											{ $$ = $1; }
-// 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
-// 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
+postfix_expression
+ 	: primary_expression 											{ $$ = $1; }
+ 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
+ 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
 // 	| IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
 // 	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
 // 	| postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
-// 	| postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
-// 	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
-// 	;
+ 	| postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
+ 	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
+ 	;
 
 // /* Argument expression list for function calls */
 // argument_expression_list
@@ -200,103 +200,103 @@ void yyerror(const char *s);
 // 	;
 
 // /* Unary expressions */
-// unary_expression
-// 	: postfix_expression 						{ $$ = $1; }
-// 	| INC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
-// 	| DEC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
-// 	| unary_operator cast_expression 			{ $$ = create_unary_expression_cast($1, $2); }
-// 	| SIZEOF unary_expression 					{ $$ = create_unary_expression($1, $2); }
-// 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	{ $$ = create_unary_expression($1, $3); }
-// 	;
+unary_expression
+ 	: postfix_expression 						{ $$ = $1; }
+ 	| INC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
+ 	| DEC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
+ 	| unary_operator cast_expression 			{ $$ = create_unary_expression_cast($1, $2); }
+ 	| SIZEOF unary_expression 					{ $$ = create_unary_expression($1, $2); }
+ 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	{ $$ = create_unary_expression($1, $3); }
+ 	;
 
-// unary_operator
-// 	: AMPERSAND     { $$ = "&"; }
-// 	| ASTERISK      { $$ = "*"; }
-// 	| PLUS          { $$ = "+"; }
-// 	| MINUS         { $$ = "-"; }
-// 	| TILDE         { $$ = "~"; }
-// 	| EXCLAMATION   { $$ = "!"; }
-// 	;
+unary_operator
+	: AMPERSAND     { $$ = "&"; }
+ 	| ASTERISK      { $$ = "*"; }
+ 	| PLUS          { $$ = "+"; }
+ 	| MINUS         { $$ = "-"; }
+ 	| TILDE         { $$ = "~"; }
+ 	| EXCLAMATION   { $$ = "!"; }
+ 	;
 
 // /* Type casting */
-// cast_expression
-// 	: unary_expression 										{ $$ = $1; }
-// 	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ $$ = create_cast_expression_typename($2, $4); }
-// 	;
+cast_expression
+ 	: unary_expression 										{ $$ = $1; }
+ 	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ $$ = create_cast_expression_typename($2, $4); }
+ 	;
 
 // /* Arithmetic expressions */
-// multiplicative_expression
-// 	: cast_expression 										{ $$ = $1; }
-// 	| multiplicative_expression ASTERISK cast_expression 	{ $$ = create_expression(MULTIPLICATIVE, "*", $1, $3); }
-// 	| multiplicative_expression SLASH cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "/", $1, $3); }
-// 	| multiplicative_expression PERCENT cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "%", $1, $3); }
-// 	;
+multiplicative_expression
+ 	: cast_expression 										{ $$ = $1; }
+ 	| multiplicative_expression ASTERISK cast_expression 	{ $$ = create_expression(MULTIPLICATIVE, "*", $1, $3); }
+ 	| multiplicative_expression SLASH cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "/", $1, $3); }
+ 	| multiplicative_expression PERCENT cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "%", $1, $3); }
+ 	;
 
-// additive_expression
-// 	: multiplicative_expression 							{ $$ = $1; }
-// 	| additive_expression PLUS multiplicative_expression 	{ $$ = create_expression(ADDITIVE, "+", $1, $3); }
-// 	| additive_expression MINUS multiplicative_expression	{ $$ = create_expression(ADDITIVE, "-", $1, $3); }
-// 	;
+additive_expression
+ 	: multiplicative_expression 							{ $$ = $1; }
+ 	| additive_expression PLUS multiplicative_expression 	{ $$ = create_expression(ADDITIVE, "+", $1, $3); }
+ 	| additive_expression MINUS multiplicative_expression	{ $$ = create_expression(ADDITIVE, "-", $1, $3); }
+ 	;
 
-// shift_expression
-// 	: additive_expression									{ $$ = $1; }
-// 	| shift_expression LEFT_OP additive_expression			{ $$ = create_expression(SHIFT, "<<", $1, $3); }
-// 	| shift_expression RIGHT_OP additive_expression			{ $$ = create_expression(SHIFT, ">>", $1, $3); }
-// 	;
+shift_expression
+ 	: additive_expression									{ $$ = $1; }
+ 	| shift_expression LEFT_OP additive_expression			{ $$ = create_expression(SHIFT, "<<", $1, $3); }
+ 	| shift_expression RIGHT_OP additive_expression			{ $$ = create_expression(SHIFT, ">>", $1, $3); }
+ 	;
 
 // /* Relational expressions */
-// relational_expression
-// 	: shift_expression										{ $$ = $1; }
-// 	| relational_expression LESS_THAN shift_expression		{ $$ = create_expression(RELATIONAL, "<", $1, $3); }
-// 	| relational_expression GREATER_THAN shift_expression	{ $$ = create_expression(RELATIONAL, ">", $1, $3); }
-// 	| relational_expression LE_OP shift_expression			{ $$ = create_expression(RELATIONAL, "<=", $1, $3); }
-// 	| relational_expression GE_OP shift_expression			{ $$ = create_expression(RELATIONAL, ">=", $1, $3); }
-// 	;
+relational_expression
+ 	: shift_expression										{ $$ = $1; }
+ 	| relational_expression LESS_THAN shift_expression		{ $$ = create_expression(RELATIONAL, "<", $1, $3); }
+ 	| relational_expression GREATER_THAN shift_expression	{ $$ = create_expression(RELATIONAL, ">", $1, $3); }
+ 	| relational_expression LE_OP shift_expression			{ $$ = create_expression(RELATIONAL, "<=", $1, $3); }
+ 	| relational_expression GE_OP shift_expression			{ $$ = create_expression(RELATIONAL, ">=", $1, $3); }
+ 	;
 
-// equality_expression
-// 	: relational_expression									{ $$ = $1; }
-// 	| equality_expression EQ_OP relational_expression		{ $$ = create_expression(EQUALITY, "==", $1, $3); }
-// 	| equality_expression NE_OP relational_expression		{ $$ = create_expression(EQUALITY, "!=", $1, $3); }
-// 	;
+equality_expression
+ 	: relational_expression									{ $$ = $1; }
+ 	| equality_expression EQ_OP relational_expression		{ $$ = create_expression(EQUALITY, "==", $1, $3); }
+ 	| equality_expression NE_OP relational_expression		{ $$ = create_expression(EQUALITY, "!=", $1, $3); }
+ 	;
 
 // /* Bitwise expressions */
-// and_expression
-// 	: equality_expression									{ $$ = $1; }
-// 	| and_expression AMPERSAND equality_expression			{ $$ = create_expression(AND, "&", $1, $3); }
-// 	;
+and_expression
+ 	: equality_expression									{ $$ = $1; }
+ 	| and_expression AMPERSAND equality_expression			{ $$ = create_expression(AND, "&", $1, $3); }
+ 	;
 
-// exclusive_or_expression
-// 	: and_expression 										{ $$ = $1; }
-// 	| exclusive_or_expression CARET and_expression			{ $$ = create_expression(XOR, "^", $1, $3); }
-// 	;
+exclusive_or_expression
+ 	: and_expression 										{ $$ = $1; }
+ 	| exclusive_or_expression CARET and_expression			{ $$ = create_expression(XOR, "^", $1, $3); }
+ 	;
 
-// inclusive_or_expression
-// 	: exclusive_or_expression								{ $$ = $1; }
-// 	| inclusive_or_expression PIPE exclusive_or_expression	{ $$ = create_expression(OR, "|", $1, $3); }
-// 	;
+inclusive_or_expression
+ 	: exclusive_or_expression								{ $$ = $1; }
+ 	| inclusive_or_expression PIPE exclusive_or_expression	{ $$ = create_expression(OR, "|", $1, $3); }
+ 	;
 
 // /* Logical expressions */
-// logical_and_expression
-// 	: inclusive_or_expression								{ $$ = $1; }
-// 	| logical_and_expression AND_OP inclusive_or_expression	
-// 	;
+logical_and_expression
+ 	: inclusive_or_expression								{ $$ = $1; }
+ 	| logical_and_expression AND_OP inclusive_or_expression	
+ 	;
 
-// logical_or_expression
-// 	: logical_and_expression								{ $$ = $1; }
-// 	| logical_or_expression OR_OP logical_and_expression	
-// 	;
+ logical_or_expression
+ 	: logical_and_expression								{ $$ = $1; }
+ 	| logical_or_expression OR_OP logical_and_expression	
+ 	;
 
 // /* Conditional expression (ternary operator) */
-// conditional_expression
-// 	: logical_or_expression									{ $$ = $1; }
-// 	| logical_or_expression QUESTION expression COLON conditional_expression { $$ = create_expression(CONDITIONAL, "?:", $1, $3, $5); }
-// 	;
+ conditional_expression
+ 	: logical_or_expression									{ $$ = $1; }
+ 	| logical_or_expression QUESTION expression COLON conditional_expression { $$ = create_expression(CONDITIONAL, "?:", $1, $3, $5); }
+ 	;
 
 // /* Assignment */
-// assignment_expression
-// 	: conditional_expression								{ $$ = $1; }
+assignment_expression
+ 	: conditional_expression								{ $$ = $1; }
 // 	| unary_expression assignment_operator assignment_expression { $$ = create_expression(ASSIGNMENT, std::string($1), $2, $3); }
-// 	;
+ 	;
 
  assignment_operator
  	: ASSIGN		{ $$ = strdup("="); }
@@ -313,10 +313,10 @@ void yyerror(const char *s);
  	;
 
 // /* Expressions */
-// expression
-// 	: assignment_expression { $$ = $1; }
-// 	| expression COMMA assignment_expression { $$ = create_expression(TOPLEVEL, ' ', $1, $3); }
-// 	;
+expression
+ 	: assignment_expression { $$ = $1; }
+ 	| expression COMMA assignment_expression { $$ = create_expression(TOPLEVEL, ' ', $1, $3); }
+ 	;
 
 // constant_expression
 // 	: conditional_expression { $$ = $1; }
@@ -380,11 +380,7 @@ declaration_specifiers
  		$$ = $2;
  		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
  	}
-	;
-// 	// TODO: implement later
-//  | type_qualifier 
-// 		// TODO: implement later: storage_class_specifier { $$ = new GlobalType(); }
-// 	;
+	
 
  init_declarator_list
  	: init_declarator{
@@ -412,7 +408,6 @@ storage_class_specifier
  	: TYPEDEF { $$ = new Specifiers(); $$->is_typedef = true; }
  	| EXTERN { $$ = new Specifiers(); $$->is_extern = true; }
  	| STATIC { $$ = new Specifiers(); $$->is_static = true; }
- 	| AUTO { $$ = new Specifiers(); $$->is_auto = true; }
  	| REGISTER { $$ = new Specifiers(); $$->is_register = true; }
  	;
 
@@ -422,15 +417,19 @@ type_specifier
 	| VOID     { $$ = create_primitive_type(VOID_T); }
 	| CHAR     { $$ = create_primitive_type(CHAR_T); }
 	| SHORT    { $$ = create_primitive_type(SHORT_T); }
+	| SHORT INT   { $$ = create_primitive_type(SHORT_T); }
 	| LONG     { $$ = create_primitive_type(LONG_T); }
+	| LONG INT { $$ = create_primitive_type(LONG_T); }
+	| LONG LONG { $$ = create_primitive_type(LLONG_T); }
+	| LONG LONG INT { $$ = create_primitive_type(LLONG_T); }
 	| FLOAT    { $$ = create_primitive_type(FLOAT_T); }
 	| DOUBLE   { $$ = create_primitive_type(DOUBLE_T); }
-// 	/* | SIGNED   { $$ = new GlobalType(); $$->standard_type = type_specifiers[SIGNED_T]; } */
-// 	/* | UNSIGNED { $$ = new GlobalType(); $$->standard_type = type_specifiers[UNSIGNED_T]; } */
+	| LONG DOUBLE { $$ = create_primitive_type(LONG_DOUBLE_T); }
+	| SIGNED   { $$ = create_primitive_type(SIGNED_T); }
+	| UNSIGNED { $$ = create_primitive_type(UNSIGNED_T); }
  	| struct_specifier { $$ = create_struct_type($1); }
  	| union_specifier { $$ = create_union_type($1); }
  	| enum_specifier { $$ = create_enum_type($1); }
-// 	/* | TYPE_NAME { $$ = new GlobalType(); $$->type_name = $1; } */
 // 	| type_specifier pointer {
 // 		$$ = new GlobalType();
 // 		$$->pointer_type = $2;
@@ -753,10 +752,10 @@ parameter_list
 // 	| statement_list statement
 // 	;
 
-// expression_statement
-// 	: SEMICOLON
-// 	| expression SEMICOLON
-// 	;
+expression_statement
+ 	: SEMICOLON
+ 	| expression SEMICOLON { SymbolTable::add_symbol($1); }
+ 	;
 
 // /* Control flow */
 // selection_statement
@@ -765,10 +764,10 @@ parameter_list
 // 	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
 // 	;
 
-declaration_statement
- 	: SEMICOLON
- 	| declaration
- 	;
+//declaration_statement
+// 	: SEMICOLON
+// 	| declaration
+// 	;
 
 // iteration_statement
 // 	: WHILE LEFT_PAREN expression RIGHT_PAREN statement
@@ -790,6 +789,7 @@ declaration_statement
  translation_unit
  	: external_declaration
  	| translation_unit external_declaration
+	| expression_statement
 // 	| translation_unit error_statement_closed
  	;
 

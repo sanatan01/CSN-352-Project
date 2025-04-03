@@ -8,7 +8,18 @@
 #include <3ac.h>
 
 // --------------------------------------------------------------------------------------------
-class Expression: public NonTerminal {
+class ExpressionType{
+public:
+  std::string type;
+  int ptr_level;
+
+  ExpressionType(std::string type, int ptr_level=0) {
+    this->type = type;
+    this->ptr_level = ptr_level;
+  }
+}
+
+class Expression {
 public:
   GlobalType type;
   int num_operands;
@@ -142,7 +153,7 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
 Expression* create_postfix_expr_ido(Terminal* op, Expression* pe);
 
 // --------------------------------------------------------------------------------------------
-class Constant: public Terminal {
+class Constant {
 public:
   Constant(const char* name, const char* value, unsigned int line_num, unsigned int column);
   GlobalType constant_type;
@@ -157,7 +168,9 @@ public:
 Constant* create_constant(const char* name, const char* value, unsigned int line_num, unsigned int column);
 
 // --------------------------------------------------------------------------------------------
-class StringLiteral: public Terminal {
+class StringLiteral{
 public:
   StringLiteral(const char* name);
 };
+
+Expression *create_assignment_expression(OpExpression *oe, Node *n_op);

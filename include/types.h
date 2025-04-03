@@ -20,11 +20,15 @@ enum PrimitiveTypes {
 	U_INT_T,
 	INT_T,
 	U_LONG_T,
+	LLONG_T,
+	U_LLONG_T,
 	LONG_T,
 	FLOAT_T,
 	DOUBLE_T,
 	LONG_DOUBLE_T,
 	VOID_T,
+	SIGNED_T,
+	UNSIGNED_T,
 };
 
 class Specifiers {
@@ -32,7 +36,6 @@ public:
 	bool is_typedef;
 	bool is_extern;
 	bool is_static;
-	bool is_auto;
 	bool is_register;
 	bool is_const;
 	bool is_volatile;
@@ -41,7 +44,6 @@ public:
 		is_typedef(false),
 		is_extern(false),
 		is_static(false),
-		is_auto(false),
 		is_register(false),
 		is_const(false),
 		is_volatile(false) {};
@@ -97,9 +99,6 @@ public:
 		}
 		if (specifiers->is_static) {
 			st += "static ";
-		}
-		if (specifiers->is_auto) {
-			st += "auto ";
 		}
 		if (specifiers->is_register) {
 			st += "register ";
@@ -362,13 +361,53 @@ public:
 
 	void setSpecifiers(Specifiers* specifiers) {
 		switch (type_tag) {
-		case STANDARD_TYPE: standard_type->specifiers = specifiers; break;
-		case STRUCT_TYPE: struct_type->specifiers = specifiers; break;
-		case UNION_TYPE: union_type->specifiers = specifiers; break;
-		case ARRAY_TYPE: array_type->specifiers = specifiers; break;
-		case FUNCTION_TYPE: function_type->specifiers = specifiers; break;
-		case POINTER_TYPE: pointer_type->specifiers = specifiers; break;
-		case ENUM_TYPE: enum_type->specifiers = specifiers; break;
+		case STANDARD_TYPE: {
+			if (specifiers->is_register) {
+				std::cerr << "Error: Pointer cannot be defined with register keywords" << std::endl;
+			}
+			standard_type->specifiers = specifiers; 
+			break;
+		}
+		case STRUCT_TYPE: {
+			if ( specifiers->is_register) {
+				std::cerr << "Error: Struct cannot be defined with register keywords" << std::endl;
+			}
+			struct_type->specifiers = specifiers;
+			break;}
+		case UNION_TYPE: {
+			if (specifiers->is_extern || specifiers->is_static  || specifiers->is_register) {
+				std::cerr << "Error: Union cannot be defined with extern, static, volatile keywords" << std::endl;
+			}
+			union_type->specifiers = specifiers;
+			break;
+		}
+		case ARRAY_TYPE: {
+			if (specifiers->is_register) {
+				std::cerr << "Error: Pointer cannot be defined with register keywords" << std::endl;
+			}
+			array_type->specifiers = specifiers; 
+			break;
+		}
+		case FUNCTION_TYPE: {
+			if (specifiers->is_typedef || specifiers->is_register || specifiers->is_volatile) {
+				std::cerr << "Error: Function cannot be defined with typedef, register, volatile keywords" << std::endl;
+			}
+			function_type->specifiers = specifiers;
+			break;}
+		case POINTER_TYPE: {
+			if (specifiers->is_register) {
+				std::cerr << "Error: Pointer cannot be defined with register, keywords" << std::endl;
+			}
+			pointer_type->specifiers = specifiers; 
+			break;
+		}
+		case ENUM_TYPE: {
+			if (specifiers->is_const || specifiers->is_volatile || specifiers->is_extern || specifiers->is_static || specifiers->is_register) {
+				std::cerr << "Error: Enum cannot be defined with const, volatile, extern, static, register keywords" << std::endl;
+			}
+			enum_type->specifiers = specifiers; 
+			break;
+		}
 		default: break;
 		}
 	}
