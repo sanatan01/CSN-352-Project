@@ -1,4 +1,4 @@
-#include <ast.hpp>
+#include <ast.h>
 #include<assert.h>
 #include<string>
 #include<iostream>
@@ -7,7 +7,7 @@
 static unsigned long long int id_count = 0;
 
 unsigned long long int get_next_node_id() {
-	return id_count++;
+    return id_count++;
 }
 
 // Constructors
@@ -18,12 +18,12 @@ Node::Node(unsigned int line_num, unsigned int column) {
     this->id = get_next_node_id();
 }
 
-Terminal::Terminal(const char * name_, const char * value_, unsigned int _line_num=0, unsigned int _column=0) : Node(_line_num, _column) {
+Terminal::Terminal(const char* name_, const char* value_, unsigned int _line_num = 0, unsigned int _column = 0): Node(_line_num, _column) {
     this->name = name_;
     this->value = value_;
 }
 
-NonTerminal::NonTerminal(const char * name_) {
+NonTerminal::NonTerminal(const char* name_) {
     this->name = name_;
 }
 
@@ -35,27 +35,27 @@ void Node::add_children(std::initializer_list<Node*> nodes) {
 }
 
 void Terminal::dotify() {
-	if(is_printed){
-		is_printed = 0;
-		std::stringstream ss;
-		ss << "\t" << id << " [label=\"" << name << " : " << value << "\"];\n";
-		file_writer(ss.str());
-	}
+    if (is_printed) {
+        is_printed = 0;
+        std::stringstream ss;
+        ss << "\t" << id << " [label=\"" << name << " : " << value << "\"];\n";
+        file_writer(ss.str());
+    }
 }
 void NonTerminal::dotify() {
-	if(is_printed){
-		is_printed = 0;
-		std::stringstream ss;
-		ss << "\t" << id << " [label=\"" << name << "\"];\n";
-		for (auto it = children.begin(); it != children.end(); it++) {
-			ss << "\t" << id << " -> " << (*it)->id << ";\n";
-		}
-		file_writer(ss.str());
+    if (is_printed) {
+        is_printed = 0;
+        std::stringstream ss;
+        ss << "\t" << id << " [label=\"" << name << "\"];\n";
+        for (auto it = children.begin(); it != children.end(); it++) {
+            ss << "\t" << id << " -> " << (*it)->id << ";\n";
+        }
+        file_writer(ss.str());
 
-		for(auto it = children.begin(); it != children.end(); it++){
-			(*it)->dotify();
-		}
-	}
+        for (auto it = children.begin(); it != children.end(); it++) {
+            (*it)->dotify();
+        }
+    }
 }
 
 void NonTerminal::add_children(std::initializer_list<Node*> nodes) {
@@ -66,15 +66,15 @@ void NonTerminal::add_children(std::initializer_list<Node*> nodes) {
 
 // Creation of nodes
 
-Terminal * create_terminal(const char * name, const char * value, unsigned int line_num=0, unsigned int column=0) {
-    Terminal * newTerminal = new Terminal(name, value, line_num, column);
+Terminal* create_terminal(const char* name, const char* value, unsigned int line_num = 0, unsigned int column = 0) {
+    Terminal* newTerminal = new Terminal(name, value, line_num, column);
     return newTerminal;
 }
 
-Node * create_non_terminal(const char * name, std::initializer_list<Node*> nodes) {
-    NonTerminal * newNonTerminal = new NonTerminal(name);
+Node* create_non_terminal(const char* name, std::initializer_list<Node*> nodes) {
+    NonTerminal* newNonTerminal = new NonTerminal(name);
     newNonTerminal->add_children(nodes);
-    if(nodes.size() == 0) {
+    if (nodes.size() == 0) {
         delete newNonTerminal;
         return nullptr;
     }

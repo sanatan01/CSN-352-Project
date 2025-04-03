@@ -1,3 +1,10 @@
 syntax_analyser
 lexer
 .DS_Store
+.vscode/
+include/y.tab.h
+src/y.tab.c
+src/lex.yy.c
+include/y.tab.h
+output/*
+src/stack.hh
