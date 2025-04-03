@@ -8,20 +8,21 @@
 #include <3ac.h>
 
 // --------------------------------------------------------------------------------------------
-class ExpressionType{
+class ConstantType{
 public:
-  std::string type;
+  int type;
   int ptr_level;
+  std::string value;
 
-  ExpressionType(std::string type, int ptr_level=0) {
+  ConstantType(int type, int ptr_level=0) {
     this->type = type;
     this->ptr_level = ptr_level;
   }
-}
+};
 
 class Expression {
 public:
-  GlobalType type;
+  ConstantType type;
   int num_operands;
   Address* res;
   std::vector<GoTo*> truelist;
@@ -155,11 +156,14 @@ Expression* create_postfix_expr_ido(Terminal* op, Expression* pe);
 // --------------------------------------------------------------------------------------------
 class Constant {
 public:
-  Constant(const char* name, const char* value, unsigned int line_num, unsigned int column);
-  GlobalType constant_type;
+  Constant(std::string name, std::string value, unsigned int line_num=0, unsigned int column=0):
+    name(name), value(value), line_num(line_num), column(column) {
+    constant_type.type = "constant";
+  }
+  ConstantType constant_type;
 
   std::string getConstantType() {
-    return constant_type.getType();
+    return constant_type.type;
   }
   void negate();
 
@@ -168,9 +172,12 @@ public:
 Constant* create_constant(const char* name, const char* value, unsigned int line_num, unsigned int column);
 
 // --------------------------------------------------------------------------------------------
-class StringLiteral{
+class StringLiteral: public Constant {
 public:
-  StringLiteral(const char* name);
+  StringLiteral(std::string name){
+    constant_type.type = "string";
+    constant_type.value = name;
+  }
 };
 
 Expression *create_assignment_expression(OpExpression *oe, Node *n_op);

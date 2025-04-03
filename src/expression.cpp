@@ -448,9 +448,9 @@ Expression *and_expression(OpExpression *oe)
 // utils
 Expression *xor_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    if (op1Type.type == "InvalidType" || op2Type.type == "InvalidType")
     {
         oe->type.invalid_type = &INVALID_TYPE;
         return oe;
