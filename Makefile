@@ -27,7 +27,7 @@ clean:
 
 build: $(BISON_OUT) $(FLEX_OUT)
 	@echo "Compiling the generated C files with g++..."
-	g++ -o $(EXECUTABLE) $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
+	g++ -o --std=c++11 $(EXECUTABLE) $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
 
 $(BISON_OUT) $(BISON_HDR_TMP): $(BISON_SRC)
 	@echo "Compiling $(BISON_SRC) with bison..."

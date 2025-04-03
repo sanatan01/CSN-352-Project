@@ -28,7 +28,7 @@ public:
 // A static symbol table to store and manage symbols
 class SymbolTable {
 private:
-  static std::unordered_map<std::string, std::vector<Symbol>> symbol_map;
+  static std::unordered_map<std::string, std::vector<Symbol> > symbol_map;
   static int current_scope_level;
 
 public:

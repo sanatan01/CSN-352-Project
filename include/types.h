@@ -10,6 +10,7 @@
 
 // Todo: remove this later
 #include <iostream>
+
 // --------------------------------------PRIMITVE TYPES----------------------------------------
 enum PrimitiveTypes
 {
@@ -42,16 +43,12 @@ public:
 	bool is_const;
 	bool is_volatile;
 
-	Specifiers() : is_typedef(false),
-				   is_extern(false),
-				   is_static(false),
-				   is_register(false),
-				   is_const(false),
-				   is_volatile(false) {};
+	Specifiers();
 };
 
-// TODO: this is supposed to throw errors when same symbol is defined twice
 Specifiers *combine_specs(Specifiers *spec1, Specifiers *spec2);
+
+// -------------------------------------IDENTIFIER----------------------------------------
 
 class Identifier
 {
@@ -61,6 +58,8 @@ public:
 	Identifier(std::string name, unsigned int _line_num = 0, unsigned int _column = 0);
 	Identifier(class GlobalType *type);
 };
+
+// -------------------------------------STANDARD TYPE----------------------------------------
 
 class StandardType
 {
@@ -73,51 +72,12 @@ public:
 
 	// Important: Always use references when creating the objects to prevent object slicing
 	virtual bool isEqual(const StandardType &obj) const;
+	bool operator==(const StandardType &obj) const { return isEqual(obj); };
+	bool operator!=(const StandardType &obj) const { return !(*this == obj); };
 
-	bool operator==(const StandardType &obj) const
-	{
-		return isEqual(obj);
-	};
-
-	bool operator!=(const StandardType &obj) const
-	{
-		return !(*this == obj);
-	};
-
-	std::string getSpecifierName() const
-	{
-		std::string st = "";
-		if (specifiers == nullptr)
-		{
-			return name;
-		}
-		if (specifiers->is_const)
-		{
-			st += "const ";
-		}
-		if (specifiers->is_volatile)
-		{
-			st += "volatile ";
-		}
-		if (specifiers->is_typedef)
-		{
-			st += "typedef ";
-		}
-		if (specifiers->is_extern)
-		{
-			st += "extern ";
-		}
-		if (specifiers->is_static)
-		{
-			st += "static ";
-		}
-		if (specifiers->is_register)
-		{
-			st += "register ";
-		}
-		return st + name;
-	}
+	std::string getSpecifierName() const;
 };
+
 extern std::unordered_map<PrimitiveTypes, StandardType *> type_specifiers;
 
 // -------------------------------------STRUCT----------------------------------------
@@ -144,7 +104,6 @@ class Struct : public StandardType
 public:
 	VectorStructElement members;
 	std::string struct_name;
-	// TODO: remember to add the "struct" as the name of the standard type
 	Struct(std::string name, VectorStructElement *members);
 	Struct(std::string name);
 	Struct(VectorStructElement *members);
@@ -171,10 +130,10 @@ public:
 	unsigned int dim;
 	std::vector<unsigned int> dims;
 	ArrayType(unsigned int dim, class GlobalType *type, std::vector<unsigned int> dims, std::string name);
-	ArrayType() : dim(0),
-				  return_type(nullptr),
-				  dims(std::vector<unsigned int>()) {};
+	ArrayType();
 };
+
+// -------------------------------------FUNCTION----------------------------------------
 
 class VectorIdentifiers
 {
@@ -186,8 +145,6 @@ public:
 	void add_identifiers(VectorIdentifiers *other);
 };
 
-// -------------------------------------FUNCTION----------------------------------------
-
 class FunctionType : public StandardType
 {
 public:
@@ -196,10 +153,7 @@ public:
 	class GlobalType *return_type;
 
 	FunctionType(class GlobalType *return_type, class VectorIdentifiers *args);
-	size_t get_num_args()
-	{
-		return args.identifiers.size();
-	}
+	size_t get_num_args() const;
 };
 
 // -------------------------------------POINTER----------------------------------------
@@ -257,6 +211,7 @@ public:
 };
 
 // -------------------------------------GLOBAL TYPES----------------------------------------
+
 enum GlobalTypeTag
 {
 	STANDARD_TYPE,
@@ -294,12 +249,19 @@ public:
 };
 
 class GlobalType *create_enum_type(EnumType *_enum, Specifiers *specifiers = nullptr);
+
 class GlobalType *create_union_type(Union *_union, Specifiers * = nullptr);
+
 class GlobalType *create_struct_type(Struct *_struct, Specifiers *specifiers = nullptr);
+
 class GlobalType *create_primitive_type(PrimitiveTypes type, Specifiers *specifiers = nullptr);
+
 class GlobalType *create_function_type(class GlobalType *return_type, class VectorIdentifiers *args, Specifiers *specifiers = nullptr);
+
 class GlobalType *create_pointer_type(class GlobalType *return_type, int ptr_level = 1, Specifiers *specifiers = nullptr);
+
 class GlobalType *create_default_pointer_type();
+
 class GlobalType *create_invalid_type(std::string err_message, int line_num = 0, int column = 0);
 
 class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *right);

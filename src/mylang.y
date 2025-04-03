@@ -287,7 +287,7 @@ logical_and_expression
  	;
 
 // /* Conditional expression (ternary operator) */
- conditional_expression
+conditional_expression
  	: logical_or_expression									{ $$ = $1; }
  	| logical_or_expression QUESTION expression COLON conditional_expression { $$ = create_expression(CONDITIONAL, "?:", $1, $3, $5); }
  	;
@@ -374,7 +374,7 @@ declaration_specifiers
 		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
  	}
  	| type_specifier declaration_specifiers { 
- 		/* $$ = combine_global_type($1, $2); */
+ 		$$ = combine_global_type($1, $2);
  	}
  	| type_qualifier declaration_specifiers {
  		$$ = $2;
@@ -430,12 +430,10 @@ type_specifier
  	| struct_specifier { $$ = create_struct_type($1); }
  	| union_specifier { $$ = create_union_type($1); }
  	| enum_specifier { $$ = create_enum_type($1); }
-// 	| type_specifier pointer {
-// 		$$ = new GlobalType();
-// 		$$->pointer_type = $2;
-// 		$$->pointer_type->type = $1;
-// 	}
-// 	;
+	| type_specifier pointer {
+		$$ = create_pointer_type($1, $2->ptr_level, $1->getSpecifiers());
+	}
+	;
 
 // /* Struct and union specifiers */
 struct_specifier
@@ -482,23 +480,15 @@ struct_declaration
 
  specifier_qualifier_list
  	: type_specifier specifier_qualifier_list {
- 		// TODO: 
 		$$ = combine_global_type($1, $2);
  	}
  	| type_specifier{
-			$$ = $1;
+		$$ = $1;
 	}
  	| type_qualifier specifier_qualifier_list{
 		$$=$2;
 		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
 	}
-
-
-	//TODO: later
- 	/* | type_qualifier{
-		$$ = new GlobalType();
-		$$->setSpecifiers($1);
-	} */
  	;
 
  struct_declarator
@@ -660,12 +650,7 @@ parameter_list
  parameter_declaration
  	: declaration_specifiers declarator {
  		$$ = $2;
-		if ($$->type->type_tag == NONE) {
-			$$->type = $1;
-		} else {
-			$$->type = create_pointer_type($1, $$->type->pointer_type->ptr_level, $1->getSpecifiers());
-		}
-		// TODO: Add combine_global_type function here depending on what type is the function
+		$$ = combine_global_type($1, $2);
  	}
 	;
 // 	// Todo: | declaration_specifiers abstract_declarator
@@ -680,10 +665,10 @@ parameter_list
 // 	}
 // 	;
 
-// type_name
-// 	: specifier_qualifier_list
+type_name
+ 	: specifier_qualifier_list
 // 	| specifier_qualifier_list abstract_declarator
-// 	;
+ 	;
 
 // abstract_declarator
 // 	: pointer
@@ -801,28 +786,27 @@ expression_statement
 
 function_identifier
  	: IDENTIFIER { $$ = new Identifier($1); }
- 	| pointer function_identifier{ 
+ 	| pointer function_identifier { 
  		$$ = $2; 
  		if($$->type->type_tag == NONE) {
  			$$->type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
  		} else{
  			$$->type->pointer_type->ptr_level = $1->ptr_level;
  		}
-		
  	}
  	;
 
 function_declaration
 	: declaration_specifiers function_identifier LEFT_PAREN RIGHT_PAREN {
 		$$ = $2;
-		if($$->type->type_tag == NONE) {
+		if ( $$->type->type_tag == NONE ) {
 			$$->type = create_function_type($1, new VectorIdentifiers(), $2->type->getSpecifiers());
 		} else {
 			class GlobalType* temp = create_pointer_type($1, $$->type->pointer_type->ptr_level);
 			$$->type = create_function_type(temp, new VectorIdentifiers(), $2->type->getSpecifiers());
 		}
 	}
-	| declaration_specifiers function_identifier LEFT_PAREN parameter_list RIGHT_PAREN{
+	| declaration_specifiers function_identifier LEFT_PAREN parameter_list RIGHT_PAREN {
 		$$ = $2;
 		if($$->type->type_tag == NONE) {
 			$$->type = create_function_type($1, $4, $2->type->getSpecifiers());
@@ -833,18 +817,13 @@ function_declaration
 	}
 ;
 
- function_definition
- 	 : function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));} compound_statement	 { 
+function_definition
+ 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); } compound_statement { 
  		$$ = $1;
 		SymbolTable::exit_scope();
  		SymbolTable::add_symbol($$);
- 		}/*{ 
- 		$$ = $2;
- 		for (auto &element : $$->type->function_type->args) {
- 			SymbolTable::add_symbol(element);
- 		} */
-		
-		; 
+ 	}
+	; 
 
  INC_SCOPE: { SymbolTable::enter_scope(); };
  %%

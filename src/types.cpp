@@ -28,15 +28,51 @@ std::unordered_map<PrimitiveTypes, StandardType *> createStandardTypes()
     return type_specifiers;
 }
 
-Identifier::Identifier(std::string name, unsigned int _line_num, unsigned int _column) : type(new GlobalType())
+// -------------------------- Standard Methods ----------------------------
+
+Specifiers::Specifiers() : is_typedef(false), is_extern(false), is_static(false), is_register(false), is_const(false), is_volatile(false) {}
+
+bool combine_flag(bool a, bool b, std::string err)
 {
-    this->name = name;
+    if (a && b)
+        std::cerr << err << std::endl;
+    return a || b;
 }
 
-Identifier::Identifier(class GlobalType *type) : type(type)
+Specifiers *combine_specs(Specifiers *spec1, Specifiers *spec2)
 {
-    this->name = "";
+
+    if (spec1 == nullptr && spec2 == nullptr)
+    {
+        return new Specifiers();
+    }
+    else if (spec1 == nullptr)
+    {
+        Specifiers *spec = new Specifiers();
+        *spec = *spec2;
+        return spec;
+    }
+    else if (spec2 == nullptr)
+    {
+        Specifiers *spec = new Specifiers();
+        *spec = *spec1;
+        return spec;
+    }
+
+    Specifiers *combined = new Specifiers();
+
+    combined->is_typedef = combine_flag(spec1->is_typedef, spec2->is_typedef, "Error: 'typedef' keyword is used more than once.");
+    combined->is_extern = combine_flag(spec1->is_extern, spec2->is_extern, "Error: 'extern' keyword is used more than once.");
+    combined->is_static = combine_flag(spec1->is_static, spec2->is_static, "Error: 'static' keyword is used more than once.");
+    combined->is_register = combine_flag(spec1->is_register, spec2->is_register, "Error: 'register' keyword is used more than once.");
+    combined->is_const = combine_flag(spec1->is_const, spec2->is_const, "Error: 'const' keyword is used more than once.");
+    combined->is_volatile = combine_flag(spec1->is_volatile, spec2->is_volatile, "Error: 'volatile' keyword is used more than once.");
+    return combined;
 }
+
+Identifier::Identifier(std::string name, unsigned int _line_num, unsigned int _column) : type(new GlobalType()) { this->name = name; }
+
+Identifier::Identifier(class GlobalType *type) : type(type) { this->name = ""; }
 
 std::unordered_map<PrimitiveTypes, StandardType *> type_specifiers = createStandardTypes();
 
@@ -44,43 +80,82 @@ StandardType::StandardType() : name(""), size(0), specifiers(new Specifiers()) {
 
 StandardType::StandardType(std::string name, size_t size) : name(name), size(size) {}
 
-bool StandardType::isEqual(const StandardType &obj) const
-{
-    return name == obj.name && size == obj.size;
-}
+bool StandardType::isEqual(const StandardType &obj) const { return name == obj.name && size == obj.size; }
 
-ArrayType::ArrayType(unsigned int dim, class GlobalType *type, std::vector<unsigned int> dims, std::string name) : dim(dim), return_type(type), dims(dims)
+std::string StandardType::getSpecifierName() const
 {
-    this->name = name;
-    int cnt = 1;
-    for (auto &d : dims)
+    std::string st = "";
+    if (specifiers == nullptr)
     {
-        cnt *= d;
+        return name;
     }
-    this->size = cnt * type->getSize();
-}
-
-FunctionType::FunctionType(class GlobalType *return_type, class VectorIdentifiers *args) : return_type(return_type), args(*(args)) {}
-
-// VectorIdentifier to handle vectors in c
-VectorIdentifiers::VectorIdentifiers()
-{
-    this->identifiers = std::vector<Identifier>();
-}
-
-void VectorIdentifiers::add_identifier(Identifier *id)
-{
-    this->identifiers.push_back(*id);
-}
-void VectorIdentifiers::add_identifiers(VectorIdentifiers *other)
-{
-    for (auto &id : other->identifiers)
+    if (specifiers->is_const)
     {
-        this->identifiers.push_back(id);
+        st += "const ";
+    }
+    if (specifiers->is_volatile)
+    {
+        st += "volatile ";
+    }
+    if (specifiers->is_typedef)
+    {
+        st += "typedef ";
+    }
+    if (specifiers->is_extern)
+    {
+        st += "extern ";
+    }
+    if (specifiers->is_static)
+    {
+        st += "static ";
+    }
+    if (specifiers->is_register)
+    {
+        st += "register ";
+    }
+    return st + name;
+}
+
+// ---------------------------- Struct Class Methods ---------------------
+
+StructElement::StructElement(Identifier *id, size_t size) : id(id), size(size) {}
+
+VectorStructElement::VectorStructElement() : elements(std::vector<StructElement>()) {}
+
+void VectorStructElement::add_element(StructElement *element)
+{
+    this->elements.push_back(*element);
+}
+
+void VectorStructElement::add_elements(VectorStructElement *other)
+{
+    for (auto &element : other->elements)
+    {
+        this->elements.push_back(element);
     }
 }
 
-// Union
+Struct::Struct(std::string name) : StandardType("struct", 0), struct_name(name), members(VectorStructElement()) {}
+
+Struct::Struct(std::string name, VectorStructElement *members1) : StandardType("struct", 0), struct_name(name), members(*(members1))
+{
+    this->size = 0;
+    for (auto &member : members1->elements)
+    {
+        this->size += member.size;
+    }
+}
+
+Struct::Struct(VectorStructElement *members1) : StandardType("struct", 0), struct_name("Default"), members(*(members1))
+{
+    this->size = 0;
+    for (auto &member : members1->elements)
+    {
+        this->size += member.size;
+    }
+}
+
+// --------------------------- Union Class Methods ---------------------------
 
 Union::Union(std::string name) : StandardType("union", 0), union_name(name), members(VectorStructElement()) {}
 
@@ -108,46 +183,49 @@ Union::Union(std::string name, VectorStructElement *members1) : StandardType("un
     }
 }
 
-// Struct
+// --------------------------- Array Class Methods ---------------------------
 
-Struct::Struct(std::string name) : StandardType("struct", 0), struct_name(name), members(VectorStructElement()) {}
-
-Struct::Struct(std::string name, VectorStructElement *members1) : StandardType("struct", 0), struct_name(name), members(*(members1))
+ArrayType::ArrayType(unsigned int dim, class GlobalType *type, std::vector<unsigned int> dims, std::string name) : dim(dim), return_type(type), dims(dims)
 {
-    this->size = 0;
-    for (auto &member : members1->elements)
+    this->name = name;
+    int cnt = 1;
+    for (auto &d : dims)
     {
-        this->size += member.size;
+        cnt *= d;
+    }
+    this->size = cnt * type->getSize();
+}
+
+ArrayType::ArrayType() : dim(0), return_type(nullptr), dims(std::vector<unsigned int>()) {};
+
+// -------------------------- Function Class Methods --------------------------
+
+VectorIdentifiers::VectorIdentifiers()
+{
+    this->identifiers = std::vector<Identifier>();
+}
+
+void VectorIdentifiers::add_identifier(Identifier *id)
+{
+    this->identifiers.push_back(*id);
+}
+
+void VectorIdentifiers::add_identifiers(VectorIdentifiers *other)
+{
+    for (auto &id : other->identifiers)
+    {
+        this->identifiers.push_back(id);
     }
 }
 
-Struct::Struct(VectorStructElement *members1) : StandardType("struct", 0), struct_name("Default"), members(*(members1))
+FunctionType::FunctionType(class GlobalType *return_type, class VectorIdentifiers *args) : return_type(return_type), args(*(args)) {}
+
+size_t FunctionType::get_num_args() const
 {
-    this->size = 0;
-    for (auto &member : members1->elements)
-    {
-        this->size += member.size;
-    }
+    return args.identifiers.size();
 }
 
-StructElement::StructElement(Identifier *id, size_t size) : id(id), size(size) {}
-
-VectorStructElement::VectorStructElement() : elements(std::vector<StructElement>()) {}
-
-void VectorStructElement::add_element(StructElement *element)
-{
-    this->elements.push_back(*element);
-}
-
-void VectorStructElement::add_elements(VectorStructElement *other)
-{
-    for (auto &element : other->elements)
-    {
-        this->elements.push_back(element);
-    }
-}
-
-// Pointer
+// -------------------------- Pointer Class Methods --------------------------
 
 PointerType::PointerType()
 {
@@ -160,14 +238,19 @@ PointerType::PointerType(class GlobalType *return_type)
     this->return_type = return_type;
 }
 
+// -------------------------------- Enum Class Methods --------------------------
+
 EnumElement::EnumElement(std::string name, int value) : name(name), value(value), is_defined(1) {}
+
 EnumElement::EnumElement(std::string name) : name(name), value(0), is_defined(0) {}
 
 VectorEnumElement::VectorEnumElement() : elements(std::vector<EnumElement>()) {}
+
 void VectorEnumElement::add_element(EnumElement *id)
 {
     this->elements.push_back(*id);
 }
+
 void VectorEnumElement::add_elements(VectorEnumElement *other)
 {
     for (auto &id : other->elements)
@@ -177,51 +260,19 @@ void VectorEnumElement::add_elements(VectorEnumElement *other)
 }
 
 EnumType::EnumType(std::string name, VectorEnumElement *enum_values) : StandardType("enum", sizeof(int)), enum_name(name), enum_values(*(enum_values)) {}
+
 EnumType::EnumType(VectorEnumElement *enum_values) : StandardType("enum", sizeof(int)), enum_name("Default"), enum_values(*(enum_values)) {}
+
 EnumType::EnumType(std::string name) : StandardType("enum", sizeof(int)), enum_name(name), enum_values(VectorEnumElement()) {}
 
+// -------------------------- InvalidType Class Methods -------------------------
+
 InvalidType::InvalidType(std::string _err_message, int _line_num, int _column) : line_num(_line_num), column(_column), err_message(_err_message) {}
-
-Specifiers *combine_specs(Specifiers *spec1, Specifiers *spec2)
-{
-
-    if (spec1 == nullptr && spec2 == nullptr)
-    {
-        return new Specifiers();
-    }
-    else if (spec1 == nullptr)
-    {
-        Specifiers *spec = new Specifiers();
-        *spec = *spec2;
-        return spec;
-    }
-    else if (spec2 == nullptr)
-    {
-        Specifiers *spec = new Specifiers();
-        *spec = *spec1;
-        return spec;
-    }
-
-    Specifiers *combined = new Specifiers();
-    auto combine_flag = [](bool a, bool b, const char *msg)
-    {
-        if (a && b)
-            throw std::runtime_error(msg);
-        return a || b;
-    };
-
-    combined->is_typedef = combine_flag(spec1->is_typedef, spec2->is_typedef, "Error: 'typedef' keyword is used more than once.");
-    combined->is_extern = combine_flag(spec1->is_extern, spec2->is_extern, "Error: 'extern' keyword is used more than once.");
-    combined->is_static = combine_flag(spec1->is_static, spec2->is_static, "Error: 'static' keyword is used more than once.");
-    combined->is_register = combine_flag(spec1->is_register, spec2->is_register, "Error: 'register' keyword is used more than once.");
-    combined->is_const = combine_flag(spec1->is_const, spec2->is_const, "Error: 'const' keyword is used more than once.");
-    combined->is_volatile = combine_flag(spec1->is_volatile, spec2->is_volatile, "Error: 'volatile' keyword is used more than once.");
-    return combined;
-}
 
 // -------------------------- GlobalType Class Methods -------------------------
 
 GlobalType::GlobalType() : standard_type(nullptr), struct_type(nullptr), union_type(nullptr), array_type(nullptr), function_type(nullptr), pointer_type(nullptr), enum_type(nullptr), invalid_type(nullptr), type_tag(NONE) {};
+
 GlobalType::~GlobalType()
 {
     if (standard_type != nullptr)
@@ -286,6 +337,7 @@ std::string GlobalType::getType() const
         return "None";
     }
 }
+
 size_t GlobalType::getSize() const
 {
     switch (type_tag)
@@ -308,6 +360,7 @@ size_t GlobalType::getSize() const
         return 0;
     }
 }
+
 bool GlobalType::isEqual(const class GlobalType &obj) const
 {
     if (type_tag != obj.type_tag)
@@ -332,6 +385,7 @@ bool GlobalType::isEqual(const class GlobalType &obj) const
         return false;
     }
 }
+
 Specifiers *GlobalType::getSpecifiers() const
 {
     switch (type_tag)
@@ -354,6 +408,7 @@ Specifiers *GlobalType::getSpecifiers() const
         return nullptr;
     }
 }
+
 void GlobalType::setSpecifiers(Specifiers *specifiers)
 {
     switch (type_tag)
@@ -516,37 +571,108 @@ class GlobalType *create_invalid_type(std::string err_message, int line_num, int
     return type;
 }
 
+bool has_signed(std::string name)
+{
+    return name.find("signed") != std::string::npos && name.find("unsigned") == std::string::npos;
+}
+
+bool has_unsigned(std::string name)
+{
+    return name.find("unsigned") != std::string::npos;
+}
+
+bool has_none(std::string name)
+{
+    return name.find("signed") == std::string::npos;
+}
+
+size_t get_new_size(std::string name)
+{
+    // Remove "signed" or "unsigned" from the name
+    name.erase(name.find("signed"), 6);
+    name.erase(name.find("unsigned"), 8);
+
+    // Trim leading and trailing spaces
+    name.erase(0, name.find_first_not_of(" "));
+    name.erase(name.find_last_not_of(" ") + 1);
+
+    // If the name is "long long", return sizeof(long long)
+    if (name == "int")
+    {
+        return sizeof(int);
+    }
+    else if (name == "void")
+    {
+        std::cerr << "Error: Cannot add signed and unsigned to void types" << std::endl;
+        return 0;
+    }
+    else if (name == "char")
+    {
+        return sizeof(char);
+    }
+    else if (name == "short" || name == "short int")
+    {
+        return sizeof(short);
+    }
+    else if (name == "long" || name == "long int")
+    {
+        return sizeof(long);
+    }
+    else if (name == "long long" || name == "long long int")
+    {
+        return sizeof(long long);
+    }
+    else if (name == "float")
+    {
+        return sizeof(float);
+    }
+    else if (name == "double")
+    {
+        return sizeof(double);
+    }
+    else if (name == "long double")
+    {
+        return sizeof(long double);
+    }
+    else
+    {
+        std::cerr << "Error: Unknown type" << std::endl;
+        return 0;
+    }
+}
+
+class GlobalType *combine_standard_type(class GlobalType *left, class GlobalType *right)
+{
+    // This function is called only when both have standard types, and either one of them has signed or unsigned.
+    class GlobalType *type = new GlobalType();
+    type->type_tag = STANDARD_TYPE;
+    type->standard_type = new StandardType();
+    type->standard_type->name = left->standard_type->name + " " + right->standard_type->name;
+    type->standard_type->size = get_new_size(type->standard_type->name);
+    return type;
+}
+
 class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *right)
 {
 
     // This function assumes that left was written before right
-
-    // If either type is none, return the other type
-    if (left->type_tag == NONE)
-    {
-        return right;
-    }
-    else if (right->type_tag == NONE)
-    {
-        return left;
-    }
-
-    // If either type is invalid, return the invalid type
-    if (left->type_tag == INVALID)
-    {
-        return left;
-    }
-    else if (right->type_tag == INVALID)
-    {
-        return right;
-    }
-
-    // If the right type is complex type -> Function, Array, Pointer make the return type as first one.
     switch (right->type_tag)
     {
+    case NONE:
+    {
+        if (left->type_tag == NONE)
+        {
+            return new GlobalType();
+        }
+        else
+        {
+            return left;
+        }
+    }
+
     case FUNCTION_TYPE:
     {
-        if (right->function_type->return_type == NULL || right->function_type->return_type->type_tag == NONE)
+        if (left->function_type->return_type == NULL || left->function_type->return_type->type_tag == NONE)
         {
             return right->function_type->return_type = left;
         }
@@ -557,9 +683,16 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
     }
     case ARRAY_TYPE:
     {
-        if (right->array_type->return_type == NULL || right->array_type->return_type->type_tag == NONE)
+        if (left->array_type->return_type == NULL || left->array_type->return_type->type_tag == NONE)
         {
             return right->array_type->return_type = left;
+        } else if (left->type_tag == ARRAY_TYPE ) {
+            // TODO: fix this combine array function
+            right->array_type->dim += left->array_type->dim;
+            for (unsigned int &i : left->array_type->dims)
+            {
+                right->array_type->dims.push_back(i);
+            }
         }
         else
         {
@@ -600,9 +733,69 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
     }
     case ENUM_TYPE:
     {
-        // only enum struct can be combined
-        // enum struct Color {RED, GREEN, BLUE}; is valid code
+        // cannot combine enum types with other types unless left is none
+        if (left->type_tag == NONE)
+        {
+            right->enum_type->specifiers = combine_specs(left->getSpecifiers(), right->enum_type->specifiers);
+            return right;
+        }
+        else
+        {
+            return create_invalid_type("Error: Cannot combine enum types with other types");
+        }
     }
+    case STANDARD_TYPE:
+        // If right is standard, left can't be anything other than standard
+
+        if (left->type_tag != STANDARD_TYPE)
+        {
+            return create_invalid_type("Error: Cannot combine standard types with other types");
+        }
+        if (has_unsigned(left->standard_type->name))
+        {
+            if (has_none(right->standard_type->name))
+            {
+                return combine_standard_type(left, right);
+            }
+            else if (has_signed(right->standard_type->name))
+            {
+                return create_invalid_type("Error: Cannot combine signed and unsigned types");
+            }
+            else if (has_unsigned(right->standard_type->name))
+            {
+                return create_invalid_type("Error: redeclaration of unsigned");
+            }
+        }
+        else if (has_signed(left->standard_type->name))
+        {
+            if (has_none(right->standard_type->name))
+            {
+                return combine_standard_type(left, right);
+            }
+            else if (has_signed(right->standard_type->name))
+            {
+                return create_invalid_type("Error: Cannot combine signed and unsigned types");
+            }
+            else if (has_unsigned(right->standard_type->name))
+            {
+                return create_invalid_type("Error: redeclaration of signed");
+            }
+        }
+        else if (has_none(left->standard_type->name))
+        {
+            if (has_signed(right->standard_type->name))
+            {
+                return create_invalid_type("Error: Cannot combine signed and unsigned types");
+            }
+            else if (has_unsigned(right->standard_type->name))
+            {
+                return create_invalid_type("Error: redeclaration of signed");
+            }
+            else
+            {
+                return combine_standard_type(left, right);
+            }
+        }
     }
     return right;
 }

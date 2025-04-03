@@ -1,7 +1,7 @@
 #include <symtab.h>
 
 // Initialize static members
-std::unordered_map<std::string, std::vector<Symbol>> SymbolTable::symbol_map;
+std::unordered_map<std::string, std::vector<Symbol> > SymbolTable::symbol_map;
 int SymbolTable::current_scope_level = 0;
 
 void SymbolTable::enter_scope() {

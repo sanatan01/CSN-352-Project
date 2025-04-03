@@ -8,6 +8,7 @@
 #include <3ac.h>
 
 // --------------------------------------------------------------------------------------------
+
 class ConstantType{
 public:
   int type;
@@ -162,7 +163,7 @@ public:
   }
   ConstantType constant_type;
 
-  std::string getConstantType() {
+  int getConstantType() {
     return constant_type.type;
   }
   void negate();
@@ -174,8 +175,8 @@ Constant* create_constant(const char* name, const char* value, unsigned int line
 // --------------------------------------------------------------------------------------------
 class StringLiteral: public Constant {
 public:
-  StringLiteral(std::string name){
-    constant_type.type = "string";
+  StringLiteral(int name){
+    constant_type.type = STRING;
     constant_type.value = name;
   }
 };
