@@ -7,6 +7,29 @@
 #include <symtab.h>
 #include <3ac.h>
 
+
+enum ConstantTypeEnum{
+  INVALID=0,
+  BOOL,
+  CHAR,
+  UNSIGNED_CHAR,
+  SHORT,
+  UNSIGNED_SHORT,
+  INT,
+  UNSIGNED_INT,
+  LONG,
+  UNSIGNED_LONG,
+  LONG_LONG,
+  UNSIGNED_LONG_LONG,
+  FLOAT,
+  UNSIGNED_FLOAT,
+  DOUBLE,
+  UNSIGNED_DOUBLE,
+  LONG_DOUBLE,
+  UNSIGNED_LONG_DOUBLE,
+  STRING,
+};
+
 // --------------------------------------------------------------------------------------------
 
 class ConstantType{
@@ -29,7 +52,8 @@ public:
   std::vector<GoTo*> truelist;
   std::vector<GoTo*> falselist;
 
-  Expression(): NonTerminal(""), res(nullptr) {};
+  Expression(ConstantType type, int num_operands, Address* res, std::vector<GoTo*> truelist, std::vector<GoTo*> falselist):
+    type(type), num_operands(num_operands), res(res), truelist(truelist), falselist(falselist) {};
 };
 
 // --------------------------------------------------------------------------------------------
