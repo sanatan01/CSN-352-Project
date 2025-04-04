@@ -179,10 +179,10 @@ void yyerror(const char *s);
 
 // /* Primary expressions */
 primary_expression
- 	: IDENTIFIER							{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
- 	| CONSTANT_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
+ 	: IDENTIFIER							{ $$ = create_expression_simple(IDENTIFIER_ET, std::string($1)); }
+ 	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
 // 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
- 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
+// 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
  	;
 
 // /* Postfix expressions */
@@ -213,13 +213,13 @@ unary_expression
 // 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	//{ $$ = create_unary_expression($1, $3); }
  	;
 
-unary_operator
-	: AMPERSAND     { $$ = strdup("&"); }
- 	| ASTERISK      { $$ = strdup("*"); }
- 	| PLUS          { $$ = strdup("+"); }
- 	| MINUS         { $$ = strdup("-"); }
- 	| TILDE         { $$ = strdup("~"); }
- 	| EXCLAMATION   { $$ = strdup("!"); }
+// unary_operator
+// 	: AMPERSAND     { $$ = strdup("&"); }
+//  	| ASTERISK      { $$ = strdup("*"); }
+//  	| PLUS          { $$ = strdup("+"); }
+//  	| MINUS         { $$ = strdup("-"); }
+//  	| TILDE         { $$ = strdup("~"); }
+//  	| EXCLAMATION   { $$ = strdup("!"); }
  	;
 
 // /* Type casting */
@@ -932,7 +932,7 @@ expression_statement
 
  /* Top-level constructs */
  translation_unit
- 	: expression_statement
+ 	: primary_expression
 // 	| external_declaration
 // 	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed

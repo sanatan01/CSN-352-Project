@@ -1,107 +1,123 @@
 #include <expression.h>
-#include <symtab.h>
 #include <cassert>
-#include <types.h>
 
-int line_num=0,column=0;
+int line_num = 0, column = 0;
 
-void error_msg(std::string msg, int line_num=0, int column=0)
-{
+void error_msg(std::string msg, int line_num = 0, int column = 0) {
     std::cerr << "Error: " << msg << " at line " << line_num << ", column " << column << std::endl;
 }
 
-void warning_msg(std::string msg, int line_num=0, int column=0)
-{
+void warning_msg(std::string msg, int line_num = 0, int column = 0) {
     std::cerr << "Warning: " << msg << " at line " << line_num << ", column " << column << std::endl;
 }
 
+Expression::Expression(PrimitiveTypes type, int num_operands): prim_type(static_cast<int>(type)), num_operands(num_operands), exp_type(create_primitive_type(type)) {};
+Expression::Expression(): prim_type(static_cast<int>(ERROR_T)), num_operands(0), exp_type(create_invalid_type("Invalid expression", line_num, column)) {};
 
-bool isInt(ConstantType op){
-    return (op.type>-1 && op.type<10);
+bool isInt(PrimitiveTypes op) {
+    return (op > -1 && op < 10);
 }
 
-bool isFloat(ConstantType op){
-    return (op.type>=10 && op.type<13);
+bool isFloat(PrimitiveTypes op) {
+    return (op >= 10 && op < 13);
 }
 
-void castTypes(ConstantType &op1, ConstantType &op2){
-    if (op1.type != op2.type){
-        if(op1.type == VOID_T || op2.type == VOID_T || op1.type == ERROR_T || op2.type == ERROR_T){
-            error_msg("Invalid types for operation", line_num, column);
-            op1.type = ERROR_T;
-            op2.type = ERROR_T;
-            return;
-        }
-        if(op1.type == BOOL_T){
-            op1.type = op2.type;
-            return;
-        }
-        if(op2.type == BOOL_T){
-            op2.type = op1.type;
-            return;
-        }
-        // Cast to the larger type based on enum order
-        // The enum is in sorted order of size, so higher enum value = larger type
-        if (op1.type > op2.type) {
-            // op1 is larger, cast op2 to op1's type
-            op2.type = op1.type;
-        } else {
-            // op2 is larger, cast op1 to op2's type
-            op1.type = op2.type;
-        }
+std::unordered_map<std::string, PrimitiveTypes> type_map = {
+    {"unsigned char", U_CHAR_T},
+    {"char", CHAR_T},
+    {"unsigned short", U_SHORT_T},
+    {"short", SHORT_T},
+    {"unsigned int", U_INT_T},
+    {"int", INT_T},
+    {"unsigned long", U_LONG_T},
+    {"long", LONG_T},
+    {"long long", LLONG_T},
+    {"unsigned long long", U_LLONG_T},
+    {"float", FLOAT_T},
+    {"double", DOUBLE_T},
+    {"long double", LONG_DOUBLE_T},
+    {"void", VOID_T},
+    {"error", ERROR_T},
+    {"bool", BOOL_T}
+  };
+
+// void castTypes(PrimitiveTypes& op1, PrimitiveTypes& op2) {
+//     if (op1 != op2) {
+//         if (op1 == VOID_T || op2 == VOID_T || op1 == ERROR_T || op2 == ERROR_T) {
+//             error_msg("Invalid types for operation", line_num, column);
+//             op1 = ERROR_T;
+//             op2 = ERROR_T;
+//             return;
+//         }
+//         if (op1 == BOOL_T) {
+//             op1 = op2;
+//             return;
+//         }
+//         if (op2 == BOOL_T) {
+//             op2 = op1;
+//             return;
+//         }
+//         // Cast to the larger type based on enum order
+//         // The enum is in sorted order of size, so higher enum value = larger type
+//         if (op1 > op2) {
+//             // op1 is larger, cast op2 to op1's type
+//             op2 = op1;
+//         }
+//         else {
+//             // op2 is larger, cast op1 to op2's type
+//             op1 = op2;
+//         }
+//     }
+// }
+
+void make_signed(PrimitiveTypes& op) {
+
+    if (op % 2 == 0 && op < 10 && op > -1) {
+        op = static_cast<PrimitiveTypes>(static_cast<int>(op) + 1);
     }
 }
-void make_signed(ConstantType &op)
-{
 
-    if(op.type%2==0 && op.type<10 && op.type>-1){
-        op.type++;
+void make_unsigned(PrimitiveTypes& op) {
+
+    if (op % 2 && op <10 && op >-1) {
+        op = static_cast<PrimitiveTypes>(static_cast<int>(op) - 1);
     }
 }
 
-void make_unsigned(ConstantType &op)
-{
-    if(op.type%2 && op.type<10 && op.type>-1){
-        op.type--;
-    }
-}
-bool isUnsigned(ConstantType op)
-{
-    if (op.type%2 == 0 && op.type<10 && op.type>-1)
-    {
+bool isUnsigned(PrimitiveTypes op) {
+    if (op % 2 == 0 && op <10 && op > -1) {
         return true;
     }
-    if(op.type>=10 && op.type<14){
+
+    if (op >= 10 && op < 14) {
         return true;
     }
+
     return false;
 }
-bool isInvalid(std::initializer_list<ConstantType> ops)
-{
+
+bool isInvalid(std::initializer_list<PrimitiveTypes> ops) {
     bool result = false;
-    for (ConstantType op : ops)
-    {
-        result = result || (op.type == ERROR_T);
+    for (PrimitiveTypes op : ops) {
+        result = result || (op == ERROR_T);
     }
     return result;
 }
 
-PrimaryExpression::PrimaryExpression() : Expression(ConstantType(ERROR_T), 0) {}
+// PrimaryExpression::PrimaryExpression(): Expression(PrimitiveTypes(ERROR_T), 0) {}
+
+
+// Expression* create_primary_expression(ExpressionType* typ) {
+//     PrimaryExpression* pe = new PrimaryExpression();
+//     pe->prim_type = *typ;
+//     return pe;
+// }
+
+ArgumentExprList::ArgumentExprList(): Expression() {}
 
 // TODO: Implement this
-Expression *create_primary_expression(ExpressionType *typ)
-{
-    PrimaryExpression *pe = new PrimaryExpression();
-    pe->type = *typ;
-    return pe;
-}
-
-ArgumentExprList::ArgumentExprList() : Expression() {}
-
-// TODO: Implement this
-ArgumentExprList *create_argument_expr_assignement(Expression *ase)
-{
-    ArgumentExprList *ae_list = new ArgumentExprList();
+ArgumentExprList* create_argument_expr_assignement(Expression* ase) {
+    ArgumentExprList* ae_list = new ArgumentExprList();
     ae_list->args.push_back(ase);
     // ArgumentExprList does not have any type as it is a composite entity
     // ae_list->name = "arguments";
@@ -109,8 +125,7 @@ ArgumentExprList *create_argument_expr_assignement(Expression *ase)
     return ae_list;
 }
 
-ArgumentExprList *create_argument_expr_list(ArgumentExprList *ae_list, Expression *ase)
-{
+ArgumentExprList* create_argument_expr_list(ArgumentExprList* ae_list, Expression* ase) {
     ae_list->args.push_back(ase);
     // ArgumentExprList does not have any type as it is a composite entity
     // ae_list->name = "arguments";
@@ -118,650 +133,701 @@ ArgumentExprList *create_argument_expr_list(ArgumentExprList *ae_list, Expressio
     return ae_list;
 }
 
-// utils
-Expression *multiplicative_expression(OpExpression *oe)
-{
 
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || op1Type.type == VOID_T || op2Type.type == VOID_T )
-    {
+Expression* multiplicative_expression(OpExpression* oe) {
+
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+
+
+    if (oe->op2.exp_type->type_tag == STANDARD_TYPE && oe->op1.exp_type->type_tag == STANDARD_TYPE && isInvalid({ op1Type, op2Type }) || op1Type == VOID_T || op2Type == VOID_T) {
         error_msg("Invalid types for multiplication" + oe->op, line_num, column);
-        oe->type = ConstantType(ERROR_T);
+        oe->prim_type = ERROR_T;
         return oe;
     }
 
-    if (oe->op == "*" || oe->op == "/")
-    {
+    if (oe->op == "*" || oe->op == "/") {
         bool op1Unsigned = isUnsigned(op1Type);
-        bool op2Unsigned = isUnsigned(op2Type); 
-            
-        if (!op1Unsigned && !op2Unsigned)
-        {
-                // Both are signed
-                ;
-            }
-            else if (op1Unsigned && op2Unsigned)
-            {
-                // Both are unsigned integers
-                oe->op += "u";
-            }
-            else if (!op1Unsigned && op2Unsigned)
-            {
-                // make op1 unsigned
-                oe->op += "u";
-            }
-            else if (op1Unsigned && !op2Unsigned)
-            {
-                // make op2 unsigned
-                oe->op += "u";
-            }
-            
-            oe->type = op1Type.type > op2Type.type ? op1Type : op2Type;
-            if(isUnsigned(op1Type) || isUnsigned(op2Type)){
-                make_unsigned(oe->type);
-            }
-            // add 3AC code
+        bool op2Unsigned = isUnsigned(op2Type);
+
+        if (!op1Unsigned && !op2Unsigned) {
+            // Both are signed
+            ;
+        }
+        else if (op1Unsigned && op2Unsigned) {
+            // Both are unsigned integers
+            oe->op += "u";
+        }
+        else if (!op1Unsigned && op2Unsigned) {
+            // make op1 unsigned
+            oe->op += "u";
+        }
+        else if (op1Unsigned && !op2Unsigned) {
+            // make op2 unsigned
+            oe->op += "u";
+        }
+
+        oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
+        if (isUnsigned(op1Type) || isUnsigned(op2Type)) {
+            PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
+            make_unsigned(tmp);
+            oe->prim_type = tmp;
+        }
+        // add 3AC code
     }
-    else if (oe->op == "%")
-    {
-        if (!isInt(op1Type) || !isInt(op2Type))
-        {
+    else if (oe->op == "%") {
+
+        if (!isInt(op1Type) || !isInt(op2Type)) {
             error_msg("Invalid types for modulo" + oe->op, line_num, column);
-            oe->type = ConstantType(ERROR_T);
+            oe->prim_type = ERROR_T;
             return oe;
         }
-        oe->type = op1Type;
-        make_unsigned(oe->type);
+        oe->prim_type = op1Type;
+        PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
+        make_unsigned(tmp);
+        oe->prim_type = tmp;
         // make it unsigned
 
         // add 3AC code
     }
-    else
-    {
+    else {
+        // Code should not reach here
         assert(0);
     }
 
     // oe->name = "multiplicative_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&oe->op1, n_op, &PrimitiveTypes(oe->op2.prim_type)});
     return oe;
 }
 
-// utils
-Expression *additive_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) )
-    {
+Expression* additive_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+    if (oe->op2.exp_type->type_tag == STANDARD_TYPE && oe->op1.exp_type->type_tag == STANDARD_TYPE && isInvalid({ op1Type, op2Type })) {
         error_msg("Invalid types for addition/subtraction " + oe->op, line_num, column);
-        oe->type = ConstantType(ERROR_T);
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         return oe;
     }
 
-    if (isInt(op1Type) && isInt(op2Type))
-    {
+    if (isInt(op1Type) && isInt(op2Type)) {
 
-        oe->type = op1Type.type>op2Type.type ? op1Type : op2Type;
-        make_unsigned(oe->type);
+        oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
+        PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
+        make_unsigned(tmp);
+        oe->prim_type = tmp;
         // 3AC code would be added here
     }
-    else if (isFloat(op1Type) && isFloat(op2Type))
-    {
-        oe->type = op1Type.type>op2Type.type ? op1Type : op2Type;
+    else if (isFloat(op1Type) && isFloat(op2Type)) {
+        oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
         // 3AC code would be added here
     }
-    else if ((isFloat(op1Type) && isInt(op2Type)) || (isInt(op1Type) && isFloat(op2Type)))
-    {
+    else if ((isFloat(op1Type) && isInt(op2Type)) || (isInt(op1Type) && isFloat(op2Type))) {
         oe->op += "f";
-        oe->type = op1Type.type>op2Type.type ? op1Type : op2Type;
+        oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
         // 3AC code would be added here
     }
-    else if (op1Type.ptr_level > 0 && isInt(op2Type))
-    { 
+    else if (oe->op1.exp_type->type_tag == POINTER_TYPE && isInt(op2Type)) {
         //TODO
-        oe->type = op1Type;
-        
+        oe->prim_type = ERROR_T;
+        oe->exp_type = oe->op1.exp_type;
+
         // 3AC code for pointer + int would be added here
     }
-    else if (op2Type.ptr_level > 0 && isInt(op1Type))
-    {
+    else if (oe->op2.exp_type->type_tag == POINTER_TYPE && isInt(op1Type)) {
         //TODO
-        oe->type = op2Type;
+        oe->prim_type = ERROR_T;
+        oe->exp_type = oe->op2.exp_type;
         // 3AC code for int + pointer would be added here
+    }
+    else {
+        error_msg("Invalid types for addition/subtraction " + oe->op, line_num, column);
+        oe->prim_type = ERROR_T;
+        return oe;
     }
 
     // oe->name = "additive_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     return oe;
 }
 
-// utils
-Expression *relational_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) )
-    {
-        oe->type = ConstantType(ERROR_T);
+Expression* relational_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+    if (isInvalid({ op1Type, op2Type })) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         error_msg("Invalid types for relational operation " + oe->op, line_num, column);
         return oe;
     }
 
-    if (oe->op == "<" || oe->op == ">" || oe->op == "<=" || oe->op == ">=")
-    {
+    if (oe->op == "<" || oe->op == ">" || oe->op == "<=" || oe->op == ">=") {
         // Check if both operands are numeric
-        if (isInt(op1Type) && isInt(op2Type))
-        {
-            oe->type = ConstantType(BOOL_T);
+        if (op1Type != VOID_T && op2Type != VOID_T && op1Type != ERROR_T && op2Type != ERROR_T) {
+            oe->prim_type = PrimitiveTypes(BOOL_T);
 
             // Add warning for signed/unsigned mismatch
             bool op1Unsigned = isUnsigned(op1Type);
             bool op2Unsigned = isUnsigned(op2Type);
-            if (op1Unsigned != op2Unsigned)
-            {
+            if (op1Unsigned != op2Unsigned) {
                 warning_msg("Comparison " + oe->op + " between signed and unsigned values", line_num, column);
             }
 
             // 3AC code would be added here
         }
     }
-    else
-    {
+    else {
         std::cerr << "Incorrect relation expression. Something went wrong\n";
     }
 
     // oe->name = "relational_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     // 3AC code would be added here
     return oe;
 }
 
 // utils
-Expression *shift_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) )
-    {
-        oe->type = ConstantType(ERROR_T);
+Expression* shift_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+    if (isInvalid({ op1Type, op2Type })) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         error_msg("Invalid types for shift operation " + oe->op, line_num, column);
         return oe;
     }
 
-    if (oe->op == "<<" || oe->op == ">>")
-    {
-
-            oe->type = op1Type;
+    if (oe->op == "<<" || oe->op == ">>") {
+        if (isInt(op1Type) && isInt(op2Type)) {
+            oe->prim_type = op1Type;
 
             // If first operand is unsigned, mark operation as unsigned
-            if (isUnsigned(op1Type))
-            {
+            if (isUnsigned(op1Type)) {
                 oe->op += "u";
             }
+        }
+        else {
+            error_msg("Invalid types for shift operation " + oe->op, line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
+        }
+
     }
-    else
-    {
+    else {
         // This should not happen
         std::cerr << "Incorrect shift expression. Something went wrong\n";
     }
 
     // oe->name = "shift_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     // 3AC code would be added here
     return oe;
 }
 
 // utils
-Expression *equality_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) )
-    {
+Expression* equality_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+    if (isInvalid({ op1Type, op2Type })) {
         error_msg("Invalid types for equality operation " + oe->op, line_num, column);
-        oe->type = ConstantType(ERROR_T);
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         return oe;
     }
 
-    if (oe->op == "==" || oe->op == "!=")
-    {
+    if (oe->op == "==" || oe->op == "!=") {
         // Handle pointer comparisons
-        if (op1Type.ptr_level > 0 && op2Type.ptr_level > 0)
-        {
-            oe->type = ConstantType(BOOL_T);
+        if (oe->op1.exp_type->type_tag == POINTER_TYPE && oe->op2.exp_type->type_tag == POINTER_TYPE) {
+            oe->prim_type = PrimitiveTypes(BOOL_T);
         }
-        // if ptr_level==0 : TODO
-        else if (op1Type.ptr_level == 0 && op2Type.ptr_level == 0)
-        {
+        else if ((oe->op1.exp_type->type_tag == STANDARD_TYPE && oe->op2.exp_type->type_tag == STANDARD_TYPE)
+                 && (isInt(op1Type) || isFloat(op1Type))
+                 && (isInt(op2Type) || isFloat(op2Type))) {
 
-            oe->type = ConstantType(BOOL_T);
+            oe->prim_type = PrimitiveTypes(BOOL_T);
 
             // Add warning for signed/unsigned mismatch
             bool op1Unsigned = isUnsigned(op1Type);
             bool op2Unsigned = isUnsigned(op2Type);
-            if (op1Unsigned != op2Unsigned)
-            {
+            if (op1Unsigned != op2Unsigned) {
                 warning_msg("Comparison " + oe->op + " between signed and unsigned values", line_num, column);
             }
         }
+        else {
+            error_msg("Invalid types for equality operation " + oe->op, line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
+        }
     }
-    else
-    {
+    else {
         std::cerr << "Incorrect equality expression. Something went wrong\n";
     }
 
     // oe->name = "equality_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     // 3AC code would be added here
     return oe;
 }
 
 // utils
-Expression *and_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) )
-    {
-        oe->type = ConstantType(ERROR_T);
+Expression* and_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+    if (isInvalid({ op1Type, op2Type })) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         error_msg("Invalid types for bitwise AND operation", line_num, column);
         return oe;
     }
 
-    if (oe->op == "&")
-    {
-        // Determine the result type (using the "wider" of the two types)
-        oe->type = op1Type.type > op2Type.type ? op1Type : op2Type;
+    if (oe->op == "&") {
+        if (isInt(op1Type) && isInt(op2Type)) {
+            // Determine the result type (using the "wider" of the two types)
+            oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
 
-        // Handle unsigned/signed issues
-        bool op1Unsigned = isUnsigned(op1Type);
-        bool op2Unsigned = isUnsigned(op2Type);
+            // Handle unsigned/signed issues
+            bool op1Unsigned = isUnsigned(op1Type);
+            bool op2Unsigned = isUnsigned(op2Type);
 
-        if (!(op1Unsigned && op2Unsigned))
-        {
-            // upgrade unsigned to signed for safety
-            make_signed(oe->type);
+            if (!(op1Unsigned && op2Unsigned)) {
+                // upgrade unsigned to signed for safety
+                PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
+                make_signed(tmp);
+                oe->prim_type = tmp;
+            }
+
+            // 3AC code would be added here
         }
-
-        // 3AC code would be added here
-        
+        else {
+            error_msg("Invalid types for bitwise AND operation " + oe->op, line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
+        }
     }
-    else
-    {
+    else {
         std::cerr << "Incorrect and_expression. Something went wrong\n";
     }
 
     // oe->name = "and_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     // 3AC code would be added here
     return oe;
 }
 
 // utils
-Expression *xor_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) )
-    {
+Expression* xor_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+    if (isInvalid({ op1Type, op2Type })) {
         error_msg("Invalid types for exclusive OR operation", line_num, column);
-        oe->type = ConstantType(ERROR_T);
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         return oe;
     }
 
-    if (oe->op == "^")
-    {
-        // Determine the result type (ideally the wider of the two types) :TODO
-        oe->type = op1Type.type > op2Type.type ? op1Type : op2Type;
+    if (oe->op == "^") {
+        if (isInt(op1Type) && isInt(op2Type)) {
+            // Determine the result type (using the "wider" of the two types)
+            oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
 
-        // Handle unsigned/signed issues
-        bool op1Unsigned = isUnsigned(op1Type);
-        bool op2Unsigned = isUnsigned(op2Type);
+            // Handle unsigned/signed issues
+            bool op1Unsigned = isUnsigned(op1Type);
+            bool op2Unsigned = isUnsigned(op2Type);
 
-        if (!(op1Unsigned && op2Unsigned))
-        {
-            make_signed(oe->type);
+            if (!(op1Unsigned && op2Unsigned)) {
+                // upgrade unsigned to signed for safety
+                PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
+                make_signed(tmp);
+                oe->prim_type = tmp;
+            }
+
+            // 3AC code would be added here
+        }
+        else {
+            error_msg("Invalid types for bitwise XOR operation " + oe->op, line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
         }
     }
-    else
-    {
+    else {
         std::cerr << "Incorrect exclusive or expression. Something went wrong\n";
     }
 
     // oe->name = "exclusive_or_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     // 3AC code would be added here
     return oe;
 }
 
 // utils
-Expression *or_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) )
-    {
-        oe->type = ConstantType(ERROR_T);
+Expression* or_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+
+    if (isInvalid({ op1Type, op2Type })) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         error_msg("Invalid types for bitwise OR operation", line_num, column);
         return oe;
     }
 
-    if (oe->op == "|")
-    {
-        // Determine the result type (would ideally use the wider of the two types) :TODO
-        oe->type = op1Type.type > op2Type.type ? op1Type : op2Type;
+    if (oe->op == "|") {
+        if (isInt(op1Type) && isInt(op2Type)) {
+            // Determine the result type (using the "wider" of the two types)
+            oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
 
-        // Handle unsigned/signed issues
-        bool op1Unsigned = isUnsigned(op1Type);
-        bool op2Unsigned = isUnsigned(op2Type);
+            // Handle unsigned/signed issues
+            bool op1Unsigned = isUnsigned(op1Type);
+            bool op2Unsigned = isUnsigned(op2Type);
 
-        if (!(op1Unsigned && op2Unsigned))
-        {
-            make_signed(oe->type);
+            if (!(op1Unsigned && op2Unsigned)) {
+                // upgrade unsigned to signed for safety
+                PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
+                make_signed(tmp);
+                oe->prim_type = tmp;
+            }
+
+            // 3AC code would be added here
+        }
+        else {
+            error_msg("Invalid types for bitwise OR operation " + oe->op, line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
         }
     }
-    else
-    {
+    else {
         std::cerr << "Incorrect inclusive or expression. Something went wrong\n";
     }
 
     // oe->name = "inclusive_or_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     // 3AC code would be added here
     return oe;
 }
 
 // utils
-Expression *logical_and_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) )
-    {
-        oe->type = ConstantType(ERROR_T);
+Expression* logical_and_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+
+    if (isInvalid({ op1Type, op2Type })) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         error_msg("Invalid types for logical AND operation", line_num, column);
         return oe;
     }
 
-    if (oe->op == "&&")
-    {
-        // Result type is boolean
-        oe->type = ConstantType(BOOL_T);
+    if (oe->op == "&&") {
+        if (isInt(op1Type) && isInt(op2Type)) {
+            // Result type is boolean
+            oe->prim_type = PrimitiveTypes(BOOL_T);
+        }
+        else {
+            error_msg("Invalid types for logical AND operation " + oe->op, line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
+        }
+
     }
-    else
-    {
-        std::cerr << "Incorrect logical and expression. Something went wrong\n";
+    else {
+        std::cerr << "Incorrect logical AND expression. Something went wrong\n";
     }
 
     // oe->name = "logical_and_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     // 3AC code would be added here
-    // append(oe->truelist, oe->op2.truelist);
-    // append(oe->falselist, oe->op1.falselist);
-    // append(oe->falselist, oe->op2.falselist);
+    // append(oe->truelist, PrimitiveTypes(oe->op2.prim_type).truelist);
+    // append(oe->falselist, PrimitiveTypes(oe->op1.prim_type).falselist);
+    // append(oe->falselist, PrimitiveTypes(oe->op2.prim_type).falselist);
 
     return oe;
 }
 
 // utils
-Expression *logical_or_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type})  )
-    {
-        oe->type = ConstantType(ERROR_T);
+Expression* logical_or_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+
+    if (isInvalid({ op1Type, op2Type })) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         error_msg("Invalid types for logical OR operation", line_num, column);
         return oe;
     }
 
-    if (oe->op == "||")
-    {
-        // Result type is boolean
-        oe->type = ConstantType(BOOL_T);
+    if (oe->op == "||") {
+        if (isInt(op1Type) && isInt(op2Type)) {
+            // Result type is boolean
+            oe->prim_type = PrimitiveTypes(BOOL_T);
+        }
+        else {
+            error_msg("Invalid types for logical OR operation " + oe->op, line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
+        }
     }
-    else
-    {
-        std::cerr << "Incorrect logical or expression. Something went wrong\n";
+    else {
+        std::cerr << "Incorrect logical OR expression. Something went wrong\n";
     }
 
     // oe->name = "logical_or_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    // oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), n_op, &PrimitiveTypes(oe->op2.prim_type)});
     // 3AC code would be added here
-    // append(oe->truelist, oe->op1.truelist);
-    // append(oe->truelist, oe->op2.truelist);
-    // append(oe->falselist, oe->op2.falselist);
+    // append(oe->truelist, PrimitiveTypes(oe->op1.prim_type).truelist);
+    // append(oe->truelist, PrimitiveTypes(oe->op2.prim_type).truelist);
+    // append(oe->falselist, PrimitiveTypes(oe->op2.prim_type).falselist);
 
     return oe;
 }
 
-// utils
-Expression *conditional_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
-    ConstantType op3Type = oe->op3.type;
+bool isCompatiblePrim(PrimitiveTypes p1, PrimitiveTypes p2){
+    if((isInt(p1)||isFloat(p1)) && (isInt(p2)||isFloat(p2))){
+        return true;
+    }
+    if(p1==ERROR_T || p2==ERROR_T){
+        return false;
+    }
+    return p1 == p2;
+}
 
-    if (isInvalid({op1Type, op2Type, op3Type}))
-    {
-        oe->type = ConstantType(ERROR_T);
+
+
+bool isCompatible(GlobalType* op1, GlobalType* op2){
+    if(op1->type_tag == STANDARD_TYPE && op2->type_tag == STANDARD_TYPE){
+        return isCompatiblePrim(type_map[op1->standard_type->name],type_map[op2->standard_type->name]);
+    }
+    else if(op1->type_tag != op2->type_tag){
+        return false;
+    }
+    else{
+        if(op1->type_tag== FUNCTION_TYPE){
+            return isCompatible(op1->function_type->return_type,op2->function_type->return_type);
+        }
+        else if(op1->type_tag== POINTER_TYPE){
+            if(op1->pointer_type->ptr_level != op2->pointer_type->ptr_level){
+                return false;
+            }
+            return isCompatible(op1->pointer_type->return_type,op2->pointer_type->return_type);
+        }
+        else if(op1->type_tag== ARRAY_TYPE){
+            return false;
+        }
+        else if(op1->type_tag== ENUM_TYPE){
+            return true;
+        }
+        else if(op1->type_tag== STRUCT_TYPE){
+            return op1->struct_type->struct_name == op2->struct_type->struct_name;
+        }
+        else if(op1->type_tag == UNION_TYPE){
+            return op1->union_type->union_name == op2->union_type->union_name;
+        }
+        else if(op1->type_tag == INVALID_TYPE){
+            return true;
+        }
+    }
+    return false;
+}
+
+// utils
+Expression* conditional_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+    PrimitiveTypes op3Type = PrimitiveTypes(oe->op3.prim_type);
+
+    if (isInvalid({ op1Type})) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         error_msg("Invalid types for conditional expression", line_num, column);
         return oe;
+    }
+    if((op2Type== ERROR_T && op3Type!=ERROR_T) || (op3Type==ERROR_T && op2Type!=ERROR_T)) {
+        error_msg("Invalid types for conditional expression", line_num, column);
+        oe->prim_type = PrimitiveTypes(ERROR_T);
+        return oe;         
     }
 
     // check: TODO
     // Check if condition is an integer
     // if (type_specifiers[INT_T].isEqual(*op1Type.standard_type))
-    if (op1Type.type == INT_T)
-    {
+    if (isInt(op1Type)) {
         // Check if true and false expressions have compatible types
-        if (true){
-            error_msg("Invalid types for conditional expression", line_num, column);
-            oe->type = ConstantType(ERROR_T);
+        if (op2Type==ERROR_T && op3Type==ERROR_T && !isCompatible(oe->op2.exp_type,oe->op3.exp_type)) {
+            error_msg("Types mismatch for conditional expression", line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
             return oe;
         }
-        else if (op2Type.type == op3Type.type && op2Type.ptr_level>0)
-        {
-            // check: TODO
-            // Both expressions are pointers of the same type
-            oe->type = op2Type;
-            oe->type.ptr_level = op2Type.ptr_level;
+        else if(op2Type==ERROR_T && op3Type==ERROR_T && isCompatible(oe->op2.exp_type,oe->op3.exp_type)){
+            oe->prim_type=PrimitiveTypes(ERROR_T);
+            oe->exp_type= oe->op1.exp_type;
         }
-        else
-        {
-            // Determine the result type (wider of the two types): TODO
-            oe->type = op2Type.type > op3Type.type ? op2Type : op3Type;
-
-            // Handle unsigned/signed issues
-            bool op2Unsigned = isUnsigned(op2Type);
-            bool op3Unsigned = isUnsigned(op3Type);
-
-            if (!(op2Unsigned && op3Unsigned))
-            {
-                // As safety, we upgrade unsigned to signed
-                make_signed(oe->type);
+        else if((isInt(op2Type)||isFloat(op2Type))&&(isInt(op3Type)||isFloat(op3Type))){
+            oe->prim_type = op2Type > op3Type ? op2Type : op3Type;
+            if(!(isUnsigned(op2Type)&& isUnsigned(op3Type))){
+                PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
+                make_signed(tmp);
+                oe->prim_type = tmp;
             }
         }
-
+        else if(op2Type == op3Type){
+            oe->prim_type= op1Type;
+        }
+        else{
+            error_msg("Types mismatch for conditional expression", line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
+        }
+    } else {
+        error_msg("Comparison expression is not an int", line_num, column);
+        oe->prim_type = PrimitiveTypes(ERROR_T);
+        return oe;
     }
 
     // oe->name = "conditional_expression";
-    // oe->add_children({&oe->op1, &oe->op2, &oe->op3});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), &PrimitiveTypes(oe->op2.prim_type), &oe->op3});
 
     return oe;
 }
 
 // utils : TODO
-Expression *constant_expression(OpExpression *oe)
-{
+Expression* constant_expression(OpExpression* oe) {
     return oe;
 }
 
 // utils
-Expression *toplevel_expression(OpExpression *oe)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
+Expression* toplevel_expression(OpExpression* oe) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
 
-    if (isInvalid({op1Type, op2Type}))
-    {
+    if (isInvalid({ op1Type, op2Type })) {
         error_msg("Invalid types for toplevel expression", line_num, column);
-        oe->type = ConstantType(ERROR_T);
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         return oe;
     }
 
     //////need TO DO LATER///////////
 
     // oe->name = "toplevel_expression";
-    // oe->add_children({&oe->op1, &oe->op2});
+    // oe->add_children({&PrimitiveTypes(oe->op1.prim_type), &PrimitiveTypes(oe->op2.prim_type)});
     return oe;
 }
 
-Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
-{
-    ConstantType op1Type = oe->op1.type;
-    ConstantType op2Type = oe->op2.type;
+Expression* create_assignment_expression(OpExpression* oe, Node* n_op) {
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
     // Terminal *op = (Terminal *)n_op;
     // TODO:
     // oe->op = op->name;
 
-    if (isInvalid({op1Type, op2Type}) )
-    {
-        oe->type = ConstantType(ERROR_T);
+    if (isInvalid({ op1Type, op2Type })) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
         error_msg("Invalid types for assignment expression", line_num, column);
         return oe;
     }
 
     // check if op1 is a contant expression then it cannot be assigned to anything
-    if (op1Type.type == CONSTANT)
-    {
-        oe->type = ConstantType(ERROR_T);
+    if (op1Type == PrimitiveTypes(CONSTANT)) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
+        error_msg("Cannot assign to a constant", line_num, column);
         return oe;
     }
 
-    if (oe->op == "=")
-    {
+    if (oe->op == "=") {
         // Simple assignment
-        if (isInt(op1Type) && isInt(op2Type))
-        {
+        // additional checking needed for checking complex types;
+        if (isInt(op1Type) && isInt(op2Type)) {
             // Integer or float assignment
-            if (op1Type.type != op2Type.type)
-            {
-                warning_msg("Assignment between different types:"+ typeName(op1Type.type) + "and" + typeName(op2Type.type), line_num, column);
+            if (op1Type != op2Type) {
+                warning_msg("Assignment between different types:" + typeName(op1Type) + "and" + typeName(op2Type), line_num, column);
             }
-            oe->type = op1Type;
+            oe->prim_type = op1Type;
         }
-        else if (op1Type.ptr_level > 0 && op2Type.ptr_level > 0)
-        {
+        else if (oe->op1.exp_type->type_tag == POINTER_TYPE && oe->op2.exp_type->type_tag == POINTER_TYPE) {
             // Pointer assignment
             //  TODO: how to do level check
-            if (op2Type.type == VOID_T && (op1Type.type != op2Type.type || op1Type.ptr_level != op2Type.ptr_level))
-            {
+            PrimitiveTypes p1 = static_cast<PrimitiveTypes>(oe->op1.exp_type->pointer_type->return_type->type_tag);
+            PrimitiveTypes p2 = static_cast<PrimitiveTypes>(oe->op2.exp_type->pointer_type->return_type->type_tag);
+            int p1_ptr_level = oe->op1.exp_type->pointer_type->ptr_level;
+            int p2_ptr_level = oe->op2.exp_type->pointer_type->ptr_level;
+            if (p2 != VOID_T && (p1 != p2 || p1_ptr_level != p2_ptr_level)) {
                 warning_msg("Assignment between different pointer types", line_num, column);
             }
-            oe->type = op1Type;
+            oe->prim_type = p1;
         }
         // 3AC code would be added here
     }
-    else if (oe->op == "+=" || oe->op == "-=")
-    {
+    else if (oe->op == "+=" || oe->op == "-=") {
         // Addition/subtraction assignment
-        if ((op1Type.type == INT_T || op1Type.type == FLOAT_T) &&
-             (op2Type.type == INT_T || op2Type.type == FLOAT_T))
-        {
-            if (op1Type.type != op2Type.type)
-            {
-                warning_msg("Assignment between different types",line_num, column);
+        if ((isInt(op1Type) || isFloat(op1Type)) &&
+            (isInt(op2Type) || isFloat(op2Type))) {
+            if (op1Type != op2Type) {
+                warning_msg("Assignment between different types", line_num, column);
             }
-            oe->type = op1Type;
+            oe->prim_type = op1Type;
         }
-        else if (op1Type.ptr_level > 0 && op2Type.type == INT_T)
-        {
+        else if (oe->op1.exp_type->type_tag == POINTER_TYPE && op2Type == INT_T) {
             // Pointer arithmetic assignment
-            oe->type = op1Type;
+            oe->prim_type = op1Type;
         }
     }
-    else if (oe->op == "*=" || oe->op == "/=" || oe->op == "%=")
-    {
+    else if (oe->op == "*=" || oe->op == "/=" || oe->op == "%=") {
         // Multiplicative assignment
-        if (oe->op == "%=" && !isInt(op1Type) && !isInt(op2Type))
-        {
+        if (oe->op == "%=" && !isInt(op1Type) && !isInt(op2Type)) {
             error_msg("Modulo operation requires integer operands", line_num, column);
-            oe->type = ERROR_T;
+            oe->prim_type = ERROR_T;
             return oe;
         }
-        else if (isInt(op1Type) && isInt(op2Type))
-        {
-            if (op1Type.type != op2Type.type)
-            {
-                warning_msg("Assignment between different types:"+ typeName(op1Type.type) + "and" + typeName(op2Type.type), line_num, column);
+        else if (isInt(op1Type) && isInt(op2Type)) {
+            if (op1Type != op2Type) {
+                warning_msg("Assignment between different types:" + typeName(op1Type) + "and" + typeName(op2Type), line_num, column);
             }
-            oe->type = op1Type;
+            oe->prim_type = op1Type;
         }
-        else
-        {
+        else {
             error_msg("Invalid operands for " + oe->op, line_num, column);
-            oe->type = ERROR_T;
+            oe->prim_type = ERROR_T;
             return oe;
         }
     }
-    else if (oe->op == "<<=" || oe->op == ">>=")
-    {
+    else if (oe->op == "<<=" || oe->op == ">>=") {
         // Bitshift assignment
-        if (isInt(op1Type) && isInt(op2Type))
-        {
-            oe->type = op1Type;
+        if (isInt(op1Type) && isInt(op2Type)) {
+            oe->prim_type = op1Type;
         }
-        else
-        {
+        else {
             error_msg("Shift operations require integer operands", line_num, column);
-            oe->type = ERROR_T;
+            oe->prim_type = ERROR_T;
             return oe;
         }
     }
-    else if (oe->op == "&=" || oe->op == "|=" || oe->op == "^=")
-    {
+    else if (oe->op == "&=" || oe->op == "|=" || oe->op == "^=") {
         // Bitwise operations assignment
-        if (isInt(op1Type) && isInt(op2Type))
-        {
-            oe->type = op1Type;
+        if (isInt(op1Type) && isInt(op2Type)) {
+            oe->prim_type = op1Type;
 
             // Handle unsigned/signed issues
             bool op1Unsigned = isUnsigned(op1Type);
             bool op2Unsigned = isUnsigned(op2Type);
 
-            if (!(op1Unsigned && op2Unsigned))
-            {
+            if (!(op1Unsigned && op2Unsigned)) {
                 // As safety, we upgrade unsigned to signed
-                make_signed(oe->type);
+                PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
+                make_signed(tmp);
+                oe->prim_type = tmp;
             }
         }
-        else
-        {
+        else {
             error_msg("Bitwise operations require integer operands", line_num, column);
-            oe->type = ERROR_T;
+            oe->prim_type = ERROR_T;
             return oe;
         }
         // 3AC code would be added here
     }
-    else
-    {
+    else {
         std::cerr << "Incorrect assignment expression. Something went wrong\n";
     }
 
-//     oe->name = "assignment_expression";
-//     oe->add_children({&oe->op1, &oe->op2});
+    //     oe->name = "assignment_expression";
+    //     oe->add_children({&PrimitiveTypes(oe->op1.prim_type), &PrimitiveTypes(oe->op2.prim_type)});
     return oe;
 }
 
@@ -770,9 +836,9 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //    UnaryExpression *U = new UnaryExpression();
 //     U->op1 = ue;
 //     U->op = op->name;
-//     GlobalType ueT = ue->type;
+//     GlobalType ueT = ue->prim_type;
 //     if ( ueT.getType() == "InvalidType" ) {
-//         U->type.invalid_type = &INVALID_TYPE;
+//         U->prim_type.invalid_type = &INVALID_TYPE;
 //         return U;
 //     }
 //     std::string u_op = op->name;
@@ -783,29 +849,29 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //         // if ( ueT.is_const == true ) {
 //         //     error_msg( "Invalid operand " + u_op + " with constant type",
 //         //                op->line_num, op->column );
-//         //     U->type.invalid_type = &INVALID_TYPE;
+//         //     U->prim_type.invalid_type = &INVALID_TYPE;
 //         //     return U;
 //         // }
 // 		u_op = u_op.substr( 0, 1 );
-// 		if ( ue->type.getType() == "Pointer" ) {
-// 			U->type = ue->type;
-// 		} else if ( type_specifiers[INT_T].isEqual(*ue->type.standard_type) ) {
-// 			U->type = ue->type;
-// 		} else if ( type_specifiers[FLOAT_T].isEqual(*ue->type.standard_type) ) {
-//             U->type = ue->type;
+// 		if ( ue->prim_type.getType() == "Pointer" ) {
+// 			U->prim_type = ue->prim_type;
+// 		} else if ( type_specifiers[INT_T].isEqual(*ue->prim_type.standard_type) ) {
+// 			U->prim_type = ue->prim_type;
+// 		} else if ( type_specifiers[FLOAT_T].isEqual(*ue->prim_type.standard_type) ) {
+//             U->prim_type = ue->prim_type;
 // 		} else {
 // 			// Incorrect type throw error
 // 			error_msg( "Invalid operand " + u_op + "with type " +
-// 						   ue->type.getType(),
+// 						   ue->prim_type.getType(),
 // 					   op->line_num, op->column );
-// 			U->type.invalid_type = &INVALID_TYPE;
+// 			U->prim_type.invalid_type = &INVALID_TYPE;
 // 			return U;
 // 		}
 //     } else if ( u_op == "sizeof" ) {
 //         U->name = "sizeof";
-//         U->type.standard_type = &type_specifiers[INT_T];
+//         U->prim_type.standard_type = &type_specifiers[INT_T];
 //         // TODO: make it const
-//         // U->type.is_const = true;
+//         // U->prim_type.is_const = true;
 //     } else {
 //         // Raise Error
 //         std::cerr << "Error parsing Unary Expression.\n";
@@ -825,10 +891,10 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     std::string u_op = t_op->name;
 //     U->op = u_op;
 //     U->op1 = ce;
-//     GlobalType ceT = ce->type;
+//     GlobalType ceT = ce->prim_type;
 
 //     if ( ceT.getType() == "InvalidType" ) {
-//         U->type.invalid_type = &INVALID_TYPE;
+//         U->prim_type.invalid_type = &INVALID_TYPE;
 //         return U;
 //     }
 
@@ -836,45 +902,45 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //         if ( ceT.getType() == "FunctionType" ) {
 //             error_msg( "lvalue required as unary & operand", n_op->line_num,
 //                        n_op->column );
-//             U->type.invalid_type = &INVALID_TYPE;
+//             U->prim_type.invalid_type = &INVALID_TYPE;
 //             return U;
 //         }
 
-// 		U->type = ce->type;
-//         U->type.pointer_type->ptr_level++;
+// 		U->prim_type = ce->prim_type;
+//         U->prim_type.pointer_type->ptr_level++;
 //     } else if ( u_op == "*" ) {
 //         if ( ceT.getType() == "ArrayType" ) {
 //             // Error because of dereference of non-pointer type
 //             error_msg( "Cannot dereference type " + ceT.getType(),
 //                        n_op->line_num, n_op->column );
-//             U->type.invalid_type = &INVALID_TYPE;
+//             U->prim_type.invalid_type = &INVALID_TYPE;
 //             return U;
 //         }
 
-// 		U->type = ce->type;
-// 		U->type.pointer_type->ptr_level--;
+// 		U->prim_type = ce->prim_type;
+// 		U->prim_type.pointer_type->ptr_level--;
 
 //     } else if ( u_op == "-" || u_op == "+" ) {
 //         if (type_specifiers[INT_T].isEqual(*ceT.standard_type) || type_specifiers[FLOAT_T].isEqual(*ceT.standard_type)) {
 //             // Throw Error
 //             error_msg( "Invalid operand " + u_op + " on type " + ceT.getType(),
 //                        n_op->line_num, n_op->column );
-//             U->type.invalid_type = &INVALID_TYPE;
+//             U->prim_type.invalid_type = &INVALID_TYPE;
 //             return U;
 //         }
 
-// 		U->type = ce->type;
-// 		U->type.make_signed();
+// 		U->prim_type = ce->prim_type;
+// 		U->prim_type.make_signed();
 
 //     } else if ( u_op == "!" ) {
 //         if ( !type_specifiers[INT_T].isEqual(*ceT.standard_type) ) {
 //             // Throw Error
 //             error_msg( "Invalid operand " + u_op + " on type " + ceT.getType(),
 //                        n_op->line_num, n_op->column );
-//             U->type.invalid_type = &INVALID_TYPE;
+//             U->prim_type.invalid_type = &INVALID_TYPE;
 //             return U;
 //         }
-//         U->type.standard_type = &type_specifiers[U_CHAR_T];
+//         U->prim_type.standard_type = &type_specifiers[U_CHAR_T];
 // 		U->truelist = ce->falselist;
 // 		U->falselist = ce->truelist;
 //     } else {
@@ -895,7 +961,7 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     std::string u_op = op->name;
 //     U->name = u_op;
 //     U->add_children({op, t_name});
-//     U->type.standard_type = &type_specifiers[INT_T];
+//     U->prim_type.standard_type = &type_specifiers[INT_T];
 
 //     return U;
 // }
@@ -904,21 +970,21 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 // {
 //     CastExpression *P = new CastExpression();
 //     P->op1 = ce;
-//     GlobalType ceT = ce->type;
-//     GlobalType tnT = tn->type;
+//     GlobalType ceT = ce->prim_type;
+//     GlobalType tnT = tn->prim_type;
 //     if ( ceT.getType() == "InvalidType" || tnT.getType() == "InvalidType" ) {
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
 //     }
 //     if ( (type_specifiers[INT_T].isEqual(*ceT.standard_type) || type_specifiers[FLOAT_T].isEqual(*ceT.standard_type)) && (type_specifiers[INT_T].isEqual(*tnT.standard_type) || type_specifiers[FLOAT_T].isEqual(*tnT.standard_type)) ) {
-//         P->type = tn->type;
+//         P->prim_type = tn->prim_type;
 //     } else if ( ceT.pointer_type->ptr_level > 0 && tnT.pointer_type->ptr_level > 0 ) {
-//         P->type = tn->type;
+//         P->prim_type = tn->prim_type;
 //     } else {
 //         error_msg( "Undefined casting operation of " + ceT.getType() +
 //                        " into " + tnT.getType(),
 //                    line_num );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
 //     }
 //     P->name = "cast_expression";
@@ -938,35 +1004,35 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     P->exp = exp;
 //     P->name = "ARRAY ACCESS";
 
-//     if ( pe->type.getType() == "InvalidType" || exp->type.getType() == "InvalidType" ) {
-//         P->type.invalid_type = &INVALID_TYPE;
+//     if ( pe->prim_type.getType() == "InvalidType" || exp->prim_type.getType() == "InvalidType" ) {
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
 //     }
 
-//     if ( !type_specifiers[INT_T].isEqual(*exp->type.standard_type) ) {
+//     if ( !type_specifiers[INT_T].isEqual(*exp->prim_type.standard_type) ) {
 //         // Error
 //         error_msg( "Array index must be of type integer", line_num );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
 //     }
 
-// 	if ( pe->type.getType() == "ArrayType" ) {
-// 		P->type = pe->type;
-// 		P->type.array_type->dim--;
-// 		P->type.array_type->dims.erase( P->type.array_type->dims.begin() );
-// 		// P->type.is_const = false; //TODO: make it non-constant
-// 	} else if ( pe->type.getType() == "PointerType" ) {
-// 		P->type = pe->type;
-// 		P->type.pointer_type->ptr_level--;
-// 		// P->type.is_const = false; //TODO: make it non-constant
+// 	if ( pe->prim_type.getType() == "ArrayType" ) {
+// 		P->prim_type = pe->prim_type;
+// 		P->prim_type.array_type->dim--;
+// 		P->prim_type.array_type->dims.erase( P->prim_type.array_type->dims.begin() );
+// 		// P->prim_type.is_const = false; //TODO: make it non-constant
+// 	} else if ( pe->prim_type.getType() == "PointerType" ) {
+// 		P->prim_type = pe->prim_type;
+// 		P->prim_type.pointer_type->ptr_level--;
+// 		// P->prim_type.is_const = false; //TODO: make it non-constant
 //         // TODO: What type to update to?
-// 		// if ( P->type.pointer_type->ptr_level == 0 ) {
-// 			// P->type.pointer_type->is_pointer = false;
+// 		// if ( P->prim_type.pointer_type->ptr_level == 0 ) {
+// 			// P->prim_type.pointer_type->is_pointer = false;
 // 		// }
 // 	} else {
 // 		error_msg( "Subscripted value is neither array nor pointer",
 // 				   line_num );
-// 		P->type.invalid_type = &INVALID_TYPE;
+// 		P->prim_type.invalid_type = &INVALID_TYPE;
 // 	}
 
 //     P->add_children({pe, exp});
@@ -984,19 +1050,19 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     if ( ste == nullptr ) {
 //         // Error
 //         error_msg( "Undeclared symbol " + fi->value, fi->line_num, fi->column );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
-//     } else if ( ste->type.getType() != "FunctionType" ) {
+//     } else if ( ste->prim_type.getType() != "FunctionType" ) {
 //         // Error
 //         error_msg( "Called object '" + fi->value + "' is not a function",
 //                    fi->line_num, fi->column );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
-//     } else if ( ste->type.function_type->num_args != 0 ) {
+//     } else if ( ste->prim_type.function_type->num_args != 0 ) {
 //         // Error
 //         error_msg( "Too few arguments to function '" + fi->value + "'",
 //                    fi->line_num, fi->column );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
 //     }
 
@@ -1005,10 +1071,10 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     P->line_num = fi->line_num;
 //     P->column = fi->column;
 
-//     P->type = ste->type;
-//     P->type.function_type->is_defined = false;
-//     P->type.function_type->num_args = 0;
-//     P->type.function_type->args.clear();
+//     P->prim_type = ste->prim_type;
+//     P->prim_type.function_type->is_defined = false;
+//     P->prim_type.function_type->num_args = 0;
+//     P->prim_type.function_type->args.clear();
 
 //     return P;
 // }
@@ -1021,44 +1087,44 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     if ( ste == nullptr ) {
 //         // Error
 //         error_msg( "Undeclared symbol " + fi->value, fi->line_num, fi->column );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
-//     } else if ( ste->type.getType() != "FunctionType" ) {
+//     } else if ( ste->prim_type.getType() != "FunctionType" ) {
 //         // Error
 //         error_msg( "Called object '" + fi->value + "' is not a function",
 //                    fi->line_num, fi->column );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
-//     } else if ( ste->type.function_type->num_args > ae->args.size() ) {
+//     } else if ( ste->prim_type.function_type->num_args > ae->args.size() ) {
 //         // Error
 //         error_msg( "Too few arguments to function '" + fi->value +
-//                        "'. Expected " + std::to_string( ste->type.function_type->num_args ) +
+//                        "'. Expected " + std::to_string( ste->prim_type.function_type->num_args ) +
 //                        ", got " + std::to_string( ae->args.size() ),
 //                    fi->line_num, fi->column );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
-//     } else if ( ste->type.function_type->num_args < ae->args.size() ) {
+//     } else if ( ste->prim_type.function_type->num_args < ae->args.size() ) {
 //         // Error
 //         error_msg( "Too many arguments to function '" + fi->value +
-//                        "'. Expected " + std::to_string( ste->type.function_type->num_args ) +
+//                        "'. Expected " + std::to_string( ste->prim_type.function_type->num_args ) +
 //                        ", got " + std::to_string( ae->args.size() ),
 //                    fi->line_num, fi->column );
-//         P->type.invalid_type = &INVALID_TYPE;
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
-//     } else if ( ste->type.function_type->num_args == ae->args.size() ) {
+//     } else if ( ste->prim_type.function_type->num_args == ae->args.size() ) {
 //         int i = 0;
-//         for (auto itr: ste->type.function_type->args) {
+//         for (auto itr: ste->prim_type.function_type->args) {
 //             if ( itr.second.getType() == "InvalidType" ) {
-//                 P->type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type.invalid_type = &INVALID_TYPE;
 //                 return P;
 //             }
-//             if ( !( itr.second.isEqual(ae->args[i]->type) ) ) {
+//             if ( !( itr.second.isEqual(ae->args[i]->prim_type) ) ) {
 //                 error_msg( "Type mismatch at argument " + std::to_string( i ) +
 //                                " of function '" + fi->value + "'. Expected " +
 //                                itr.second.getType() + ", got " +
-//                                ae->args[i]->type.getType(),
+//                                ae->args[i]->prim_type.getType(),
 //                            fi->line_num, fi->column );
-//                 P->type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type.invalid_type = &INVALID_TYPE;
 //                 return P;
 //             }
 //             i++;
@@ -1069,10 +1135,10 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     P->add_children({fi, ae});
 //     P->line_num = fi->line_num;
 //     P->column = fi->column;
-//     P->type = ste->type;
-//     P->type.function_type->is_defined = false;
-//     P->type.function_type->num_args = 0;
-//     P->type.function_type->args.clear();
+//     P->prim_type = ste->prim_type;
+//     P->prim_type.function_type->is_defined = false;
+//     P->prim_type.function_type->num_args = 0;
+//     P->prim_type.function_type->args.clear();
 
 //     return P;
 // }
@@ -1080,19 +1146,19 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 // Expression *create_postfix_expr_struct( std::string access_op, Expression *pe, Identifier *id){
 //     PostfixExpression *P = new PostfixExpression();
 
-//     if ( pe->type.getType() == "InvalidType" ) {
-//         P->type.invalid_type = &INVALID_TYPE;
+//     if ( pe->prim_type.getType() == "InvalidType" ) {
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
 //     }
 
-//     GlobalType peT = pe->type;
+//     GlobalType peT = pe->prim_type;
 //     if ( access_op == "." ) {
-//         if ( ( peT.getType() == "Struct" || peT.getType() == "Union" ) && pe->type.pointer_type->ptr_level == 0 ) {
+//         if ( ( peT.getType() == "Struct" || peT.getType() == "Union" ) && pe->prim_type.pointer_type->ptr_level == 0 ) {
 //             if ( peT.struct_type == nullptr ) {
 //                 error_msg( id->value + " is not a member of " +
-//                                pe->type.getType(),
+//                                pe->prim_type.getType(),
 //                            id->line_num, id->column );
-//                 P->type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type.invalid_type = &INVALID_TYPE;
 //                 return P;
 //             }
 //             // whether i exists in Struct
@@ -1101,23 +1167,23 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //                 // Error
 //                 error_msg( id->value + " is not a member of " + peT.getType(),
 //                            id->line_num, id->column );
-//                 P->type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type.invalid_type = &INVALID_TYPE;
 //                 return P;
 //             } else {
-//                 P->type = iType;
+//                 P->prim_type = iType;
 //             }
 //         } else {
-//             error_msg( "Invalid operand . with type " + pe->type.getType(), id->line_num,
+//             error_msg( "Invalid operand . with type " + pe->prim_type.getType(), id->line_num,
 //                        id->column );
-//             P->type.invalid_type = &INVALID_TYPE;
+//             P->prim_type.invalid_type = &INVALID_TYPE;
 //             return P;
 //         }
 //     } else if ( access_op == "->" ) {
-//         if ( ( peT.getType() == "Struct" || peT.getType() == "Union" ) && pe->type.pointer_type->ptr_level == 1 ) {
+//         if ( ( peT.getType() == "Struct" || peT.getType() == "Union" ) && pe->prim_type.pointer_type->ptr_level == 1 ) {
 //             if ( peT.struct_type == nullptr ) {
 //                 error_msg( id->value + " is not a member of " + peT.getType(),
 //                            id->line_num, id->column );
-//                 P->type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type.invalid_type = &INVALID_TYPE;
 //                 return P;
 //             }
 //             // whether i exists in Struct*
@@ -1126,15 +1192,15 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //                 // Error
 //                 error_msg( id->value + " is not a member of " + peT.getType(),
 //                            id->line_num, id->column );
-//                 P->type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type.invalid_type = &INVALID_TYPE;
 //                 return P;
 //             } else {
-//                 P->type = iType;
+//                 P->prim_type = iType;
 //             }
 //         } else {
-//             error_msg( "Invalid operand -> with type " + pe->type.getType(),
+//             error_msg( "Invalid operand -> with type " + pe->prim_type.getType(),
 //                        id->line_num, id->column );
-//             P->type.invalid_type = &INVALID_TYPE;
+//             P->prim_type.invalid_type = &INVALID_TYPE;
 //             return P;
 //         }
 //     }
@@ -1153,8 +1219,8 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //         P->pe = nullptr;
 //     }
 
-//     if ( pe->type.getType() == "InvalidType" ) {
-//         P->type.invalid_type = &INVALID_TYPE;
+//     if ( pe->prim_type.getType() == "InvalidType" ) {
+//         P->prim_type.invalid_type = &INVALID_TYPE;
 //         return P;
 //     }
 
@@ -1173,27 +1239,27 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 // 		assert(0);
 // 		return P;
 //     }
-// 	if ( pe->type.is_const == true ) {
+// 	if ( pe->prim_type.is_const == true ) {
 // 		error_msg( "Invalid operand " + op->name + " with constant type",
 // 				   op->line_num, op->column );
-// 		P->type.invalid_type = &INVALID_TYPE;
+// 		P->prim_type.invalid_type = &INVALID_TYPE;
 // 		return P;
 // 	}
 
-// 	if ( pe->type.pointer_type->ptr_level > 0 ) {
-// 		P->type = pe->type;
-// 		GlobalType t = pe->type;
+// 	if ( pe->prim_type.pointer_type->ptr_level > 0 ) {
+// 		P->prim_type = pe->prim_type;
+// 		GlobalType t = pe->prim_type;
 // 		t.pointer_type->ptr_level--;
-// 	} else if ( type_specifiers[INT_T].isEqual(*pe->type.standard_type) ) {
-// 		P->type = pe->type;
-// 	} else if ( type_specifiers[FLOAT_T].isEqual(*pe->type.standard_type) ) {
-// 		P->type = pe->type;
+// 	} else if ( type_specifiers[INT_T].isEqual(*pe->prim_type.standard_type) ) {
+// 		P->prim_type = pe->prim_type;
+// 	} else if ( type_specifiers[FLOAT_T].isEqual(*pe->prim_type.standard_type) ) {
+// 		P->prim_type = pe->prim_type;
 // 	} else {
 // 		// Error postfix operator
 // 		error_msg( "Invalid operand " + op->name + " with type " +
-// 					   pe->type.getType(),
+// 					   pe->prim_type.getType(),
 // 				   op->line_num, op->column );
-// 		P->type.invalid_type = &INVALID_TYPE;
+// 		P->prim_type.invalid_type = &INVALID_TYPE;
 // 		return P;
 // 	}
 
@@ -1206,9 +1272,9 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     UnaryExpression *U = new UnaryExpression();
 //     U->op1 = ue;
 //     U->op = op->name;
-//     GlobalType ueT = ue->type;
+//     GlobalType ueT = ue->prim_type;
 //     if ( ueT.getType() == "InvalidType" ) {
-//         U->type.invalid_type = &INVALID_TYPE;
+//         U->prim_type.invalid_type = &INVALID_TYPE;
 //         return U;
 //     }
 //     std::string u_op = op->name;
@@ -1219,32 +1285,32 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //         if ( ueT.is_const == true ) {
 //             error_msg( "Invalid operand " + u_op + " with constant type",
 //                        op->line_num, op->column );
-//             U->type.invalid_type = &INVALID_TYPE;
+//             U->prim_type.invalid_type = &INVALID_TYPE;
 //             return U;
 //         }
 
 // 		u_op = u_op.substr( 0, 1 );
-// 		if ( ue->type.getType() == "PointerType" ) {
-// 			U->type = ue->type;
-// 			GlobalType t = ue->type;
+// 		if ( ue->prim_type.getType() == "PointerType" ) {
+// 			U->prim_type = ue->prim_type;
+// 			GlobalType t = ue->prim_type;
 // 			t.pointer_type->ptr_level--;
-// 		} else if ( ue->type.getType() == "StandardType" ) {
-// 			U->type = ue->type;
-// 		} else if ( ue->type.getType() == "FloatType" ) {
-// 			U->type = ue->type;
+// 		} else if ( ue->prim_type.getType() == "StandardType" ) {
+// 			U->prim_type = ue->prim_type;
+// 		} else if ( ue->prim_type.getType() == "FloatType" ) {
+// 			U->prim_type = ue->prim_type;
 // 		} else {
 // 			// Incorrect type throw error
 // 			error_msg( "Invalid operand " + u_op + " with type " +
-// 						   ue->type.getType(),
+// 						   ue->prim_type.getType(),
 // 					   op->line_num, op->column );
-// 			U->type.invalid_type = &INVALID_TYPE;
+// 			U->prim_type.invalid_type = &INVALID_TYPE;
 // 			return U;
 // 		}
 //     } else if ( u_op == "sizeof" ) {
 //         U->name = "sizeof";
-//         U->type.standard_type = &type_specifiers[PrimitiveTypes::INT_T];
-//         U->type.pointer_type->ptr_level = 0;
-//         // U->type.is_const = true;
+//         U->prim_type.standard_type = &type_specifiers[PrimitiveTypes::INT_T];
+//         U->prim_type.pointer_type->ptr_level = 0;
+//         // U->prim_type.is_const = true;
 //     } else {
 //         // Raise Error
 //         std::cerr << "Error parsing Unary Expression.\n";
@@ -1255,58 +1321,155 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     return U;
 // }
 
-Expression *create_expression(ExpressionOpType op_type, std::string op,VectorExpression* ve)
-{
-    OpExpression *oe = new OpExpression();
+PrimitiveTypes deduceType(const std::string& input) {
+    // Check if the string contains a decimal point or exponent,
+    // indicating a floating point literal.
+    if (input.find('.') != std::string::npos || input.find('e') != std::string::npos || input.find('E') != std::string::npos) {
+        try {
+            long double val = std::stold(input);
+            // First try float; if the converted value is nearly identical, we choose float.
+            float f = static_cast<float>(val);
+            if (std::abs(static_cast<long double>(f) - val) < 1e-6L)
+                return FLOAT_T;
+            // Next try double.
+            double d = static_cast<double>(val);
+            if (std::abs(static_cast<long double>(d) - val) < 1e-12L)
+                return DOUBLE_T;
+            // Otherwise, use long double.
+            return LONG_DOUBLE_T;
+        } catch (...) {
+            return ERROR_T;
+        }
+    }
+
+    else {
+        // Determine the base and convert the literal accordingly.
+        long long val = 0;
+        try {
+            if (input.size() > 2 && input[0] == '0' &&
+                (input[1] == 'x' || input[1] == 'X')) {
+                // Hexadecimal literal
+                val = std::stoll(input, nullptr, 16);
+            }
+            else if (input[0] == '0' && input.size() > 1) {
+                // Octal literal
+                val = std::stoll(input, nullptr, 8);
+            }
+            else {
+                // Decimal literal
+                val = std::stoll(input, nullptr, 10);
+            }
+
+            if (val >= std::numeric_limits<int>::min() &&
+                val <= std::numeric_limits<int>::max())
+                return INT_T;
+            else if (val >= std::numeric_limits<long>::min() &&
+                     val <= std::numeric_limits<long>::max())
+                return LONG_T;
+            else
+                return LLONG_T;
+        } catch (...) {
+            return ERROR_T;
+        }
+    }
+}
+
+Expression* create_expression_simple(ExpressionType exp_type, std::string token) {
+    Expression* e = new Expression();
+
+
+    switch (exp_type) {
+    case IDENTIFIER_ET: {
+        // Lookup the identifier in the symbol table
+        Symbol* s = SymbolTable::get_symbol(token);
+        if (s == NULL) {
+            error_msg("Undeclared symbol " + token, line_num, column);
+            e->prim_type = ERROR_T;
+            return e;
+        }
+
+        // Set the type of the expression based on the symbol's type
+        e->exp_type = s->identifier.type;
+
+        if (e->exp_type->type_tag == STANDARD_TYPE) {
+            e->prim_type = static_cast<PrimitiveTypes>(s->identifier.type->type_tag);
+        }
+        return e;
+        break;
+    }
+    case CONSTANT_ET:
+    {
+        PrimitiveTypes type = deduceType(token);
+        if (type == ERROR_T) {
+            error_msg("Invalid constant type for " + token, line_num, column);
+            e->prim_type = ERROR_T;
+            e->exp_type = create_primitive_type(ERROR_T);
+            return e;
+        }
+        e->exp_type = create_primitive_type(type);
+        e->prim_type = type;
+        return e;
+        break;
+
+    }
+    case EXPRESSION_ET:
+    default: {
+        std::cerr << "Incorrect expression. Something went wrong\n";
+        return e;
+        };
+    }
+}
+
+Expression* create_expression(ExpressionOpType op_type, std::string op, VectorExpression* ve) {
+    OpExpression* oe = new OpExpression();
     oe->op_type = op_type;
     oe->op = op;
-    switch (op_type)
-    {
+    switch (op_type) {
     case MULTIPLICATIVE:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return multiplicative_expression(oe);
+        return multiplicative_expression(oe); // Done
     case ADDITIVE:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return additive_expression(oe);
+        return additive_expression(oe); // Done
     case RELATIONAL:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return relational_expression(oe);
+        return relational_expression(oe); // Done
     case SHIFT:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return shift_expression(oe);
+        return shift_expression(oe); // Done
     case EQUALITY:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return equality_expression(oe);
+        return equality_expression(oe); // Done
     case AND:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return and_expression(oe);
+        return and_expression(oe); // Done
     case XOR:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return xor_expression(oe);
+        return xor_expression(oe); // Done
     case OR:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return or_expression(oe);
+        return or_expression(oe); // Done
     case LOGICAL_AND:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return logical_and_expression(oe);
+        return logical_and_expression(oe); // Done
     case LOGICAL_OR:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return logical_or_expression(oe);
+        return logical_or_expression(oe); // Done
     case CONDITIONAL:
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
         oe->op3 = ve->operands[2];
-        return conditional_expression(oe);
+        return conditional_expression(oe); // Basic done (Please check)
     case CONSTANT:
         oe->op1 = ve->operands[0];
         return constant_expression(oe);
@@ -1319,31 +1482,3 @@ Expression *create_expression(ExpressionOpType op_type, std::string op,VectorExp
     }
 }
 
-Expression* create_expression(ExpressionType e_type, std::string value){
-    Expression *e = new Expression();
-
-    switch(e_type){
-        case IDENTIFIER:{
-            Symbol * s = SymbolTable::get_symbol(value);
-            if(s==NULL){
-                error_msg("Undeclared symbol " + value, line_num, column);
-                e->type = ConstantType(ERROR_T);
-                return e;
-            }
-            e->type = convert_constant_type(s->identifier.type);
-            break;
-        }
-        case CONSTANT:{
-            
-            break;
-        }
-        case EXPRESSION:
-            e->type = ConstantType(EXPRESSION);
-            e->value = value;
-            break;
-        default:
-            std::cerr << "Incorrect expression. Something went wrong\n";
-            return nullptr;
-    }
-
-}

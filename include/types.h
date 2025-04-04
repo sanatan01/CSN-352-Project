@@ -10,26 +10,27 @@
 #include <limits>
 #include <string>
 #include <iostream>
+#include <cmath>
 
 // --------------------------------------PRIMITVE TYPES----------------------------------------
 enum PrimitiveTypes
 {
 	ERROR_T = -1,
-	U_CHAR_T,
-	CHAR_T,
-	U_SHORT_T,
-	SHORT_T,
-	U_INT_T,
-	INT_T,
-	U_LONG_T,
-	LONG_T,
-	U_LLONG_T,
-	LLONG_T,
-	FLOAT_T,
-	DOUBLE_T,
-	LONG_DOUBLE_T,
-	VOID_T,
-	BOOL_T,
+	U_CHAR_T = 0,
+	CHAR_T = 1,
+	U_SHORT_T = 2,
+	SHORT_T = 3,
+	U_INT_T = 4,
+	INT_T = 5,
+	U_LONG_T = 6,
+	LONG_T = 7,
+	U_LLONG_T = 8,
+	LLONG_T = 9,
+	FLOAT_T = 10,
+	DOUBLE_T = 11,
+	LONG_DOUBLE_T = 12,
+	VOID_T = 13,
+	BOOL_T = 14,
 };
 
 std::string typeName(int type);

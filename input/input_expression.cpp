@@ -13,7 +13,5 @@ int main() {
     void *ptr;
     int b =-10;
 
-    auto c = b;
-
 }
 
