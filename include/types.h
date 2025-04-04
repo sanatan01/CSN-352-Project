@@ -221,7 +221,7 @@ enum GlobalTypeTag
 	FUNCTION_TYPE,
 	POINTER_TYPE,
 	ENUM_TYPE,
-	INVALID,
+	INVALID_TYPE,
 	NONE,
 };
 
@@ -266,4 +266,4 @@ class GlobalType *create_invalid_type(std::string err_message, int line_num = 0,
 
 class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *right);
 
-extern InvalidType INVALID_TYPE;
+// extern InvalidType INVALID_TYPE;

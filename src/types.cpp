@@ -331,7 +331,7 @@ std::string GlobalType::getType() const
     }
     case ENUM_TYPE:
         return enum_type->getSpecifierName();
-    case INVALID:
+    case INVALID_TYPE:
         return "InvalidType";
     default:
         return "None";
@@ -565,7 +565,7 @@ class GlobalType *create_default_pointer_type()
 class GlobalType *create_invalid_type(std::string err_message, int line_num, int column)
 {
     class GlobalType *type = new GlobalType();
-    type->type_tag = INVALID;
+    type->type_tag = INVALID_TYPE;
     type->invalid_type = new InvalidType(err_message, line_num, column);
     std::cerr << err_message << std::endl;
     return type;

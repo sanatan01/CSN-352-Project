@@ -2,9 +2,9 @@
 #include <helper.h>
 #include <types.h>
 #include <symtab.h>
+#include <expression.h>
 
 // #include <statementh>
-// #include <expression.h>
 // #include <ast.h>
 // #include <3ach>
 
@@ -20,7 +20,7 @@ void yyerror(const char *s);
  %union {
 // 	Terminal* terminal;
     char *nice;
- 	Expression* expression;
+ 	class Expression* expression;
 // 	PrimaryExpression* primary_expression;
 // 	ArguemmentExpressionList* argument_expression_list;
 // 	UnaryExpression* unary_expression;
@@ -41,6 +41,7 @@ void yyerror(const char *s);
  	class VectorStructElement* struct_element_list;
  	class VectorIdentifiers* vector_identifiers;
  	class StructElement* struct_element;
+ 	class VectorExpression* vector_expression;
 // 	FunctionType* function_type;
 // 	ArrayType* array_type;
  }
@@ -210,69 +211,144 @@ unary_expression
  	;
 
 unary_operator
-	: AMPERSAND     { $$ = "&"; }
- 	| ASTERISK      { $$ = "*"; }
- 	| PLUS          { $$ = "+"; }
- 	| MINUS         { $$ = "-"; }
- 	| TILDE         { $$ = "~"; }
- 	| EXCLAMATION   { $$ = "!"; }
+	: AMPERSAND     { $$ = strdup("&"); }
+ 	| ASTERISK      { $$ = strdup("*"); }
+ 	| PLUS          { $$ = strdup("+"); }
+ 	| MINUS         { $$ = strdup("-"); }
+ 	| TILDE         { $$ = strdup("~"); }
+ 	| EXCLAMATION   { $$ = strdup("!"); }
  	;
 
 // /* Type casting */
 cast_expression
  	: unary_expression 										{ $$ = $1; }
- 	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ $$ = create_cast_expression_typename($2, $4); }
+ 	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ 
+		//$$ = create_cast_expression_typename($2, $4); \
+	}
  	;
 
 // /* Arithmetic expressions */
 multiplicative_expression
  	: cast_expression 										{ $$ = $1; }
- 	| multiplicative_expression ASTERISK cast_expression 	{ $$ = create_expression(MULTIPLICATIVE, "*", $1, $3); }
- 	| multiplicative_expression SLASH cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "/", $1, $3); }
- 	| multiplicative_expression PERCENT cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "%", $1, $3); }
+ 	| multiplicative_expression ASTERISK cast_expression 	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(MULTIPLICATIVE, "*", ve); 
+ 	}
+ 	| multiplicative_expression SLASH cast_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(MULTIPLICATIVE, "/", ve); 
+ 	}
+ 	| multiplicative_expression PERCENT cast_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(MULTIPLICATIVE, "%", ve); 
+ 	}
  	;
 
 additive_expression
  	: multiplicative_expression 							{ $$ = $1; }
- 	| additive_expression PLUS multiplicative_expression 	{ $$ = create_expression(ADDITIVE, "+", $1, $3); }
- 	| additive_expression MINUS multiplicative_expression	{ $$ = create_expression(ADDITIVE, "-", $1, $3); }
+ 	| additive_expression PLUS multiplicative_expression 	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(ADDITIVE, "+", ve); 
+ 	}
+ 	| additive_expression MINUS multiplicative_expression	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3); }
  	;
-
 shift_expression
  	: additive_expression									{ $$ = $1; }
- 	| shift_expression LEFT_OP additive_expression			{ $$ = create_expression(SHIFT, "<<", $1, $3); }
- 	| shift_expression RIGHT_OP additive_expression			{ $$ = create_expression(SHIFT, ">>", $1, $3); }
+ 	| shift_expression LEFT_OP additive_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(SHIFT, "<<", ve); 
+ 	}
+ 	| shift_expression RIGHT_OP additive_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3); }
  	;
-
 // /* Relational expressions */
 relational_expression
  	: shift_expression										{ $$ = $1; }
- 	| relational_expression LESS_THAN shift_expression		{ $$ = create_expression(RELATIONAL, "<", $1, $3); }
- 	| relational_expression GREATER_THAN shift_expression	{ $$ = create_expression(RELATIONAL, ">", $1, $3); }
- 	| relational_expression LE_OP shift_expression			{ $$ = create_expression(RELATIONAL, "<=", $1, $3); }
- 	| relational_expression GE_OP shift_expression			{ $$ = create_expression(RELATIONAL, ">=", $1, $3); }
+ 	| relational_expression LESS_THAN shift_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(RELATIONAL, "<", ve); 
+ 	}
+ 	| relational_expression GREATER_THAN shift_expression	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(RELATIONAL, ">", ve); 
+ 	}
+ 	| relational_expression LE_OP shift_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(RELATIONAL, "<=", ve); 
+ 	}
+ 	| relational_expression GE_OP shift_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(RELATIONAL, ">=", ve); 
+ 	}
  	;
-
 equality_expression
  	: relational_expression									{ $$ = $1; }
- 	| equality_expression EQ_OP relational_expression		{ $$ = create_expression(EQUALITY, "==", $1, $3); }
- 	| equality_expression NE_OP relational_expression		{ $$ = create_expression(EQUALITY, "!=", $1, $3); }
+ 	| equality_expression EQ_OP relational_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(EQUALITY, "==", ve); 
+ 	}
+ 	| equality_expression NE_OP relational_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(EQUALITY, "!=", ve); 
+ 	}
  	;
 
 // /* Bitwise expressions */
 and_expression
  	: equality_expression									{ $$ = $1; }
- 	| and_expression AMPERSAND equality_expression			{ $$ = create_expression(AND, "&", $1, $3); }
+ 	| and_expression AMPERSAND equality_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(AND, "&", ve); 
+ 	}
  	;
 
 exclusive_or_expression
  	: and_expression 										{ $$ = $1; }
- 	| exclusive_or_expression CARET and_expression			{ $$ = create_expression(XOR, "^", $1, $3); }
+ 	| exclusive_or_expression CARET and_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(XOR, "^", ve); 
+ 	}
  	;
 
 inclusive_or_expression
  	: exclusive_or_expression								{ $$ = $1; }
- 	| inclusive_or_expression PIPE exclusive_or_expression	{ $$ = create_expression(OR, "|", $1, $3); }
+ 	| inclusive_or_expression PIPE exclusive_or_expression	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(OR, "|", ve); 
+ 	}
  	;
 
 // /* Logical expressions */
@@ -289,7 +365,13 @@ logical_and_expression
 // /* Conditional expression (ternary operator) */
 conditional_expression
  	: logical_or_expression									{ $$ = $1; }
- 	| logical_or_expression QUESTION expression COLON conditional_expression { $$ = create_expression(CONDITIONAL, "?:", $1, $3, $5); }
+ 	| logical_or_expression QUESTION expression COLON conditional_expression { 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		ve->add_element($5);
+ 		$$ = create_expression(CONDITIONAL, "?:", ve); 
+ 	}
  	;
 
 // /* Assignment */
@@ -315,7 +397,12 @@ assignment_expression
 // /* Expressions */
 expression
  	: assignment_expression { $$ = $1; }
- 	| expression COMMA assignment_expression { $$ = create_expression(TOPLEVEL, ' ', $1, $3); }
+ 	| expression COMMA assignment_expression { 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(TOPLEVEL, "", ve); 
+ 	}
  	;
 
 // constant_expression
@@ -650,7 +737,7 @@ parameter_list
  parameter_declaration
  	: declaration_specifiers declarator {
  		$$ = $2;
-		$$ = combine_global_type($1, $2);
+		$$ = combine_global_type($1, $2->type);
  	}
 	;
 // 	// Todo: | declaration_specifiers abstract_declarator

@@ -5,29 +5,29 @@
 #include <map>
 #include <string>
 #include <symtab.h>
-#include <3ac.h>
+// #include <3ac.h>
 
 
 enum ConstantTypeEnum{
-  INVALID=0,
+  INVALID,
   BOOL,
-  CHAR,
-  UNSIGNED_CHAR,
-  SHORT,
-  UNSIGNED_SHORT,
-  INT,
-  UNSIGNED_INT,
-  LONG,
-  UNSIGNED_LONG,
-  LONG_LONG,
-  UNSIGNED_LONG_LONG,
-  FLOAT,
-  UNSIGNED_FLOAT,
-  DOUBLE,
-  UNSIGNED_DOUBLE,
-  LONG_DOUBLE,
-  UNSIGNED_LONG_DOUBLE,
-  STRING,
+  CHAR_CONSTANT,
+  UNSIGNED_CHAR_CONSTANT,
+  SHORT_CONSTANT,
+  UNSIGNED_SHORT_CONSTANT,
+  INT_CONSTANT,
+  UNSIGNED_INT_CONSTANT,
+  LONG_CONSTANT,
+  UNSIGNED_LONG_CONSTANT,
+  LONG_LONG_CONSTANT,
+  UNSIGNED_LONG_LONG_CONSTANT,
+  FLOAT_CONSTANT,
+  UNSIGNED_FLOAT_CONSTANT,
+  DOUBLE_CONSTANT,
+  UNSIGNED_DOUBLE_CONSTANT,
+  LONG_DOUBLE_CONSTANT,
+  UNSIGNED_LONG_DOUBLE_CONSTANT,
+  STRING_CONSTANT,
 };
 
 // --------------------------------------------------------------------------------------------
@@ -48,14 +48,27 @@ class Expression {
 public:
   ConstantType type;
   int num_operands;
-  Address* res;
-  std::vector<GoTo*> truelist;
-  std::vector<GoTo*> falselist;
+  // Address* res;
+  // std::vector<GoTo*> truelist;
+  // std::vector<GoTo*> falselist;
 
-  Expression(ConstantType type, int num_operands, Address* res, std::vector<GoTo*> truelist, std::vector<GoTo*> falselist):
-    type(type), num_operands(num_operands), res(res), truelist(truelist), falselist(falselist) {};
+  Expression(ConstantType type, int num_operands):
+    type(type), num_operands(num_operands) {};
 };
 
+class VectorExpression: public Expression {
+public:
+  std::vector<Expression>* operands;
+  VectorExpression() {
+    this->operands = new std::vector<Expression>();
+  };
+  void add_element(Expression* e) {
+    this->operands->push_back(*e);
+  };
+  void add_elements(std::vector<Expression> elements) {
+    this->operands->insert(this->operands->end(), elements.begin(), elements.end());
+  };
+};
 // --------------------------------------------------------------------------------------------
 union ExpressionType {
   Identifier* id;
@@ -77,7 +90,7 @@ Expression* create_primary_expression(ExpressionType* typ);
 class ArgumentExprList: public Expression {
 public:
   std::vector <Expression* > args;
-  ArgumentExprList() {};
+  ArgumentExprList() : Expression(ConstantType(INVALID), 0) {};
 };
 
 // Grammar warppers for ArguementExpressionList
@@ -114,7 +127,7 @@ public:
 };
 
 // Grammar wrapper for OpExpression
-Expression* create_expression(ExpressionOpType op_type, std::string op, std::initializer_list<Expression> operands);
+Expression* create_expression(ExpressionOpType op_type, std::string op, VectorExpression* ve);
 
 //-------------------------------------------------
 class UnaryExpression: public Expression {
@@ -122,7 +135,7 @@ public:
   Expression* op1;
   std::string op;
 
-  UnaryExpression() {
+  UnaryExpression() : Expression(ConstantType(INVALID), 1) {
     op1 = nullptr;
     op = "";
   }
@@ -131,7 +144,7 @@ public:
 // Grammar warppers for UnaryExpression
 Expression* create_unary_expression(Terminal* op, Expression* ue); // INC_OP, DEC_OP, SIZEOF
 Expression* create_unary_expression_cast(Node* n_op, Expression* ce);
-Expression* create_unary_expression(Terminal*, TypeName* t_name);
+Expression* create_unary_expression(Terminal* op, TypeName* t_name);
 
 // --------------------------------------------------------------------------------------------
 
@@ -144,7 +157,7 @@ public:
   */
   int typeCast;
 
-  CastExpression() {
+  CastExpression() : Expression(ConstantType(INVALID), 1) {
     op1 = nullptr;
     typeCast = -1;
   };
@@ -162,7 +175,7 @@ public:
   ArgumentExprList* ae_list;
   std::string op;
 
-  PostfixExpression() {
+  PostfixExpression(): Expression(ConstantType(INVALID), 0) {
     pe = nullptr;
     exp = nullptr;
     id = nullptr;
@@ -181,11 +194,10 @@ Expression* create_postfix_expr_ido(Terminal* op, Expression* pe);
 // --------------------------------------------------------------------------------------------
 class Constant {
 public:
-  Constant(std::string name, std::string value, unsigned int line_num=0, unsigned int column=0):
-    name(name), value(value), line_num(line_num), column(column) {
-    constant_type.type = "constant";
-  }
   ConstantType constant_type;
+
+  Constant(std::string name, std::string value, unsigned int line_num=0, unsigned int column=0):
+    constant_type(ConstantType(STRING_CONSTANT)) {}
 
   int getConstantType() {
     return constant_type.type;
@@ -199,8 +211,9 @@ Constant* create_constant(const char* name, const char* value, unsigned int line
 // --------------------------------------------------------------------------------------------
 class StringLiteral: public Constant {
 public:
-  StringLiteral(int name){
-    constant_type.type = STRING;
+// check :todo
+  StringLiteral(int name): Constant(std::to_string(name), std::to_string(name)) {
+    constant_type.type = STRING_CONSTANT;
     constant_type.value = name;
   }
 };

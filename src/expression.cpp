@@ -1,7 +1,13 @@
-#include <expression.hpp>
-#include <symtab.hpp>
+#include <expression.h>
+#include <symtab.h>
 #include <cassert>
 #include "types.cpp"
+#include <ast_entries.h>
+#include <new_symtab.h>
+
+bool isNumeric(ConstantType op){
+    return op.type == INT_CONSTANT || op.type == LONG_CONSTANT || op.type == LONG_LONG_CONSTANT || op.type == SHORT_CONSTANT || op.type == CHAR_CONSTANT || op.type == FLOAT_CONSTANT || op.type == DOUBLE_CONSTANT || op.type == LONG_DOUBLE_CONSTANT || op.type == UNSIGNED_INT_CONSTANT || op.type == UNSIGNED_LONG_CONSTANT || op.type == UNSIGNED_LONG_LONG_CONSTANT || op.type == UNSIGNED_SHORT_CONSTANT || op.type == UNSIGNED_CHAR_CONSTANT || op.type == UNSIGNED_FLOAT_CONSTANT || op.type == UNSIGNED_DOUBLE_CONSTANT || op.type == UNSIGNED_LONG_DOUBLE_CONSTANT;
+}
 
 void castTypes(ConstantType &op1, ConstantType &op2){
     if (op1.type != op2.type){
@@ -18,90 +24,91 @@ void castTypes(ConstantType &op1, ConstantType &op2){
 }
 void make_signed(ConstantType &op)
 {
-    if (op.type == UNSIGNED_INT)
+    if (op.type == UNSIGNED_INT_CONSTANT)
     {
-        op.type = INT;
+        op.type = INT_CONSTANT;
     }
-    else if (op.type == UNSIGNED_LONG)
+    else if (op.type == UNSIGNED_LONG_CONSTANT)
     {
-        op.type = LONG;
+        op.type = LONG_CONSTANT;
     }
-    else if (op.type == UNSIGNED_LONG_LONG)
+    else if (op.type == UNSIGNED_LONG_LONG_CONSTANT)
     {
-        op.type = LONG_LONG;
+        op.type = LONG_LONG_CONSTANT;
     }
-    else if (op.type == UNSIGNED_SHORT)
+    else if (op.type == UNSIGNED_SHORT_CONSTANT)
     {
-        op.type = SHORT;
+        op.type = SHORT_CONSTANT;
     }
-    else if (op.type == UNSIGNED_CHAR)
+    else if (op.type == UNSIGNED_CHAR_CONSTANT)
     {
-        op.type = CHAR;
+        op.type = CHAR_CONSTANT;
     }
-    else if (op.type == UNSIGNED_FLOAT)
+    else if (op.type == UNSIGNED_FLOAT_CONSTANT)
     {
-        op.type = FLOAT;
+        op.type = FLOAT_CONSTANT;
     }
-    else if (op.type == UNSIGNED_DOUBLE)
+    else if (op.type == UNSIGNED_DOUBLE_CONSTANT)
     {
-        op.type = DOUBLE;
+        op.type = DOUBLE_CONSTANT;
     }
-    else if (op.type == UNSIGNED_LONG_DOUBLE)
+    else if (op.type == UNSIGNED_LONG_DOUBLE_CONSTANT)
     {
-        op.type = LONG_DOUBLE;
+        op.type = LONG_DOUBLE_CONSTANT;
     }
 }
 
 void make_unsigned(ConstantType &op)
 {
-    if (op.type == INT)
+    if (op.type == INT_CONSTANT)
     {
-        op.type = UNSIGNED_INT;
+        op.type = UNSIGNED_INT_CONSTANT;
     }
-    else if (op.type == LONG)
+    else if (op.type == LONG_CONSTANT)
     {
-        op.type = UNSIGNED_LONG;
+        op.type = UNSIGNED_LONG_CONSTANT;
     }
-    else if (op.type == LONG_LONG)
+    else if (op.type == LONG_LONG_CONSTANT)
     {
-        op.type = UNSIGNED_LONG_LONG;
+        op.type = UNSIGNED_LONG_LONG_CONSTANT;
     }
-    else if (op.type == SHORT)
+    else if (op.type == SHORT_CONSTANT)
     {
-        op.type = UNSIGNED_SHORT;
+        op.type = UNSIGNED_SHORT_CONSTANT;
     }
-    else if (op.type == CHAR)
+    else if (op.type == CHAR_CONSTANT)
     {
-        op.type = UNSIGNED_CHAR;
+        op.type = UNSIGNED_CHAR_CONSTANT;
     }
-    else if (op.type == FLOAT)
+    else if (op.type == FLOAT_CONSTANT)
     {
-        op.type = UNSIGNED_FLOAT;
+        op.type = UNSIGNED_FLOAT_CONSTANT;
     }
-    else if (op.type == DOUBLE)
+    else if (op.type == DOUBLE_CONSTANT)
     {
-        op.type = UNSIGNED_DOUBLE;
+        op.type = UNSIGNED_DOUBLE_CONSTANT;
     }
-    else if (op.type == LONG_DOUBLE)
+    else if (op.type == LONG_DOUBLE_CONSTANT)
     {
-        op.type = UNSIGNED_LONG_DOUBLE;
+        op.type = UNSIGNED_LONG_DOUBLE_CONSTANT;
     }
 }
 bool isUnsigned(ConstantType op)
 {
-    if (op.type == UNSIGNED_INT || op.type == UNSIGNED_LONG || op.type == UNSIGNED_LONG_LONG || op.type == UNSIGNED_SHORT || op.type == UNSIGNED_CHAR || op.type == UNSIGNED_FLOAT || op.type == UNSIGNED_DOUBLE || op.type == UNSIGNED_LONG_DOUBLE)
+    if (op.type == UNSIGNED_INT_CONSTANT || op.type == UNSIGNED_LONG_CONSTANT || op.type == UNSIGNED_LONG_LONG_CONSTANT || op.type == UNSIGNED_SHORT_CONSTANT || op.type == UNSIGNED_CHAR_CONSTANT || op.type == UNSIGNED_FLOAT_CONSTANT || op.type == UNSIGNED_DOUBLE_CONSTANT || op.type == UNSIGNED_LONG_DOUBLE_CONSTANT)
     {
         return true;
     }
     return false;
 }
-bool isInvalid(ConstantType op1, ConstantType op2)
+bool isInvalid(std::initializer_list<ConstantType> ops)
 {
-    if (op1.type == INVALID || op2.type == INVALID)
+    bool result = false;
+    for (ConstantType op : ops)
     {
-        return true;
+        result = result || (op.type == INVALID);
     }
-    return false;
+    return result;
 }
 
 bool isCompatible(ConstantType op1, ConstantType op2)
@@ -110,7 +117,7 @@ bool isCompatible(ConstantType op1, ConstantType op2)
     {
         return true;
     }
-    if (op1.type == STRING && op2.type != STRING || op1.type != STRING && op2.type == STRING)
+    if (op1.type == STRING_CONSTANT && op2.type != STRING_CONSTANT || op1.type != STRING_CONSTANT && op2.type == STRING_CONSTANT)
     {
         return false;
     }
@@ -118,39 +125,39 @@ bool isCompatible(ConstantType op1, ConstantType op2)
     return true;
 }
 
-// PrimaryExpression::PrimaryExpression() : Expression() {}
+PrimaryExpression::PrimaryExpression() : Expression(ConstantType(INVALID), 0) {}
 
-// // TODO: Implement this
-// Expression *create_primary_expression(ExpressionType *typ)
-// {
-//     PrimaryExpression *pe = new PrimaryExpression();
-//     pe->type = *typ;
-//     return pe;
-// }
+// TODO: Implement this
+Expression *create_primary_expression(ExpressionType *typ)
+{
+    PrimaryExpression *pe = new PrimaryExpression();
+    pe->type = *typ;
+    return pe;
+}
 
 // ArgumentExprList::ArgumentExprList() : Expression() {}
 
-// // TODO: Implement this
-// ArgumentExprList *create_argument_expr_assignement(Expression *ase)
-// {
-//     ArgumentExprList *ae_list = new ArgumentExprList();
-//     ae_list->args.push_back(ase);
-//     // ArgumentExprList does not have any type as it is a composite entity
-//     ae_list->name = "arguments";
-//     ae_list->add_children({ase});
-//     return ae_list;
-// }
+// TODO: Implement this
+ArgumentExprList *create_argument_expr_assignement(Expression *ase)
+{
+    ArgumentExprList *ae_list = new ArgumentExprList();
+    ae_list->args.push_back(ase);
+    // ArgumentExprList does not have any type as it is a composite entity
+    // ae_list->name = "arguments";
+    // ae_list->add_children({ase});
+    return ae_list;
+}
 
-// ArgumentExprList *create_argument_expr_list(ArgumentExprList *ae_list, Expression *ase)
-// {
-//     ae_list->args.push_back(ase);
-//     // ArgumentExprList does not have any type as it is a composite entity
-//     ae_list->name = "arguments";
-//     ae_list->add_children({ase});
-//     return ae_list;
-// }
+ArgumentExprList *create_argument_expr_list(ArgumentExprList *ae_list, Expression *ase)
+{
+    ae_list->args.push_back(ase);
+    // ArgumentExprList does not have any type as it is a composite entity
+    // ae_list->name = "arguments";
+    // ae_list->add_children({ase});
+    return ae_list;
+}
 
-Expression *create_expression(ExpressionOpType op_type, std::string op, std::initializer_list<Expression> operands)
+Expression *create_expression(ExpressionOpType op_type, std::string op,VectorExpression* ve)
 {
     OpExpression *oe = new OpExpression();
     oe->op_type = op_type;
@@ -158,55 +165,55 @@ Expression *create_expression(ExpressionOpType op_type, std::string op, std::ini
     switch (op_type)
     {
     case MULTIPLICATIVE:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return multiplicative_expression(oe);
     case ADDITIVE:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return additive_expression(oe);
     case RELATIONAL:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return relational_expression(oe);
     case SHIFT:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return shift_expression(oe);
     case EQUALITY:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return equality_expression(oe);
     case AND:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return and_expression(oe);
     case XOR:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return xor_expression(oe);
     case OR:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return or_expression(oe);
     case LOGICAL_AND:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return logical_and_expression(oe);
     case LOGICAL_OR:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
         return logical_or_expression(oe);
     case CONDITIONAL:
-        oe->op1 = *operands.begin();
-        oe->op2 = *(operands.begin() + 1);
-        oe->op3 = *(operands.begin() + 2);
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        oe->op3 = ve->operands[2];
         return conditional_expression(oe);
     case CONSTANT:
-        oe->op1 = *operands.begin();
+        oe->op1 = ve->operands[0];
         return constant_expression(oe);
     case TOPLEVEL:
-        oe->op1 = *operands.begin();
+        oe->op1 = ve->operands[0];
         return toplevel_expression(oe);
     default:
         std::cerr << "Incorrect expression. Something went wrong\n";
@@ -220,7 +227,7 @@ Expression *multiplicative_expression(OpExpression *oe)
 
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid(op1Type, op2Type) || !isCompatible(op1Type, op2Type) || (op1Type.type == STRING || op2Type.type == STRING))
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type) || (op1Type.type == STRING_CONSTANT || op2Type.type == STRING_CONSTANT))
     {
         error_msg("Invalid types for multiplication" + oe->op, line_num, column);
         oe->type = ConstantType(INVALID);
@@ -229,13 +236,12 @@ Expression *multiplicative_expression(OpExpression *oe)
 
     if (oe->op == "*" || oe->op == "/")
     {
-            bool op1Unsigned = isUnsigned(op1Type);
-            bool op2Unsigned = isUnsigned(op2Type); 
+        bool op1Unsigned = isUnsigned(op1Type);
+        bool op2Unsigned = isUnsigned(op2Type); 
             
-            if (!op1Unsigned && !op2Unsigned)
-            {
+        if (!op1Unsigned && !op2Unsigned)
+        {
                 // Both are signed
-
                 ;
             }
             else if (op1Unsigned && op2Unsigned)
@@ -262,7 +268,6 @@ Expression *multiplicative_expression(OpExpression *oe)
             }
             oe->type = op1Type;
             // add 3AC code
-        }
     }
     else if (oe->op == "%")
     {
@@ -282,7 +287,7 @@ Expression *multiplicative_expression(OpExpression *oe)
         assert(0);
     }
 
-    oe->name = "multiplicative_expression";
+    // oe->name = "multiplicative_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
     // oe->add_children({&oe->op1, n_op, &oe->op2});
     return oe;
@@ -291,96 +296,81 @@ Expression *multiplicative_expression(OpExpression *oe)
 // utils
 Expression *additive_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        error_msg("Invalid types for addition/subtraction " + oe->op, line_num, column);
+        oe->type = ConstantType(INVALID);
         return oe;
     }
 
-    if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
+    if (isNumeric(op1Type) && isNumeric(op2Type))
     {
-        if (!type_specifiers[U_INT_T].isEqual(*op1Type.standard_type) && !type_specifiers[U_INT_T].isEqual(*op2Type.standard_type))
-        {
-            ; // Both signed integers
-        }
-        else if (type_specifiers[U_INT_T].isEqual(*op1Type.standard_type) && type_specifiers[U_INT_T].isEqual(*op2Type.standard_type))
-        {
-            ; // Both unsigned
-        }
-        else if (!type_specifiers[U_INT_T].isEqual(*op1Type.standard_type) && type_specifiers[U_INT_T].isEqual(*op2Type.standard_type))
+        if (!isUnsigned(op1Type) && isUnsigned(op2Type))
         {
             // make op1 unsigned
-            op1Type.make_unsigned();
+            make_unsigned(op1Type);
         }
-        else if (type_specifiers[U_INT_T].isEqual(*op1Type.standard_type) && !type_specifiers[U_INT_T].isEqual(*op2Type.standard_type))
+        else if (isUnsigned(op1Type) && !isUnsigned(op2Type))
         {
             // make op2 unsigned
-            op2Type.make_unsigned();
+            make_unsigned(op2Type);
         }
         oe->type = op1Type; // Result type is the same as operands
         // 3AC code would be added here
     }
-    else if (type_specifiers[FLOAT_T].isEqual(*op1Type.standard_type) && type_specifiers[FLOAT_T].isEqual(*op2Type.standard_type))
+    else if (op1Type.type == FLOAT_CONSTANT && op2Type.type == FLOAT_CONSTANT)
     {
         oe->op += "f";
         oe->type = op1Type;
         // 3AC code would be added here
     }
-    else if ((type_specifiers[FLOAT_T].isEqual(*op1Type.standard_type) && type_specifiers[INT_T].isEqual(*op2Type.standard_type)) ||
-             (type_specifiers[INT_T].isEqual(*op1Type.standard_type) && type_specifiers[FLOAT_T].isEqual(*op2Type.standard_type)))
+    else if ((op1Type.type == FLOAT_CONSTANT && op2Type.type == INT_CONSTANT) || (op1Type.type == INT_CONSTANT && op2Type.type == FLOAT_CONSTANT))
     {
         oe->op += "f";
-        oe->type.standard_type = &type_specifiers[FLOAT_T];
+        oe->type = FLOAT_CONSTANT;
         // 3AC code would be added here
     }
-    else if (op1Type.getType() == "Pointer" && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
+    else if (op1Type.ptr_level > 0 && isNumeric(op2Type))
     {
         oe->type = op1Type;
         // 3AC code for pointer + int would be added here
     }
-    else if (op2Type.getType() == "Pointer" && type_specifiers[INT_T].isEqual(*op1Type.standard_type))
+    else if (op2Type.ptr_level > 0 && isNumeric(op1Type))
     {
         oe->type = op2Type;
         // 3AC code for int + pointer would be added here
     }
-    else
-    {
-        error_msg("Invalid types for addition/subtraction " + oe->op, line_num, column);
-        oe->type.invalid_type = &INVALID_TYPE;
-        return oe;
-    }
 
-    oe->name = "additive_expression";
-    Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->name = "additive_expression";
+    // Node *n_op = create_non_terminal(oe->op.c_str(), {});
+    // oe->add_children({&oe->op1, n_op, &oe->op2});
     return oe;
 }
 
 // utils
 Expression *relational_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        oe->type = ConstantType(INVALID);
+        error_msg("Invalid types for relational operation " + oe->op, line_num, column);
         return oe;
     }
 
     if (oe->op == "<" || oe->op == ">" || oe->op == "<=" || oe->op == ">=")
     {
-        // Check if both operands are numeric (int or float)
-        if ((type_specifiers[INT_T].isEqual(*op1Type.standard_type) || type_specifiers[FLOAT_T].isEqual(*op1Type.standard_type)) &&
-            (type_specifiers[FLOAT_T].isEqual(*op1Type.standard_type) || type_specifiers[INT_T].isEqual(*op2Type.standard_type)))
+        // Check if both operands are numeric
+        if (isNumeric(op1Type) && isNumeric(op2Type))
         {
-
-            oe->type.standard_type = &type_specifiers[U_CHAR_T];
+            oe->type = ConstantType(BOOL);
 
             // Add warning for signed/unsigned mismatch
-            bool op1Unsigned = type_specifiers[U_INT_T].isEqual(*op1Type.standard_type);
-            bool op2Unsigned = type_specifiers[U_INT_T].isEqual(*op2Type.standard_type);
+            bool op1Unsigned = isUnsigned(op1Type);
+            bool op2Unsigned = isUnsigned(op2Type);
             if (op1Unsigned != op2Unsigned)
             {
                 warning_msg("Comparison " + oe->op + " between signed and unsigned values", line_num, column);
@@ -388,22 +378,15 @@ Expression *relational_expression(OpExpression *oe)
 
             // 3AC code would be added here
         }
-        else
-        {
-            error_msg("Invalid types for relational operation " + oe->op, line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
-            return oe;
-        }
     }
     else
     {
         std::cerr << "Incorrect relation expression. Something went wrong\n";
-        exit(0);
     }
 
-    oe->name = "relational_expression";
-    Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->name = "relational_expression";
+    // Node *n_op = create_non_terminal(oe->op.c_str(), {});
+    // oe->add_children({&oe->op1, n_op, &oe->op2});
     // 3AC code would be added here
     return oe;
 }
@@ -411,44 +394,35 @@ Expression *relational_expression(OpExpression *oe)
 // utils
 Expression *shift_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        oe->type = ConstantType(INVALID);
+        error_msg("Invalid types for shift operation " + oe->op, line_num, column);
         return oe;
     }
 
     if (oe->op == "<<" || oe->op == ">>")
     {
-        // Check if both operands are integers
-        if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
-        {
+
             oe->type = op1Type;
 
             // If first operand is unsigned, mark operation as unsigned
-            if (type_specifiers[U_INT_T].isEqual(*op1Type.standard_type))
+            if (isUnsigned(op1Type))
             {
                 oe->op += "u";
             }
-        }
-        else
-        {
-            error_msg("Invalid types for shift operation " + oe->op, line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
-            return oe;
-        }
     }
     else
     {
         // This should not happen
         std::cerr << "Incorrect shift expression. Something went wrong\n";
-        exit(0);
     }
 
-    oe->name = "shift_expression";
-    Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->name = "shift_expression";
+    // Node *n_op = create_non_terminal(oe->op.c_str(), {});
+    // oe->add_children({&oe->op1, n_op, &oe->op2});
     // 3AC code would be added here
     return oe;
 }
@@ -458,14 +432,9 @@ Expression *equality_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
     {
-        oe->type = ConstantType(INVALID);
-        return oe;
-    }
-
-    if (!isCompatible(op1Type, op2Type))
-    {
+        error_msg("Invalid types for equality operation " + oe->op, line_num, column);
         oe->type = ConstantType(INVALID);
         return oe;
     }
@@ -491,19 +460,13 @@ Expression *equality_expression(OpExpression *oe)
                 warning_msg("Comparison " + oe->op + " between signed and unsigned values", line_num, column);
             }
         }
-        else
-        {
-            error_msg("Invalid types for equality operation " + oe->op, line_num, column);
-            oe->type = ConstantType(INVALID);
-            return oe;
-        }
     }
     else
     {
         std::cerr << "Incorrect equality expression. Something went wrong\n";
     }
 
-    oe->name = "equality_expression";
+    // oe->name = "equality_expression";
     // Node *n_op = create_non_terminal(oe->op.c_str(), {});
     // oe->add_children({&oe->op1, n_op, &oe->op2});
     // 3AC code would be added here
@@ -513,50 +476,41 @@ Expression *equality_expression(OpExpression *oe)
 // utils
 Expression *and_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        oe->type = ConstantType(INVALID);
+        error_msg("Invalid types for bitwise AND operation", line_num, column);
         return oe;
     }
 
     if (oe->op == "&")
     {
-        // Check if both operands are integers
-        if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
+        // Determine the result type (using the "wider" of the two types)
+        oe->type = op1Type.type > op2Type.type ? op1Type : op2Type;
+
+        // Handle unsigned/signed issues
+        bool op1Unsigned = isUnsigned(op1Type);
+        bool op2Unsigned = isUnsigned(op2Type);
+
+        if (!(op1Unsigned && op2Unsigned))
         {
-            // Determine the result type (using the "wider" of the two types)
-            // typecast needed : TODO
-            oe->type = op1Type;
-
-            // Handle unsigned/signed issues
-            bool op1Unsigned = type_specifiers[U_INT_T].isEqual(*op1Type.standard_type);
-            bool op2Unsigned = type_specifiers[U_INT_T].isEqual(*op2Type.standard_type);
-
-            if (!(op1Unsigned && op2Unsigned))
-            {
-                oe->type.make_signed();
-            }
-
-            // 3AC code would be added here
+            // upgrade unsigned to signed for safety
+            make_signed(oe->type);
         }
-        else
-        {
-            error_msg("Invalid types for bitwise AND operation", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
-            return oe;
-        }
+
+        // 3AC code would be added here
+        
     }
     else
     {
         std::cerr << "Incorrect and_expression. Something went wrong\n";
-        exit(0);
     }
 
-    oe->name = "and_expression";
-    Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->name = "and_expression";
+    // Node *n_op = create_non_terminal(oe->op.c_str(), {});
+    // oe->add_children({&oe->op1, n_op, &oe->op2});
     // 3AC code would be added here
     return oe;
 }
@@ -566,45 +520,35 @@ Expression *xor_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (op1Type.type == "InvalidType" || op2Type.type == "InvalidType")
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        error_msg("Invalid types for exclusive OR operation", line_num, column);
+        oe->type = ConstantType(INVALID);
         return oe;
     }
 
     if (oe->op == "^")
     {
-        // Check if both operands are integers
-        if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
-        {
-            // Determine the result type (ideally the wider of the two types) :TODO
-            oe->type = op1Type;
+        // Determine the result type (ideally the wider of the two types) :TODO
+        oe->type = op1Type.type > op2Type.type ? op1Type : op2Type;
 
-            // Handle unsigned/signed issues
-            bool op1Unsigned = type_specifiers[U_INT_T].isEqual(*op1Type.standard_type);
-            bool op2Unsigned = type_specifiers[U_INT_T].isEqual(*op2Type.standard_type);
+        // Handle unsigned/signed issues
+        bool op1Unsigned = isUnsigned(op1Type);
+        bool op2Unsigned = isUnsigned(op2Type);
 
-            if (!(op1Unsigned && op2Unsigned))
-            {
-                oe->type.make_signed();
-            }
-        }
-        else
+        if (!(op1Unsigned && op2Unsigned))
         {
-            error_msg("Invalid types for exclusive OR operation", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
-            return oe;
+            make_signed(oe->type);
         }
     }
     else
     {
         std::cerr << "Incorrect exclusive or expression. Something went wrong\n";
-        exit(0);
     }
 
-    oe->name = "exclusive_or_expression";
-    Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->name = "exclusive_or_expression";
+    // Node *n_op = create_non_terminal(oe->op.c_str(), {});
+    // oe->add_children({&oe->op1, n_op, &oe->op2});
     // 3AC code would be added here
     return oe;
 }
@@ -612,48 +556,37 @@ Expression *xor_expression(OpExpression *oe)
 // utils
 Expression *or_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        oe->type = ConstantType(INVALID);
+        error_msg("Invalid types for bitwise OR operation", line_num, column);
         return oe;
     }
 
     if (oe->op == "|")
     {
-        // Check if both operands are integers
-        if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
-        {
-            // Determine the result type (would ideally use the wider of the two types) :TODO
-            oe->type = op1Type;
+        // Determine the result type (would ideally use the wider of the two types) :TODO
+        oe->type = op1Type.type > op2Type.type ? op1Type : op2Type;
 
-            // Handle unsigned/signed issues
-            bool op1Unsigned = type_specifiers[U_INT_T].isEqual(*op1Type.standard_type);
-            bool op2Unsigned = type_specifiers[U_INT_T].isEqual(*op2Type.standard_type);
+        // Handle unsigned/signed issues
+        bool op1Unsigned = isUnsigned(op1Type);
+        bool op2Unsigned = isUnsigned(op2Type);
 
-            if (!(op1Unsigned && op2Unsigned))
-            {
-                // If either operand is signed, make the result signed
-                oe->type.make_signed();
-            }
-        }
-        else
+        if (!(op1Unsigned && op2Unsigned))
         {
-            error_msg("Invalid types for bitwise OR operation", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
-            return oe;
+            make_signed(oe->type);
         }
     }
     else
     {
         std::cerr << "Incorrect inclusive or expression. Something went wrong\n";
-        exit(0);
     }
 
-    oe->name = "inclusive_or_expression";
-    Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->name = "inclusive_or_expression";
+    // Node *n_op = create_non_terminal(oe->op.c_str(), {});
+    // oe->add_children({&oe->op1, n_op, &oe->op2});
     // 3AC code would be added here
     return oe;
 }
@@ -661,42 +594,32 @@ Expression *or_expression(OpExpression *oe)
 // utils
 Expression *logical_and_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        oe->type = ConstantType(INVALID);
+        error_msg("Invalid types for logical AND operation", line_num, column);
         return oe;
     }
 
     if (oe->op == "&&")
     {
-        // Check if both operands are integers
-        if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
-        {
-            // Result type is boolean (unsigned char)
-            oe->type.standard_type = &type_specifiers[U_CHAR_T];
-        }
-        else
-        {
-            error_msg("Invalid types for logical AND operation", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
-            return oe;
-        }
+        // Result type is boolean
+        oe->type = ConstantType(BOOL);
     }
     else
     {
         std::cerr << "Incorrect logical and expression. Something went wrong\n";
-        exit(0);
     }
 
-    oe->name = "logical_and_expression";
-    Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->name = "logical_and_expression";
+    // Node *n_op = create_non_terminal(oe->op.c_str(), {});
+    // oe->add_children({&oe->op1, n_op, &oe->op2});
     // 3AC code would be added here
-    append(oe->truelist, oe->op2.truelist);
-    append(oe->falselist, oe->op1.falselist);
-    append(oe->falselist, oe->op2.falselist);
+    // append(oe->truelist, oe->op2.truelist);
+    // append(oe->falselist, oe->op1.falselist);
+    // append(oe->falselist, oe->op2.falselist);
 
     return oe;
 }
@@ -704,42 +627,32 @@ Expression *logical_and_expression(OpExpression *oe)
 // utils
 Expression *logical_or_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type) || (op1Type.type == STRING_CONSTANT || op2Type.type == STRING_CONSTANT))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        oe->type = ConstantType(INVALID);
+        error_msg("Invalid types for logical OR operation", line_num, column);
         return oe;
     }
 
     if (oe->op == "||")
     {
-        // Check if both operands are integers
-        if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
-        {
-            // Result type is boolean (unsigned char)
-            oe->type.standard_type = &type_specifiers[U_CHAR_T];
-        }
-        else
-        {
-            error_msg("Invalid types for logical OR operation", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
-            return oe;
-        }
+        // Result type is boolean
+        oe->type = ConstantType(BOOL);
     }
     else
     {
         std::cerr << "Incorrect logical or expression. Something went wrong\n";
-        exit(0);
     }
 
-    oe->name = "logical_or_expression";
-    Node *n_op = create_non_terminal(oe->op.c_str(), {});
-    oe->add_children({&oe->op1, n_op, &oe->op2});
+    // oe->name = "logical_or_expression";
+    // Node *n_op = create_non_terminal(oe->op.c_str(), {});
+    // oe->add_children({&oe->op1, n_op, &oe->op2});
     // 3AC code would be added here
-    append(oe->truelist, oe->op1.truelist);
-    append(oe->truelist, oe->op2.truelist);
-    append(oe->falselist, oe->op2.falselist);
+    // append(oe->truelist, oe->op1.truelist);
+    // append(oe->truelist, oe->op2.truelist);
+    // append(oe->falselist, oe->op2.falselist);
 
     return oe;
 }
@@ -747,61 +660,55 @@ Expression *logical_or_expression(OpExpression *oe)
 // utils
 Expression *conditional_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
-    GlobalType op3Type = oe->op3.type;
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    ConstantType op3Type = oe->op3.type;
 
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType" ||
-        op3Type.getType() == "InvalidType")
+    if (isInvalid({op1Type, op2Type, op3Type}))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        oe->type = ConstantType(INVALID);
+        error_msg("Invalid types for conditional expression", line_num, column);
         return oe;
     }
 
+    // check: TODO
     // Check if condition is an integer
-    if (type_specifiers[INT_T].isEqual(*op1Type.standard_type))
+    // if (type_specifiers[INT_T].isEqual(*op1Type.standard_type))
+    if (op1Type.type == INT_CONSTANT)
     {
         // Check if true and false expressions have compatible types
-        if ((type_specifiers[INT_T].isEqual(*op2Type.standard_type) || type_specifiers[FLOAT_T].isEqual(*op2Type.standard_type)) &&
-            (type_specifiers[INT_T].isEqual(*op3Type.standard_type) || type_specifiers[FLOAT_T].isEqual(*op3Type.standard_type)))
+        if (!isCompatible(op2Type, op3Type)){
+            error_msg("Invalid types for conditional expression", line_num, column);
+            oe->type = ConstantType(INVALID);
+            return oe;
+        }
+        else if (op2Type.type == op3Type.type && op2Type.ptr_level>0)
         {
-
-            // Determine the result type (wider of the two types): TODO
+            // check: TODO
+            // Both expressions are pointers of the same type
             oe->type = op2Type;
+            oe->type.ptr_level = op2Type.ptr_level;
+        }
+        else
+        {
+            // Determine the result type (wider of the two types): TODO
+            oe->type = op2Type.type > op3Type.type ? op2Type : op3Type;
 
             // Handle unsigned/signed issues
-            bool op2Unsigned = type_specifiers[U_INT_T].isEqual(*op2Type.standard_type);
-            bool op3Unsigned = type_specifiers[U_INT_T].isEqual(*op3Type.standard_type);
+            bool op2Unsigned = isUnsigned(op2Type);
+            bool op3Unsigned = isUnsigned(op3Type);
 
             if (!(op2Unsigned && op3Unsigned))
             {
                 // As safety, we upgrade unsigned to signed
-                oe->type.make_signed();
+                make_signed(oe->type);
             }
         }
-        // check this :TOD
-        else if (op2Type.getType() == op3Type.getType() &&
-                 op2Type.getType() == "Pointer")
-        {
-            // Both expressions are pointers of the same type
-            oe->type = op2Type;
-        }
-        else
-        {
-            error_msg("Type mismatch in conditional expression", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
-            return oe;
-        }
-    }
-    else
-    {
-        error_msg("Condition in conditional expression must be an integer", line_num, column);
-        oe->type.invalid_type = &INVALID_TYPE;
-        return oe;
+
     }
 
-    oe->name = "conditional_expression";
-    oe->add_children({&oe->op1, &oe->op2, &oe->op3});
+    // oe->name = "conditional_expression";
+    // oe->add_children({&oe->op1, &oe->op2, &oe->op3});
 
     return oe;
 }
@@ -815,183 +722,158 @@ Expression *constant_expression(OpExpression *oe)
 // utils
 Expression *toplevel_expression(OpExpression *oe)
 {
-    GlobalType op1Type = oe->op1.type;
-    GlobalType op2Type = oe->op2.type;
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
 
-    if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
+    if (isInvalid({op1Type, op2Type}))
     {
-        oe->type.invalid_type = &INVALID_TYPE;
+        error_msg("Invalid types for toplevel expression", line_num, column);
+        oe->type = ConstantType(INVALID);
         return oe;
     }
 
     //////need TO DO LATER///////////
 
-    oe->name = "toplevel_expression";
-    oe->add_children({&oe->op1, &oe->op2});
+    // oe->name = "toplevel_expression";
+    // oe->add_children({&oe->op1, &oe->op2});
     return oe;
 }
 
-// Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
-// {
-//     GlobalType op1Type = oe->op1.type;
-//     GlobalType op2Type = oe->op2.type;
-//     Terminal *op = (Terminal *)n_op;
-//     oe->op = op->name;
+Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
+{
+    ConstantType op1Type = oe->op1.type;
+    ConstantType op2Type = oe->op2.type;
+    // Terminal *op = (Terminal *)n_op;
+    oe->op = op->name;
 
-//     if (op1Type.getType() == "InvalidType" || op2Type.getType() == "InvalidType")
-//     {
-//         oe->type.invalid_type = &INVALID_TYPE;
-//         return oe;
-//     }
+    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type) || op1Type.type == STRING_CONSTANT || op2Type.type == STRING_CONSTANT )
+    {
+        oe->type = ConstantType(INVALID);
+        error_msg("Invalid types for assignment expression", line_num, column);
+        return oe;
+    }
 
-//     // check if op1 is a contant expression then it can be assigned to anything
-//     // if (op1Type.getType() == "Constant")
-//     // {
-//     //     oe->type = &INVALID_TYPE;
-//     //     return oe;
-//     // }
+    // check if op1 is a contant expression then it cannot be assigned to anything
+    if (op1Type.type == CONSTANT)
+    {
+        oe->type = ConstantType(INVALID);
+        return oe;
+    }
 
-//     if (oe->op == "=")
-//     {
-//         // Simple assignment
-//         if ((type_specifiers[INT_T].isEqual(*op1Type.standard_type) ||
-//              type_specifiers[FLOAT_T].isEqual(*op1Type.standard_type)) &&
-//             (type_specifiers[INT_T].isEqual(*op2Type.standard_type) ||
-//              type_specifiers[FLOAT_T].isEqual(*op2Type.standard_type)))
-//         {
-//             // Integer or float assignment
-//             if (op1Type.standard_type != op2Type.standard_type)
-//             {
-//                 warning_msg("Assignment between different types:"+ op1Type.getType() + "and" + op2Type.getType(), line_num, column);
-//             }
-//             oe->type = op1Type;
-//         }
-//         else if (op1Type.getType() == "Pointer" && op2Type.getType() == "Pointer")
-//         {
-//             // Pointer assignment
-//             //  TODO: how to do level check
-//             if (type_specifiers[VOID_T].isEqual(*op2Type.pointer_type) &&(op1Type.standard_type!=op2Type.standard_type || op1Type.pointer_type->ptr_level!=op2Type.pointer_type->ptr_level))
-//             {
-//                 warning_msg("Assignment between different pointer types", line_num, column);
-//             }
-//             oe->type = op1Type;
-//         }
-//         else
-//         {
-//             error_msg("Invalid assignment between types" + op1Type.getType() + "and" + op2Type.getType(), line_num, column);
-//             oe->type.invalid_type = &INVALID_TYPE;
-//             return oe;
-//         }
-//         // 3AC code would be added here
-//     }
-//     else if (oe->op == "+=" || oe->op == "-=")
-//     {
-//         // Addition/subtraction assignment
-//         if ((type_specifiers[INT_T].isEqual(*op1Type.standard_type) ||
-//              type_specifiers[FLOAT_T].isEqual(*op1Type.standard_type)) &&
-//             (type_specifiers[INT_T].isEqual(*op2Type.standard_type) ||
-//              type_specifiers[FLOAT_T].isEqual(*op2Type.standard_type)))
-//         {
-//             if (op1Type.standard_type != op2Type.standard_type)
-//             {
-//                 warning_msg("Assignment between different types:"+ op1Type.getType() + "and" + op2Type.getType(), line_num, column);
-//             }
-//             oe->type = op1Type;
-//         }
-//         else if (op1Type.getType() == "Pointer" && type_specifiers[INT_T].isEqual(*op2Type.standard_type))
-//         {
-//             // Pointer arithmetic assignment
-//             oe->type = op1Type;
-//         }
-//         else
-//         {
-//             error_msg("Invalid operands for " + oe->op, line_num, column);
-//             oe->type.invalid_type = &INVALID_TYPE;
-//             return oe;
-//         }
-//     }
-//     else if (oe->op == "*=" || oe->op == "/=" || oe->op == "%=")
-//     {
-//         // Multiplicative assignment
-//         if (oe->op == "%=" &&
-//             (!type_specifiers[INT_T].isEqual(*op1Type.standard_type) ||
-//              !type_specifiers[INT_T].isEqual(*op2Type.standard_type)))
-//         {
-//             error_msg("Modulo operation requires integer operands", line_num, column);
-//             oe->type.invalid_type = &INVALID_TYPE;
-//             return oe;
-//         }
-//         else if ((type_specifiers[INT_T].isEqual(*op1Type.standard_type) ||
-//                   type_specifiers[FLOAT_T].isEqual(*op1Type.standard_type)) &&
-//                  (type_specifiers[INT_T].isEqual(*op2Type.standard_type) ||
-//                   type_specifiers[FLOAT_T].isEqual(*op2Type.standard_type)))
-//         {
-//             if (op1Type.standard_type != op2Type.standard_type)
-//             {
-//                 warning_msg("Assignment between different types:"+ op1Type.getType() + "and" + op2Type.getType(), line_num, column);
-//             }
-//             oe->type = op1Type;
-//         }
-//         else
-//         {
-//             error_msg("Invalid operands for " + oe->op, line_num, column);
-//             oe->type.invalid_type = &INVALID_TYPE;
-//             return oe;
-//         }
-//         // 3AC code would be added here
-//     }
-//     else if (oe->op == "<<=" || oe->op == ">>=")
-//     {
-//         // Bitshift assignment
-//         if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) &&
-//             type_specifiers[INT_T].isEqual(*op2Type.standard_type))
-//         {
-//             oe->type = op1Type;
-//         }
-//         else
-//         {
-//             error_msg("Shift operations require integer operands", line_num, column);
-//             oe->type.invalid_type = &INVALID_TYPE;
-//             return oe;
-//         }
-//         // 3AC code would be added here
-//     }
-//     else if (oe->op == "&=" || oe->op == "|=" || oe->op == "^=")
-//     {
-//         // Bitwise operations assignment
-//         if (type_specifiers[INT_T].isEqual(*op1Type.standard_type) &&
-//             type_specifiers[INT_T].isEqual(*op2Type.standard_type))
-//         {
-//             oe->type = op1Type;
+    if (oe->op == "=")
+    {
+        // Simple assignment
+        if (isNumeric(op1Type) && isNumeric(op2Type))
+        {
+            // Integer or float assignment
+            if (op1Type.type != op2Type.type)
+            {
+                warning_msg("Assignment between different types:"+ op1Type.getType() + "and" + op2Type.getType(), line_num, column);
+            }
+            oe->type = op1Type;
+        }
+        else if (op1Type.ptr_level > 0 && op2Type.ptr_level > 0)
+        {
+            // Pointer assignment
+            //  TODO: how to do level check
+            if (op2Type.type == VOID_T && (op1Type.type != op2Type.type || op1Type.ptr_level != op2Type.ptr_level))
+            {
+                warning_msg("Assignment between different pointer types", line_num, column);
+            }
+            oe->type = op1Type;
+        }
+        // 3AC code would be added here
+    }
+    else if (oe->op == "+=" || oe->op == "-=")
+    {
+        // Addition/subtraction assignment
+        if ((op1Type.type == INT_T || op1Type.type == FLOAT_T) &&
+             (op2Type.type == INT_T || op2Type.type == FLOAT_T))
+        {
+            if (op1Type.type != op2Type.type)
+            {
+                warning_msg("Assignment between different types",line_num, column);
+            }
+            oe->type = op1Type;
+        }
+        else if (op1Type.ptr_level > 0 && op2Type.type == INT_T)
+        {
+            // Pointer arithmetic assignment
+            oe->type = op1Type;
+        }
+    }
+    else if (oe->op == "*=" || oe->op == "/=" || oe->op == "%=")
+    {
+        // Multiplicative assignment
+        if (oe->op == "%=" && !isNumeric(op1Type) && !isNumeric(op2Type))
+        {
+            error_msg("Modulo operation requires integer operands", line_num, column);
+            oe->type.invalid_type = &INVALID_TYPE;
+            return oe;
+        }
+        else if (isNumeric(op1Type) && isNumeric(op2Type))
+        {
+            if (op1Type.type != op2Type.type)
+            {
+                warning_msg("Assignment between different types:"+ op1Type.getType() + "and" + op2Type.getType(), line_num, column);
+            }
+            oe->type = op1Type;
+        }
+        else
+        {
+            error_msg("Invalid operands for " + oe->op, line_num, column);
+            oe->type.invalid_type = &INVALID_TYPE;
+            return oe;
+        }
+    }
+    else if (oe->op == "<<=" || oe->op == ">>=")
+    {
+        // Bitshift assignment
+        if (isNumeric(op1Type) && isNumeric(op2Type))
+        {
+            oe->type = op1Type;
+        }
+        else
+        {
+            error_msg("Shift operations require integer operands", line_num, column);
+            oe->type.invalid_type = &INVALID_TYPE;
+            return oe;
+        }
+    }
+    else if (oe->op == "&=" || oe->op == "|=" || oe->op == "^=")
+    {
+        // Bitwise operations assignment
+        if (isNumeric(op1Type) && isNumeric(op2Type))
+        {
+            oe->type = op1Type;
 
-//             // Handle unsigned/signed issues
-//             bool op1Unsigned = type_specifiers[U_INT_T].isEqual(*op1Type.standard_type);
-//             bool op2Unsigned = type_specifiers[U_INT_T].isEqual(*op2Type.standard_type);
+            // Handle unsigned/signed issues
+            bool op1Unsigned = isUnsigned(op1Type);
+            bool op2Unsigned = isUnsigned(op2Type);
 
-//             if (!(op1Unsigned && op2Unsigned))
-//             {
-//                 // As safety, we upgrade unsigned to signed
-//                 oe->type.make_signed();
-//             }
-//         }
-//         else
-//         {
-//             error_msg("Bitwise operations require integer operands", line_num, column);
-//             oe->type.invalid_type = &INVALID_TYPE;
-//             return oe;
-//         }
-//         // 3AC code would be added here
-//     }
-//     else
-//     {
-//         std::cerr << "Incorrect assignment expression. Something went wrong\n";
-//         exit(0);
-//     }
+            if (!(op1Unsigned && op2Unsigned))
+            {
+                // As safety, we upgrade unsigned to signed
+                make_signed(oe->type);
+            }
+        }
+        else
+        {
+            error_msg("Bitwise operations require integer operands", line_num, column);
+            oe->type.invalid_type = &INVALID_TYPE;
+            return oe;
+        }
+        // 3AC code would be added here
+    }
+    else
+    {
+        std::cerr << "Incorrect assignment expression. Something went wrong\n";
+    }
 
 //     oe->name = "assignment_expression";
 //     oe->add_children({&oe->op1, &oe->op2});
-//     return oe;
-// }
+    return oe;
+}
 
 // Expression *create_unary_expression(Terminal * op, Expression *ue)
 // {
