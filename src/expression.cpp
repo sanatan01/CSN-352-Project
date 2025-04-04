@@ -711,7 +711,8 @@ Expression* toplevel_expression(OpExpression* oe) {
     return oe;
 }
 
-Expression* create_assignment_expression(OpExpression* oe, Node* n_op) {
+// was using Node *n_op, not known why?
+Expression* assignment_expression(OpExpression* oe) {
     PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
     PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
     // Terminal *op = (Terminal *)n_op;
@@ -1476,6 +1477,11 @@ Expression* create_expression(ExpressionOpType op_type, std::string op, VectorEx
     case TOPLEVEL:
         oe->op1 = ve->operands[0];
         return toplevel_expression(oe);
+    case ASSIGNMENT:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        //Node* n_op?
+        return assignment_expression(oe);
     default:
         std::cerr << "Incorrect expression. Something went wrong\n";
         return nullptr;

@@ -182,12 +182,12 @@ primary_expression
  	: IDENTIFIER							{ $$ = create_expression_simple(IDENTIFIER_ET, std::string($1)); }
  	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
 // 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
-// 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
+ 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
  	;
 
 // /* Postfix expressions */
 postfix_expression
- 	: primary_expression 											//{ $$ = $1; }
+ 	: primary_expression 											{ $$ = $1; }
 // 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		//{ $$ = create_postfix_expr_arr($1, $3); }
 // 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							//{ $$ = create_postfix_expr_voidfun($1); }
 // 	| IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
@@ -213,14 +213,14 @@ unary_expression
 // 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	//{ $$ = create_unary_expression($1, $3); }
  	;
 
-// unary_operator
-// 	: AMPERSAND     { $$ = strdup("&"); }
-//  	| ASTERISK      { $$ = strdup("*"); }
-//  	| PLUS          { $$ = strdup("+"); }
-//  	| MINUS         { $$ = strdup("-"); }
-//  	| TILDE         { $$ = strdup("~"); }
-//  	| EXCLAMATION   { $$ = strdup("!"); }
- 	;
+unary_operator
+	: AMPERSAND     { $$ = strdup("&"); }
+	| ASTERISK      { $$ = strdup("*"); }
+	| PLUS          { $$ = strdup("+"); }
+	| MINUS         { $$ = strdup("-"); }
+	| TILDE         { $$ = strdup("~"); }
+	| EXCLAMATION   { $$ = strdup("!"); }
+	;
 
 // /* Type casting */
 cast_expression
@@ -382,33 +382,38 @@ logical_and_expression
 // /* Conditional expression (ternary operator) */
 conditional_expression
  	: logical_or_expression									{ $$ = $1; }
- 	// | logical_or_expression QUESTION expression COLON conditional_expression { 
- 	// 	VectorExpression* ve = new VectorExpression();
- 	// 	ve->add_element($1);
- 	// 	ve->add_element($3);
- 	// 	ve->add_element($5);
- 	// 	$$ = create_expression(CONDITIONAL, "?:", ve); 
- 	// }
+	| logical_or_expression QUESTION expression COLON conditional_expression { 
+		VectorExpression* ve = new VectorExpression();
+		ve->add_element($1);
+		ve->add_element($3);
+		ve->add_element($5);
+		$$ = create_expression(CONDITIONAL, "?:", ve); 
+	}
  	;
 
 // /* Assignment */
 assignment_expression
  	: conditional_expression								{ $$ = $1; }
-// 	| unary_expression assignment_operator assignment_expression { $$ = create_expression(ASSIGNMENT, std::string($1), $2, $3); }
+ 	| unary_expression assignment_operator assignment_expression { 
+		VectorExpression *ve = new VectorExpression();
+		ve->add_element($1);
+		ve->add_element($3);
+		$$ = create_expression(ASSIGNMENT, std::string($2), ve); 
+		}
  	;
 
  assignment_operator
  	: ASSIGN		{ $$ = strdup("="); }
  	| MUL_ASSIGN	{ $$ = strdup("*="); }
  	| DIV_ASSIGN	{ $$ = strdup("/="); }
- 	| MOD_ASSIGN	{ $$ = $1; }
- 	| ADD_ASSIGN	{ $$ = $1; }
- 	| SUB_ASSIGN	{ $$ = $1; }
- 	| LEFT_ASSIGN	{ $$ = $1; }
- 	| RIGHT_ASSIGN	{ $$ = $1; }
- 	| AND_ASSIGN	{ $$ = $1; }
- 	| XOR_ASSIGN	{ $$ = $1; }
- 	| OR_ASSIGN		{ $$ = $1; }
+ 	| MOD_ASSIGN	{ $$ = strdup("%="); }
+ 	| ADD_ASSIGN	{ $$ = strdup("+="); }
+ 	| SUB_ASSIGN	{ $$ = strdup("-="); }
+ 	| LEFT_ASSIGN	{ $$ = strdup("<<="); }
+ 	| RIGHT_ASSIGN	{ $$ = strdup(">>"); }
+ 	| AND_ASSIGN	{ $$ = strdup("&="); }
+ 	| XOR_ASSIGN	{ $$ = strdup("^="); }
+ 	| OR_ASSIGN		{ $$ = strdup("|"); }
  	;
 
 // /* Expressions */
@@ -933,8 +938,8 @@ expression_statement
  /* Top-level constructs */
  translation_unit
  	: primary_expression
-// 	| external_declaration
-// 	| translation_unit external_declaration
+ 	| external_declaration
+ 	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
  	;
 
