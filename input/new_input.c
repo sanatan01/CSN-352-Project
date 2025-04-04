@@ -1,28 +1,48 @@
 
-int main()
-{
-    // int c;
-    // int z;
-    // struct  nice {
-    //     int a;
-    //     int fuck;
-    // };
-    // struct s;
+int* main(int c, int z(), char f[5][]) {
 
-    // union p {
-    //     int a;
-    // };
+    int g;
 
-    // enum fuck {
-    //     FUCKALL,
-    //     FUCKYOU
-    // };
+    enum j { a, b = 5, c };
 
-    // enum gay;
+    struct s {
+        int uh : 7;
+        short b;
+        char : 5;
+    };
 
-    // int(a);
+    union lovely {
+        int uh : 7;
+        short b;
+        char : 5;
+    };
 
-    // int a;
-
-    // unsigned int a;
 }
+
+
+
+//     // int c;
+//     // int z;
+//     // struct  nice {
+//     //     int a;
+//     //     int fuck;
+//     // };
+//     // struct s;
+
+//     // union p {
+//     //     int a;
+//     // };
+
+//     // enum fuck {
+//     //     FUCKALL,
+//     //     FUCKYOU
+//     // };
+
+//     // enum gay;
+
+//     // int(a);
+
+//     // int a;
+
+//     // unsigned int a;
+// }

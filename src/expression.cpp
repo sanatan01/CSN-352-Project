@@ -1318,3 +1318,32 @@ Expression *create_expression(ExpressionOpType op_type, std::string op,VectorExp
         return nullptr;
     }
 }
+
+Expression* create_expression(ExpressionType e_type, std::string value){
+    Expression *e = new Expression();
+
+    switch(e_type){
+        case IDENTIFIER:{
+            Symbol * s = SymbolTable::get_symbol(value);
+            if(s==NULL){
+                error_msg("Undeclared symbol " + value, line_num, column);
+                e->type = ConstantType(ERROR_T);
+                return e;
+            }
+            e->type = convert_constant_type(s->identifier.type);
+            break;
+        }
+        case CONSTANT:{
+            
+            break;
+        }
+        case EXPRESSION:
+            e->type = ConstantType(EXPRESSION);
+            e->value = value;
+            break;
+        default:
+            std::cerr << "Incorrect expression. Something went wrong\n";
+            return nullptr;
+    }
+
+}

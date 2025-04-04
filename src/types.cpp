@@ -142,6 +142,7 @@ std::string StandardType::getSpecifierName() const {
 // ---------------------------- Struct Class Methods ---------------------
 
 StructElement::StructElement(Identifier* id, size_t size): id(id), size(size) {}
+StructElement::StructElement(size_t size) : id(new Identifier(new GlobalType())), size(size) {}
 
 VectorStructElement::VectorStructElement(): elements(std::vector<StructElement>()) {}
 
@@ -204,7 +205,7 @@ ArrayType::ArrayType(unsigned int dim, class GlobalType* type, std::vector<unsig
     this->size = cnt * type->getSize();
 }
 
-ArrayType::ArrayType(): dim(1), return_type(nullptr), dims(std::vector<unsigned int>()) {};
+ArrayType::ArrayType(): dim(0), return_type(nullptr), dims(std::vector<unsigned int>()) {};
 
 // -------------------------- Function Class Methods --------------------------
 
@@ -304,10 +305,11 @@ std::string GlobalType::getType() const {
     {
         std::string st = "";
 
-        for (int i = 0; i < array_type->dim; i++) {
-            st += "[]";
+        for(auto i: array_type->dims) {
+            st += "[" + ((i == 0) ? " " : std::to_string(i)) + "]";
         }
-        return array_type->getSpecifierName() + array_type->return_type->getType() + st;
+
+        return "Array: " + array_type->getSpecifierName() + array_type->return_type->getType() + st;
     }
     case FUNCTION_TYPE:
     {
@@ -530,12 +532,20 @@ class GlobalType* create_default_pointer_type() {
     return create_pointer_type(new GlobalType(), 1);
 }
 
-class GlobalType *create_array_type(class GlobalType* return_type, int dimension) {
+class GlobalType *create_array_type(class GlobalType* return_type) {
     class GlobalType* array = new GlobalType();
-    array->type_tag == ARRAY_TYPE;
     array->array_type = new ArrayType();
+    array->type_tag = ARRAY_TYPE;
     array->array_type->return_type = return_type;
-    array->array_type->dims.push_back(dimension);
+    return array;
+}
+
+class GlobalType* create_default_array_type() {
+    class GlobalType* array = new GlobalType();
+    array->array_type = new ArrayType();
+    array->type_tag = ARRAY_TYPE;
+    array->array_type->return_type = new GlobalType();
+    array->array_type->dims.push_back(0);
 
     return array;
 }
@@ -558,6 +568,48 @@ class GlobalType* create_invalid_type(std::string err_message, int line_num, int
     type->invalid_type = new InvalidType(err_message, line_num, column);
     std::cerr << err_message << std::endl;
     return type;
+}
+
+unsigned int convert_to_unsigned(std::string input) {
+    // Ensure the input is not empty and contains only digits
+    if (input.empty() || input.find_first_not_of("0123456789") != std::string::npos) {
+        std::cerr << "Error: Invalid input, not a valid unsigned integer (" << input << ")" << std::endl;
+        return 0;
+    }
+
+    // Convert to unsigned integer
+    size_t pos;
+    unsigned long val = std::stoul(input, &pos, 10);
+
+    // Ensure full conversion and range check
+    if (pos != input.size() || val > std::numeric_limits<unsigned int>::max()) {
+        std::cerr << "Error: Number out of range (" << input << ")" << std::endl;
+        return 0;
+    }
+
+    return static_cast<unsigned int>(val);
+}
+
+int convert_to_signed(std::string input) {
+    // Ensure the input is not empty and contains only digits or a leading '-'
+    if (input.empty() || 
+        (input[0] != '-' && input.find_first_not_of("0123456789") != std::string::npos) || 
+        (input[0] == '-' && (input.size() == 1 || input.find_first_not_of("0123456789", 1) != std::string::npos))) {
+        std::cerr << "Error: Invalid input, not a valid signed integer (" << input << ")" << std::endl;
+        return 0;
+    }
+
+    // Convert to signed integer
+    size_t pos;
+    long val = std::stol(input, &pos, 10);
+
+    // Ensure full conversion and range check
+    if (pos != input.size() || val < std::numeric_limits<int>::min() || val > std::numeric_limits<int>::max()) {
+        std::cerr << "Error: Number out of range (" << input << ")" << std::endl;
+        return 0;
+    }
+
+    return static_cast<int>(val);
 }
 
 class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* right) {

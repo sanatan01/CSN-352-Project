@@ -48,12 +48,21 @@ public:
     this->operands.insert(this->operands.end(), elements.begin(), elements.end());
   };
 };
-// --------------------------------------------------------------------------------------------
-union ExpressionType {
-  Identifier* id;
-  ConstantType* constant;
-  Expression* exp;
+
+enum ExpressionType {
+  IDENTIFIER,
+  CONSTANT,
+  EXPRESSION,
+  NONE
 };
+// --------------------------------------------------------------------------------------------
+// class ExpressionType {
+// public:
+//   Identifier* id;
+//   ConstantType* constant;
+//   int type_tag;
+
+// };
 
 class PrimaryExpression: public Expression {
 public:
@@ -62,7 +71,7 @@ public:
 };
 
 // Grammar warppers for PrimaryExpression
-Expression* create_primary_expression(ExpressionType* typ);
+Expression* create_primary_expression(int typ, std::string name);
 
 // --------------------------------------------------------------------------------------------
 class ArgumentExprList: public Expression {

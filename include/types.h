@@ -7,8 +7,8 @@
 #include <sstream>
 #include <unordered_map>
 #include <vector>
-
-// Todo: remove this later
+#include <limits>
+#include <string>
 #include <iostream>
 
 // --------------------------------------PRIMITVE TYPES----------------------------------------
@@ -88,7 +88,8 @@ class StructElement
 public:
 	Identifier *id;
 	size_t size;
-	StructElement(Identifier *id, size_t size); // Add implementation if the identifier pointer is NULL
+	StructElement(Identifier *id, size_t size);
+	StructElement(size_t size); // Add implementation if the identifier pointer is NULL
 };
 
 class VectorStructElement
@@ -263,7 +264,9 @@ class GlobalType *create_pointer_type(class GlobalType *return_type, int ptr_lev
 
 class GlobalType *create_default_pointer_type();
 
-class GlobalType *create_array_type(class GlobalType *return_type, int dimension = 0);
+class GlobalType *create_array_type(class GlobalType *return_type);
+
+class GlobalType *create_default_array_type();
 
 class GlobalType *add_dimension_array(class GlobalType* array_type, int dimension = 0);
 
@@ -272,3 +275,8 @@ class GlobalType *create_invalid_type(std::string err_message, int line_num = 0,
 class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *right);
 
 // extern InvalidType INVALID_TYPE;
+
+
+unsigned int convert_to_unsigned(std::string input);
+
+int convert_to_signed(std::string input);

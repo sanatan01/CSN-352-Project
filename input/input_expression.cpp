@@ -1,3 +1,9 @@
+int foo(){
+    const int a =5;
+    return 1;
+}
+
+
 int main() {
 
     short d = 4;
@@ -5,13 +11,9 @@ int main() {
 
     auto fuck = faltu%d;
     void *ptr;
-
-    unsigned int a =5;
     int b =-10;
-
-    auto f = a*b;
 
     auto c = b;
 
-
 }
+

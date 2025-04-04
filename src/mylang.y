@@ -12,6 +12,7 @@ void yyerror(const char *s);
  extern int yylex();
  extern int yylineno;
  extern FILE *yyin;
+ int test_count = 0;
 // // Global variable to hold the current type for declaration
 // char *currentType = NULL;
 // int grammarErrorCount = 0;
@@ -76,7 +77,7 @@ void yyerror(const char *s);
 // /* %type<array_type> array_declaration */
  %type<nice> translation_unit
  %type<nice> external_declaration
- %type<identifier> function_identifier
+ //%type<identifier> function_identifier
  %type<identifier> function_definition
  %type<identifier> function_declaration
  %type<vector_identifiers> declaration
@@ -129,7 +130,7 @@ void yyerror(const char *s);
 %type<identifier> direct_declarator
 %type<pointer_type> pointer
 %type<specifiers> type_qualifier_list
-// %type<vector_identifiers> parameter_type_list
+%type<vector_identifiers> parameter_type_list
  %type<vector_identifiers> parameter_list
  %type<identifier> parameter_declaration
 // %type<vector_identifiers> identifier_list
@@ -178,22 +179,22 @@ void yyerror(const char *s);
 
 // /* Primary expressions */
 primary_expression
- 	: IDENTIFIER							//{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
- 	| CONSTANT_LITERAL 								//{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
- 	| STRING_LITERAL 						//{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
- 	| LEFT_PAREN expression RIGHT_PAREN 	//{ $$ = $2 }
+ 	: IDENTIFIER							{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
+ 	| CONSTANT_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
+// 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
+ 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
  	;
 
 // /* Postfix expressions */
 postfix_expression
  	: primary_expression 											//{ $$ = $1; }
- 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		//{ $$ = create_postfix_expr_arr($1, $3); }
- 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							//{ $$ = create_postfix_expr_voidfun($1); }
+// 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		//{ $$ = create_postfix_expr_arr($1, $3); }
+// 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							//{ $$ = create_postfix_expr_voidfun($1); }
 // 	| IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
 // 	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
 // 	| postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
- 	| postfix_expression INC_OP 									//{ $$ = create_postfix_expr_ido( $2, $1); } 
- 	| postfix_expression DEC_OP 									//{ $$ = create_postfix_expr_ido( $2, $1); } 
+// 	| postfix_expression INC_OP 									//{ $$ = create_postfix_expr_ido( $2, $1); } 
+// 	| postfix_expression DEC_OP 									//{ $$ = create_postfix_expr_ido( $2, $1); } 
  	;
 
 // /* Argument expression list for function calls */
@@ -204,12 +205,12 @@ postfix_expression
 
 // /* Unary expressions */
 unary_expression
- 	: postfix_expression 						//{ $$ = $1; }
- 	| INC_OP unary_expression 					//{ $$ = create_unary_expression($1, $2); }
- 	| DEC_OP unary_expression 					//{ $$ = create_unary_expression($1, $2); }
- 	| unary_operator cast_expression 			//{ $$ = create_unary_expression_cast($1, $2); }
- 	| SIZEOF unary_expression 					//{ $$ = create_unary_expression($1, $2); }
- 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	//{ $$ = create_unary_expression($1, $3); }
+ 	: postfix_expression 						{ $$ = $1; }
+// 	| INC_OP unary_expression 					//{ $$ = create_unary_expression($1, $2); }
+// 	| DEC_OP unary_expression 					//{ $$ = create_unary_expression($1, $2); }
+// 	| unary_operator cast_expression 			//{ $$ = create_unary_expression_cast($1, $2); }
+// 	| SIZEOF unary_expression 					///{ $$ = create_unary_expression($1, $2); }
+// 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	//{ $$ = create_unary_expression($1, $3); }
  	;
 
 unary_operator
@@ -224,9 +225,9 @@ unary_operator
 // /* Type casting */
 cast_expression
  	: unary_expression 										{ $$ = $1; }
- 	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ 
+ 	// | LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ 
 		
-	}
+	// }
  	;
 
 // /* Arithmetic expressions */
@@ -263,7 +264,9 @@ additive_expression
  	| additive_expression MINUS multiplicative_expression	{ 
  		VectorExpression* ve = new VectorExpression();
  		ve->add_element($1);
- 		ve->add_element($3); }
+ 		ve->add_element($3); 
+		$$ = create_expression(ADDITIVE, "-", ve); 
+ 	}
  	;
 shift_expression
  	: additive_expression									{ $$ = $1; }
@@ -276,8 +279,10 @@ shift_expression
  	| shift_expression RIGHT_OP additive_expression			{ 
  		VectorExpression* ve = new VectorExpression();
  		ve->add_element($1);
- 		ve->add_element($3); }
- 	;
+ 		ve->add_element($3); 
+		$$ = create_expression(SHIFT, ">>", ve); 
+ 	}
+	;
 // /* Relational expressions */
 relational_expression
  	: shift_expression										{ $$ = $1; }
@@ -356,29 +361,39 @@ inclusive_or_expression
 // /* Logical expressions */
 logical_and_expression
  	: inclusive_or_expression								{ $$ = $1; }
- 	| logical_and_expression AND_OP inclusive_or_expression	
+ 	| logical_and_expression AND_OP inclusive_or_expression	{
+		VectorExpression* ve = new VectorExpression();
+		ve->add_element($1);
+		ve->add_element($3);
+		$$ = create_expression(AND, "&&", ve);
+	}
  	;
 
  logical_or_expression
  	: logical_and_expression								{ $$ = $1; }
- 	| logical_or_expression OR_OP logical_and_expression	
+ 	| logical_or_expression OR_OP logical_and_expression	{ 
+		VectorExpression* ve = new VectorExpression();
+		ve->add_element($1);
+		ve->add_element($3);
+		$$ = create_expression(OR, "||",ve);
+	}
  	;
 
 // /* Conditional expression (ternary operator) */
 conditional_expression
  	: logical_or_expression									{ $$ = $1; }
- 	| logical_or_expression QUESTION expression COLON conditional_expression { 
- 		VectorExpression* ve = new VectorExpression();
- 		ve->add_element($1);
- 		ve->add_element($3);
- 		ve->add_element($5);
- 		$$ = create_expression(CONDITIONAL, "?:", ve); 
- 	}
+ 	// | logical_or_expression QUESTION expression COLON conditional_expression { 
+ 	// 	VectorExpression* ve = new VectorExpression();
+ 	// 	ve->add_element($1);
+ 	// 	ve->add_element($3);
+ 	// 	ve->add_element($5);
+ 	// 	$$ = create_expression(CONDITIONAL, "?:", ve); 
+ 	// }
  	;
 
 // /* Assignment */
 assignment_expression
- 	: conditional_expression								//{ $$ = $1; }
+ 	: conditional_expression								{ $$ = $1; }
 // 	| unary_expression assignment_operator assignment_expression { $$ = create_expression(ASSIGNMENT, std::string($1), $2, $3); }
  	;
 
@@ -399,12 +414,12 @@ assignment_expression
 // /* Expressions */
 expression
  	: assignment_expression { $$ = $1; }
- 	| expression COMMA assignment_expression { 
- 		VectorExpression* ve = new VectorExpression();
- 		ve->add_element($1);
- 		ve->add_element($3);
- 		$$ = create_expression(TOPLEVEL, "", ve); 
- 	}
+ 	// | expression COMMA assignment_expression { 
+ 	// 	VectorExpression* ve = new VectorExpression();
+ 	// 	ve->add_element($1);
+ 	// 	ve->add_element($3);
+ 	// 	$$ = create_expression(TOPLEVEL, "", ve); 
+ 	// }
  	;
 
 // constant_expression
@@ -609,13 +624,15 @@ struct_declaration
  	: declarator {
  		$$ = new StructElement($1, $1->type->getSize()); 
 	}
-// 	| COLON constant_expression {
-// 		$$ = new StructElement($1, 0 /* Get return value from constant expression*/);
-// 	}
-// 	| declarator COLON constant_expression {
-// 		$$ = new StructElement($1, 0 /* Get return value from constant expression*/);
-// 	}
-// 	;
+	| COLON CONSTANT_LITERAL {
+		unsigned int value = convert_to_unsigned(std::string($2));
+		$$ = new StructElement(value);
+	}
+	| declarator COLON CONSTANT_LITERAL {
+		unsigned int value = convert_to_unsigned(std::string($2));
+		$$ = new StructElement($1, value);
+	}
+	;
 
  /* Enum specifiers */
  enum_specifier
@@ -642,13 +659,14 @@ struct_declaration
  	;
 
  enumerator
- 	: IDENTIFIER{
+ 	: IDENTIFIER {
  		$$ = new EnumElement(std::string($1));
  	}
-// 	| IDENTIFIER ASSIGN constant_expression{
-// 		$$ = new EnumElement(std::string($1), /* to do $3*/);
-// 	}
-// 	;
+	| IDENTIFIER ASSIGN CONSTANT_LITERAL {
+		int value = convert_to_signed(std::string($3));
+		$$ = new EnumElement(std::string($1), value);
+	}
+	;
 
  /* Type qualifiers */
  type_qualifier
@@ -663,12 +681,12 @@ declarator
  		$$ = $2; 
  		if($$->type->type_tag == NONE) {
  			$$->type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
-
- 		} else{
- 			$$->type->pointer_type->ptr_level = $1->ptr_level;
+ 		} else if ($$->type->type_tag == FUNCTION_TYPE) {
+ 			$$->type->function_type->return_type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
+ 		} else {
+			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
  		}
 
-		// Combine types
  	}
 
  	;
@@ -679,46 +697,46 @@ declarator
 	| direct_declarator LEFT_BRACKET RIGHT_BRACKET { 
  		$$ = $1;
 		if ( $$->type->type_tag == NONE) {
-			$$->type = create_array_type($$->type);
+			$$->type = create_array_type($1->type);
+			$$->type = add_dimension_array($$->type);
 		}
  		else if ( $$->type->type_tag == ARRAY_TYPE ) {
 			$$->type = add_dimension_array($1->type);
 		} else {
-			// ERROR: code should not be here
+			std::cerr << "Cannot create an array type for the following identifier" << std::endl;
 		}
  	}
-	// | direct_declarator LEFT_PAREN RIGHT_PAREN { 
-	// 	$$ = $1;
-	// 	if ($$->type->type_tag == NONE) {
-	// 		$$->type = create_function_type($$->type);
-	// 	} else {
-	// 		// ERROR: code should never reach here
-	// 	}
-	// }
-// 	| direct_declarator LEFT_BRACKET constant_expression RIGHT_BRACKET {
-// 		$$ = $1;
-// 		if ($$->type->array_type == NULL) {
-// 			$$->type->array_type = new ArrayType();
-// 			$$->type->array_type->return_type = $1->type;
-// 		}
-// 		$$->type->array_type->dim++;
-// 		$$->type->array_type->dims.push_back($3);
+	| direct_declarator LEFT_PAREN RIGHT_PAREN { 
+		$$ = $1;
+		if ($$->type->type_tag == NONE) {
+			$$->type = create_function_type($$->type);
+		} else {
+			std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+		}
+	}
+	| direct_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN { 
+		$$ = $1;
+		if ($$->type->type_tag == NONE) {
+			$$->type = create_function_type($$->type, $3);
+		} else {
+			std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+		}
+	}
+	| direct_declarator LEFT_BRACKET CONSTANT_LITERAL RIGHT_BRACKET {
+		unsigned int constant = convert_to_unsigned(std::string($3));
+		$$ = $1;
+		if ( $$->type->type_tag == NONE) {
+			$$->type = create_array_type($1->type);
+			$$->type = add_dimension_array($$->type, constant);
+		}
+ 		else if ( $$->type->type_tag == ARRAY_TYPE ) {
+			$$->type = add_dimension_array($1->type, constant);
 
-// 	}
-// 	| direct_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN { 
-// 		$$ = $1;
-// 		if($$->type == NULL) {
-// 			$$->type = new GlobalType();
-// 			$$->type->function_type = new FunctionType($1, &($3));
-// 		}
-// 		else{
-// 			GlobalType *temp = $$->type;
-// 			temp->pointer_type->return_type = $1;
-// 			$$->type = new GlobalType();
-// 			$$->type->function_type = new FunctionType(temp,&($3));
-// 		}
+		} else {
+			std::cerr << "Cannot create an array type for the following identifier" << std::endl;
+		}
 
-// 	} // Function defnition?
+	}
 // 	// TODO : | direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN { $$ = $1; } // Fimctopm ca;;
 
 // 	;
@@ -755,16 +773,16 @@ type_qualifier_list
  	}
  	;
 
-// /* Function parameters */
-// parameter_type_list
-// 	: parameter_list{
-// 		$$ = $1;
-// 	}
-// 	| parameter_list COMMA ELLIPSIS{
-// 		//TODO: fix later
-// 		$$=$1;
-// 	}
-// 	;
+/* Function parameters */
+parameter_type_list
+	: parameter_list{
+		$$ = $1;
+	}
+	// | parameter_list COMMA ELLIPSIS{
+	// 	//TODO: fix later
+	// 	$$=$1;
+	// }
+	;
 
 parameter_list
  	: parameter_declaration { $$ = new VectorIdentifiers(); $$->add_identifier($1); }
@@ -774,8 +792,24 @@ parameter_list
  parameter_declaration
  	: declaration_specifiers declarator {
  		$$ = $2;
-		// TODO: here type of right can be only array, function, or pointer
-		$$->type = combine_global_type($1, $2->type);
+		// Function 
+		if ($$->type->type_tag == FUNCTION_TYPE) {
+			if ($$->type->function_type->return_type != NULL && $$->type->function_type->return_type->type_tag == POINTER_TYPE) {
+				$$->type->function_type->return_type->pointer_type->return_type = $1;;
+				$$->type->function_type->return_type->pointer_type->specifiers = combine_specs($$->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$$->type->function_type->return_type = $1;
+			}
+		// We only got identifier
+		} else if ($$->type->type_tag == NONE) {
+			$$->type = $1;
+		/// If we get array type
+		} else if ($$->type->type_tag == ARRAY_TYPE) {
+			$$->type->array_type->return_type = $1;
+		// If we get somehing else
+		} else {
+			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+		}
  	}
 	;
 // 	// Todo: | declaration_specifiers abstract_declarator
@@ -842,11 +876,10 @@ type_name
 // 	| DEFAULT COLON statement
 // 	;
 
- compound_statement
- 	:  LEFT_BRACE RIGHT_BRACE { 
-		std::cout<<"YOOOO"<<std::endl;
+compound_statement
+ 	: INC_SCOPE LEFT_BRACE RIGHT_BRACE { 
 		SymbolTable::exit_scope(); }
- 	// |  LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
+	| INC_SCOPE LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
 // 	|  LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
 // 	|  LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
  	;
@@ -899,54 +932,35 @@ expression_statement
 
  /* Top-level constructs */
  translation_unit
- 	: external_declaration
- 	| translation_unit external_declaration
-	// | expression_statement
+ 	: expression_statement
+// 	| external_declaration
+// 	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
  	;
 
  external_declaration
- 	: function_declaration
- 	| function_definition
+ 	: function_definition
 	| declaration
  	;
 
-function_identifier
- 	: IDENTIFIER { $$ = new Identifier($1); }
- 	| pointer function_identifier { 
- 		$$ = $2; 
- 		if($$->type->type_tag == NONE) {
- 			$$->type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
- 		} else{
- 			$$->type->pointer_type->ptr_level = $1->ptr_level;
- 		}
- 	}
- 	;
-
 function_declaration
-	: declaration_specifiers function_identifier LEFT_PAREN RIGHT_PAREN {
-		std::cout<<"YOOOO"<<std::endl;
+	: declaration_specifiers declarator {
 		$$ = $2;
-		if ( $$->type->type_tag == NONE ) {
-			$$->type = create_function_type($1, new VectorIdentifiers(), $2->type->getSpecifiers());
-		} else {
-			class GlobalType* temp = create_pointer_type($1, $$->type->pointer_type->ptr_level);
-			$$->type = create_function_type(temp, new VectorIdentifiers(), $2->type->getSpecifiers());
+		if ($$->type->type_tag == FUNCTION_TYPE) {
+			if ($$->type->function_type->return_type != NULL && $$->type->function_type->return_type->type_tag == POINTER_TYPE) {
+				$$->type->function_type->return_type->pointer_type->return_type = $1;;
+				$$->type->function_type->return_type->pointer_type->specifiers = combine_specs($$->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$$->type->function_type->return_type = $1;
+			}
+		} else{
+			std::cerr << "Error: function declaration with non-function type" << std::endl;
 		}
 	}
-	| declaration_specifiers function_identifier LEFT_PAREN parameter_list RIGHT_PAREN {
-		$$ = $2;
-		if($$->type->type_tag == NONE) {
-			$$->type = create_function_type($1, $4, $2->type->getSpecifiers());
-		} else {
-			class GlobalType* temp = create_pointer_type($1, $$->type->pointer_type->ptr_level);
-			$$->type = create_function_type(temp, $4, $2->type->getSpecifiers());
-		}
-	}
-;
+	;
 
 function_definition
- 	: function_declaration  { SymbolTable::add_symbols(&($1->type->function_type->args)); } compound_statement { 
+ 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); } compound_statement { 
  		$$ = $1;
 		SymbolTable::exit_scope();
  		SymbolTable::add_symbol($$);
