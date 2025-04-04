@@ -84,13 +84,13 @@ UNTERMINATED_STRING   L?\"([^"\\\n]|\\.)*$
 }
 
 
-0[xX]{H}+{IS}?                   { displayLexer(CONSTANT, yytext); yylval.nice = strdup(yytext); return CONSTANT; }
-0{D}+{IS}?                       { displayLexer(CONSTANT, yytext); yylval.nice = strdup(yytext); return CONSTANT; }
-{D}+{IS}?                        { displayLexer(CONSTANT, yytext); yylval.nice = strdup(yytext); return CONSTANT; }
-L?'(\\.|[^\\'])+\'               { displayLexer(CONSTANT, yytext); yylval.nice = strdup(yytext); return CONSTANT; }
-{D}+{E}{FS}?                     { displayLexer(CONSTANT, yytext); yylval.nice = strdup(yytext); return CONSTANT; }
-{D}*"."{D}+({E})?{FS}?           { displayLexer(CONSTANT, yytext); yylval.nice = strdup(yytext); return CONSTANT; }
-{D}+"."{D}*({E})?{FS}?           { displayLexer(CONSTANT, yytext); yylval.nice = strdup(yytext); return CONSTANT; }
+0[xX]{H}+{IS}?                   { displayLexer(CONSTANT_LITERAL, yytext); yylval.nice = strdup(yytext); return CONSTANT_LITERAL; }
+0{D}+{IS}?                       { displayLexer(CONSTANT_LITERAL, yytext); yylval.nice = strdup(yytext); return CONSTANT_LITERAL; }
+{D}+{IS}?                        { displayLexer(CONSTANT_LITERAL, yytext); yylval.nice = strdup(yytext); return CONSTANT_LITERAL; }
+L?'(\\.|[^\\'])+\'               { displayLexer(CONSTANT_LITERAL, yytext); yylval.nice = strdup(yytext); return CONSTANT_LITERAL; }
+{D}+{E}{FS}?                     { displayLexer(CONSTANT_LITERAL, yytext); yylval.nice = strdup(yytext); return CONSTANT_LITERAL; }
+{D}*"."{D}+({E})?{FS}?           { displayLexer(CONSTANT_LITERAL, yytext); yylval.nice = strdup(yytext); return CONSTANT_LITERAL; }
+{D}+"."{D}*({E})?{FS}?           { displayLexer(CONSTANT_LITERAL, yytext); yylval.nice = strdup(yytext); return CONSTANT_LITERAL; }
 
 
 {INVALID_OCT_NUM} {

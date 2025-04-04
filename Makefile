@@ -14,10 +14,12 @@ EXECUTABLE := $(SRC_DIR)/syntax_analyser
 HEADERS := $(wildcard $(INCLUDE_DIR)/*.h)
 
 # Additional source files for parsing phase
-PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp 
+PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp  $(SRC_DIR)/expression.cpp 
 
-all: clean build run
+all:  clear clean build run
 
+clear:
+	clear
 clean:
 	@echo "Cleaning up output and generated files..."
 	rm -rf $(OUTPUT_DIR)
@@ -27,7 +29,7 @@ clean:
 
 build: $(BISON_OUT) $(FLEX_OUT)
 	@echo "Compiling the generated C files with g++..."
-	g++ -o --std=c++11 $(EXECUTABLE) $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
+	g++ -o $(EXECUTABLE) $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
 
 $(BISON_OUT) $(BISON_HDR_TMP): $(BISON_SRC)
 	@echo "Compiling $(BISON_SRC) with bison..."

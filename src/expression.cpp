@@ -1,16 +1,45 @@
 #include <expression.h>
 #include <symtab.h>
 #include <cassert>
-#include "types.cpp"
-#include <ast_entries.h>
-#include <new_symtab.h>
+#include <types.h>
 
-bool isNumeric(ConstantType op){
-    return op.type == INT_CONSTANT || op.type == LONG_CONSTANT || op.type == LONG_LONG_CONSTANT || op.type == SHORT_CONSTANT || op.type == CHAR_CONSTANT || op.type == FLOAT_CONSTANT || op.type == DOUBLE_CONSTANT || op.type == LONG_DOUBLE_CONSTANT || op.type == UNSIGNED_INT_CONSTANT || op.type == UNSIGNED_LONG_CONSTANT || op.type == UNSIGNED_LONG_LONG_CONSTANT || op.type == UNSIGNED_SHORT_CONSTANT || op.type == UNSIGNED_CHAR_CONSTANT || op.type == UNSIGNED_FLOAT_CONSTANT || op.type == UNSIGNED_DOUBLE_CONSTANT || op.type == UNSIGNED_LONG_DOUBLE_CONSTANT;
+int line_num=0,column=0;
+
+void error_msg(std::string msg, int line_num=0, int column=0)
+{
+    std::cerr << "Error: " << msg << " at line " << line_num << ", column " << column << std::endl;
+}
+
+void warning_msg(std::string msg, int line_num=0, int column=0)
+{
+    std::cerr << "Warning: " << msg << " at line " << line_num << ", column " << column << std::endl;
+}
+
+
+bool isInt(ConstantType op){
+    return (op.type>-1 && op.type<10);
+}
+
+bool isFloat(ConstantType op){
+    return (op.type>=10 && op.type<13);
 }
 
 void castTypes(ConstantType &op1, ConstantType &op2){
     if (op1.type != op2.type){
+        if(op1.type == VOID_T || op2.type == VOID_T || op1.type == ERROR_T || op2.type == ERROR_T){
+            error_msg("Invalid types for operation", line_num, column);
+            op1.type = ERROR_T;
+            op2.type = ERROR_T;
+            return;
+        }
+        if(op1.type == BOOL_T){
+            op1.type = op2.type;
+            return;
+        }
+        if(op2.type == BOOL_T){
+            op2.type = op1.type;
+            return;
+        }
         // Cast to the larger type based on enum order
         // The enum is in sorted order of size, so higher enum value = larger type
         if (op1.type > op2.type) {
@@ -24,79 +53,25 @@ void castTypes(ConstantType &op1, ConstantType &op2){
 }
 void make_signed(ConstantType &op)
 {
-    if (op.type == UNSIGNED_INT_CONSTANT)
-    {
-        op.type = INT_CONSTANT;
-    }
-    else if (op.type == UNSIGNED_LONG_CONSTANT)
-    {
-        op.type = LONG_CONSTANT;
-    }
-    else if (op.type == UNSIGNED_LONG_LONG_CONSTANT)
-    {
-        op.type = LONG_LONG_CONSTANT;
-    }
-    else if (op.type == UNSIGNED_SHORT_CONSTANT)
-    {
-        op.type = SHORT_CONSTANT;
-    }
-    else if (op.type == UNSIGNED_CHAR_CONSTANT)
-    {
-        op.type = CHAR_CONSTANT;
-    }
-    else if (op.type == UNSIGNED_FLOAT_CONSTANT)
-    {
-        op.type = FLOAT_CONSTANT;
-    }
-    else if (op.type == UNSIGNED_DOUBLE_CONSTANT)
-    {
-        op.type = DOUBLE_CONSTANT;
-    }
-    else if (op.type == UNSIGNED_LONG_DOUBLE_CONSTANT)
-    {
-        op.type = LONG_DOUBLE_CONSTANT;
+
+    if(op.type%2==0 && op.type<10 && op.type>-1){
+        op.type++;
     }
 }
 
 void make_unsigned(ConstantType &op)
 {
-    if (op.type == INT_CONSTANT)
-    {
-        op.type = UNSIGNED_INT_CONSTANT;
-    }
-    else if (op.type == LONG_CONSTANT)
-    {
-        op.type = UNSIGNED_LONG_CONSTANT;
-    }
-    else if (op.type == LONG_LONG_CONSTANT)
-    {
-        op.type = UNSIGNED_LONG_LONG_CONSTANT;
-    }
-    else if (op.type == SHORT_CONSTANT)
-    {
-        op.type = UNSIGNED_SHORT_CONSTANT;
-    }
-    else if (op.type == CHAR_CONSTANT)
-    {
-        op.type = UNSIGNED_CHAR_CONSTANT;
-    }
-    else if (op.type == FLOAT_CONSTANT)
-    {
-        op.type = UNSIGNED_FLOAT_CONSTANT;
-    }
-    else if (op.type == DOUBLE_CONSTANT)
-    {
-        op.type = UNSIGNED_DOUBLE_CONSTANT;
-    }
-    else if (op.type == LONG_DOUBLE_CONSTANT)
-    {
-        op.type = UNSIGNED_LONG_DOUBLE_CONSTANT;
+    if(op.type%2 && op.type<10 && op.type>-1){
+        op.type--;
     }
 }
 bool isUnsigned(ConstantType op)
 {
-    if (op.type == UNSIGNED_INT_CONSTANT || op.type == UNSIGNED_LONG_CONSTANT || op.type == UNSIGNED_LONG_LONG_CONSTANT || op.type == UNSIGNED_SHORT_CONSTANT || op.type == UNSIGNED_CHAR_CONSTANT || op.type == UNSIGNED_FLOAT_CONSTANT || op.type == UNSIGNED_DOUBLE_CONSTANT || op.type == UNSIGNED_LONG_DOUBLE_CONSTANT)
+    if (op.type%2 == 0 && op.type<10 && op.type>-1)
     {
+        return true;
+    }
+    if(op.type>=10 && op.type<14){
         return true;
     }
     return false;
@@ -106,26 +81,12 @@ bool isInvalid(std::initializer_list<ConstantType> ops)
     bool result = false;
     for (ConstantType op : ops)
     {
-        result = result || (op.type == INVALID);
+        result = result || (op.type == ERROR_T);
     }
     return result;
 }
 
-bool isCompatible(ConstantType op1, ConstantType op2)
-{
-    if (op1.type == op2.type)
-    {
-        return true;
-    }
-    if (op1.type == STRING_CONSTANT && op2.type != STRING_CONSTANT || op1.type != STRING_CONSTANT && op2.type == STRING_CONSTANT)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-PrimaryExpression::PrimaryExpression() : Expression(ConstantType(INVALID), 0) {}
+PrimaryExpression::PrimaryExpression() : Expression(ConstantType(ERROR_T), 0) {}
 
 // TODO: Implement this
 Expression *create_primary_expression(ExpressionType *typ)
@@ -135,7 +96,7 @@ Expression *create_primary_expression(ExpressionType *typ)
     return pe;
 }
 
-// ArgumentExprList::ArgumentExprList() : Expression() {}
+ArgumentExprList::ArgumentExprList() : Expression() {}
 
 // TODO: Implement this
 ArgumentExprList *create_argument_expr_assignement(Expression *ase)
@@ -157,80 +118,16 @@ ArgumentExprList *create_argument_expr_list(ArgumentExprList *ae_list, Expressio
     return ae_list;
 }
 
-Expression *create_expression(ExpressionOpType op_type, std::string op,VectorExpression* ve)
-{
-    OpExpression *oe = new OpExpression();
-    oe->op_type = op_type;
-    oe->op = op;
-    switch (op_type)
-    {
-    case MULTIPLICATIVE:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return multiplicative_expression(oe);
-    case ADDITIVE:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return additive_expression(oe);
-    case RELATIONAL:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return relational_expression(oe);
-    case SHIFT:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return shift_expression(oe);
-    case EQUALITY:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return equality_expression(oe);
-    case AND:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return and_expression(oe);
-    case XOR:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return xor_expression(oe);
-    case OR:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return or_expression(oe);
-    case LOGICAL_AND:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return logical_and_expression(oe);
-    case LOGICAL_OR:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        return logical_or_expression(oe);
-    case CONDITIONAL:
-        oe->op1 = ve->operands[0];
-        oe->op2 = ve->operands[1];
-        oe->op3 = ve->operands[2];
-        return conditional_expression(oe);
-    case CONSTANT:
-        oe->op1 = ve->operands[0];
-        return constant_expression(oe);
-    case TOPLEVEL:
-        oe->op1 = ve->operands[0];
-        return toplevel_expression(oe);
-    default:
-        std::cerr << "Incorrect expression. Something went wrong\n";
-        exit(0);
-    }
-}
-
 // utils
 Expression *multiplicative_expression(OpExpression *oe)
 {
 
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type) || (op1Type.type == STRING_CONSTANT || op2Type.type == STRING_CONSTANT))
+    if (isInvalid({op1Type, op2Type}) || op1Type.type == VOID_T || op2Type.type == VOID_T )
     {
         error_msg("Invalid types for multiplication" + oe->op, line_num, column);
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         return oe;
     }
 
@@ -252,34 +149,32 @@ Expression *multiplicative_expression(OpExpression *oe)
             else if (!op1Unsigned && op2Unsigned)
             {
                 // make op1 unsigned
-                make_unsigned(op1Type);
                 oe->op += "u";
             }
             else if (op1Unsigned && !op2Unsigned)
             {
                 // make op2 unsigned
-                make_unsigned(op2Type);
                 oe->op += "u";
             }
-
-            if (op1Type.type != op2Type.type ){
-                castTypes(op1Type, op2Type);
-
+            
+            oe->type = op1Type.type > op2Type.type ? op1Type : op2Type;
+            if(isUnsigned(op1Type) || isUnsigned(op2Type)){
+                make_unsigned(oe->type);
             }
-            oe->type = op1Type;
             // add 3AC code
     }
     else if (oe->op == "%")
     {
-        if (!isUnsigned(op1Type) || !isUnsigned(op2Type))
+        if (!isInt(op1Type) || !isInt(op2Type))
         {
             error_msg("Invalid types for modulo" + oe->op, line_num, column);
-            oe->type = ConstantType(INVALID);
+            oe->type = ConstantType(ERROR_T);
             return oe;
         }
         oe->type = op1Type;
+        make_unsigned(oe->type);
         // make it unsigned
-        make_unsigned(op1Type);
+
         // add 3AC code
     }
     else
@@ -298,47 +193,41 @@ Expression *additive_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) )
     {
         error_msg("Invalid types for addition/subtraction " + oe->op, line_num, column);
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         return oe;
     }
 
-    if (isNumeric(op1Type) && isNumeric(op2Type))
+    if (isInt(op1Type) && isInt(op2Type))
     {
-        if (!isUnsigned(op1Type) && isUnsigned(op2Type))
-        {
-            // make op1 unsigned
-            make_unsigned(op1Type);
-        }
-        else if (isUnsigned(op1Type) && !isUnsigned(op2Type))
-        {
-            // make op2 unsigned
-            make_unsigned(op2Type);
-        }
-        oe->type = op1Type; // Result type is the same as operands
+
+        oe->type = op1Type.type>op2Type.type ? op1Type : op2Type;
+        make_unsigned(oe->type);
         // 3AC code would be added here
     }
-    else if (op1Type.type == FLOAT_CONSTANT && op2Type.type == FLOAT_CONSTANT)
+    else if (isFloat(op1Type) && isFloat(op2Type))
+    {
+        oe->type = op1Type.type>op2Type.type ? op1Type : op2Type;
+        // 3AC code would be added here
+    }
+    else if ((isFloat(op1Type) && isInt(op2Type)) || (isInt(op1Type) && isFloat(op2Type)))
     {
         oe->op += "f";
-        oe->type = op1Type;
+        oe->type = op1Type.type>op2Type.type ? op1Type : op2Type;
         // 3AC code would be added here
     }
-    else if ((op1Type.type == FLOAT_CONSTANT && op2Type.type == INT_CONSTANT) || (op1Type.type == INT_CONSTANT && op2Type.type == FLOAT_CONSTANT))
-    {
-        oe->op += "f";
-        oe->type = FLOAT_CONSTANT;
-        // 3AC code would be added here
-    }
-    else if (op1Type.ptr_level > 0 && isNumeric(op2Type))
-    {
+    else if (op1Type.ptr_level > 0 && isInt(op2Type))
+    { 
+        //TODO
         oe->type = op1Type;
+        
         // 3AC code for pointer + int would be added here
     }
-    else if (op2Type.ptr_level > 0 && isNumeric(op1Type))
+    else if (op2Type.ptr_level > 0 && isInt(op1Type))
     {
+        //TODO
         oe->type = op2Type;
         // 3AC code for int + pointer would be added here
     }
@@ -354,9 +243,9 @@ Expression *relational_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) )
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         error_msg("Invalid types for relational operation " + oe->op, line_num, column);
         return oe;
     }
@@ -364,9 +253,9 @@ Expression *relational_expression(OpExpression *oe)
     if (oe->op == "<" || oe->op == ">" || oe->op == "<=" || oe->op == ">=")
     {
         // Check if both operands are numeric
-        if (isNumeric(op1Type) && isNumeric(op2Type))
+        if (isInt(op1Type) && isInt(op2Type))
         {
-            oe->type = ConstantType(BOOL);
+            oe->type = ConstantType(BOOL_T);
 
             // Add warning for signed/unsigned mismatch
             bool op1Unsigned = isUnsigned(op1Type);
@@ -396,9 +285,9 @@ Expression *shift_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) )
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         error_msg("Invalid types for shift operation " + oe->op, line_num, column);
         return oe;
     }
@@ -432,10 +321,10 @@ Expression *equality_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) )
     {
         error_msg("Invalid types for equality operation " + oe->op, line_num, column);
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         return oe;
     }
 
@@ -444,13 +333,13 @@ Expression *equality_expression(OpExpression *oe)
         // Handle pointer comparisons
         if (op1Type.ptr_level > 0 && op2Type.ptr_level > 0)
         {
-            oe->type = ConstantType(BOOL);
+            oe->type = ConstantType(BOOL_T);
         }
         // if ptr_level==0 : TODO
         else if (op1Type.ptr_level == 0 && op2Type.ptr_level == 0)
         {
 
-            oe->type = ConstantType(BOOL);
+            oe->type = ConstantType(BOOL_T);
 
             // Add warning for signed/unsigned mismatch
             bool op1Unsigned = isUnsigned(op1Type);
@@ -478,9 +367,9 @@ Expression *and_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) )
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         error_msg("Invalid types for bitwise AND operation", line_num, column);
         return oe;
     }
@@ -520,10 +409,10 @@ Expression *xor_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) )
     {
         error_msg("Invalid types for exclusive OR operation", line_num, column);
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         return oe;
     }
 
@@ -558,9 +447,9 @@ Expression *or_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) )
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         error_msg("Invalid types for bitwise OR operation", line_num, column);
         return oe;
     }
@@ -596,9 +485,9 @@ Expression *logical_and_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type))
+    if (isInvalid({op1Type, op2Type}) )
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         error_msg("Invalid types for logical AND operation", line_num, column);
         return oe;
     }
@@ -606,7 +495,7 @@ Expression *logical_and_expression(OpExpression *oe)
     if (oe->op == "&&")
     {
         // Result type is boolean
-        oe->type = ConstantType(BOOL);
+        oe->type = ConstantType(BOOL_T);
     }
     else
     {
@@ -629,9 +518,9 @@ Expression *logical_or_expression(OpExpression *oe)
 {
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type) || (op1Type.type == STRING_CONSTANT || op2Type.type == STRING_CONSTANT))
+    if (isInvalid({op1Type, op2Type})  )
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         error_msg("Invalid types for logical OR operation", line_num, column);
         return oe;
     }
@@ -639,7 +528,7 @@ Expression *logical_or_expression(OpExpression *oe)
     if (oe->op == "||")
     {
         // Result type is boolean
-        oe->type = ConstantType(BOOL);
+        oe->type = ConstantType(BOOL_T);
     }
     else
     {
@@ -666,7 +555,7 @@ Expression *conditional_expression(OpExpression *oe)
 
     if (isInvalid({op1Type, op2Type, op3Type}))
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         error_msg("Invalid types for conditional expression", line_num, column);
         return oe;
     }
@@ -674,12 +563,12 @@ Expression *conditional_expression(OpExpression *oe)
     // check: TODO
     // Check if condition is an integer
     // if (type_specifiers[INT_T].isEqual(*op1Type.standard_type))
-    if (op1Type.type == INT_CONSTANT)
+    if (op1Type.type == INT_T)
     {
         // Check if true and false expressions have compatible types
-        if (!isCompatible(op2Type, op3Type)){
+        if (true){
             error_msg("Invalid types for conditional expression", line_num, column);
-            oe->type = ConstantType(INVALID);
+            oe->type = ConstantType(ERROR_T);
             return oe;
         }
         else if (op2Type.type == op3Type.type && op2Type.ptr_level>0)
@@ -728,7 +617,7 @@ Expression *toplevel_expression(OpExpression *oe)
     if (isInvalid({op1Type, op2Type}))
     {
         error_msg("Invalid types for toplevel expression", line_num, column);
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         return oe;
     }
 
@@ -744,11 +633,12 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
     ConstantType op1Type = oe->op1.type;
     ConstantType op2Type = oe->op2.type;
     // Terminal *op = (Terminal *)n_op;
-    oe->op = op->name;
+    // TODO:
+    // oe->op = op->name;
 
-    if (isInvalid({op1Type, op2Type}) || !isCompatible(op1Type, op2Type) || op1Type.type == STRING_CONSTANT || op2Type.type == STRING_CONSTANT )
+    if (isInvalid({op1Type, op2Type}) )
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         error_msg("Invalid types for assignment expression", line_num, column);
         return oe;
     }
@@ -756,19 +646,19 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
     // check if op1 is a contant expression then it cannot be assigned to anything
     if (op1Type.type == CONSTANT)
     {
-        oe->type = ConstantType(INVALID);
+        oe->type = ConstantType(ERROR_T);
         return oe;
     }
 
     if (oe->op == "=")
     {
         // Simple assignment
-        if (isNumeric(op1Type) && isNumeric(op2Type))
+        if (isInt(op1Type) && isInt(op2Type))
         {
             // Integer or float assignment
             if (op1Type.type != op2Type.type)
             {
-                warning_msg("Assignment between different types:"+ op1Type.getType() + "and" + op2Type.getType(), line_num, column);
+                warning_msg("Assignment between different types:"+ typeName(op1Type.type) + "and" + typeName(op2Type.type), line_num, column);
             }
             oe->type = op1Type;
         }
@@ -805,45 +695,45 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
     else if (oe->op == "*=" || oe->op == "/=" || oe->op == "%=")
     {
         // Multiplicative assignment
-        if (oe->op == "%=" && !isNumeric(op1Type) && !isNumeric(op2Type))
+        if (oe->op == "%=" && !isInt(op1Type) && !isInt(op2Type))
         {
             error_msg("Modulo operation requires integer operands", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
+            oe->type = ERROR_T;
             return oe;
         }
-        else if (isNumeric(op1Type) && isNumeric(op2Type))
+        else if (isInt(op1Type) && isInt(op2Type))
         {
             if (op1Type.type != op2Type.type)
             {
-                warning_msg("Assignment between different types:"+ op1Type.getType() + "and" + op2Type.getType(), line_num, column);
+                warning_msg("Assignment between different types:"+ typeName(op1Type.type) + "and" + typeName(op2Type.type), line_num, column);
             }
             oe->type = op1Type;
         }
         else
         {
             error_msg("Invalid operands for " + oe->op, line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
+            oe->type = ERROR_T;
             return oe;
         }
     }
     else if (oe->op == "<<=" || oe->op == ">>=")
     {
         // Bitshift assignment
-        if (isNumeric(op1Type) && isNumeric(op2Type))
+        if (isInt(op1Type) && isInt(op2Type))
         {
             oe->type = op1Type;
         }
         else
         {
             error_msg("Shift operations require integer operands", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
+            oe->type = ERROR_T;
             return oe;
         }
     }
     else if (oe->op == "&=" || oe->op == "|=" || oe->op == "^=")
     {
         // Bitwise operations assignment
-        if (isNumeric(op1Type) && isNumeric(op2Type))
+        if (isInt(op1Type) && isInt(op2Type))
         {
             oe->type = op1Type;
 
@@ -860,7 +750,7 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
         else
         {
             error_msg("Bitwise operations require integer operands", line_num, column);
-            oe->type.invalid_type = &INVALID_TYPE;
+            oe->type = ERROR_T;
             return oe;
         }
         // 3AC code would be added here
@@ -1364,3 +1254,67 @@ Expression *create_assignment_expression(OpExpression *oe, Node *n_op)
 //     U->add_children({ue});
 //     return U;
 // }
+
+Expression *create_expression(ExpressionOpType op_type, std::string op,VectorExpression* ve)
+{
+    OpExpression *oe = new OpExpression();
+    oe->op_type = op_type;
+    oe->op = op;
+    switch (op_type)
+    {
+    case MULTIPLICATIVE:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return multiplicative_expression(oe);
+    case ADDITIVE:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return additive_expression(oe);
+    case RELATIONAL:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return relational_expression(oe);
+    case SHIFT:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return shift_expression(oe);
+    case EQUALITY:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return equality_expression(oe);
+    case AND:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return and_expression(oe);
+    case XOR:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return xor_expression(oe);
+    case OR:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return or_expression(oe);
+    case LOGICAL_AND:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return logical_and_expression(oe);
+    case LOGICAL_OR:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return logical_or_expression(oe);
+    case CONDITIONAL:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        oe->op3 = ve->operands[2];
+        return conditional_expression(oe);
+    case CONSTANT:
+        oe->op1 = ve->operands[0];
+        return constant_expression(oe);
+    case TOPLEVEL:
+        oe->op1 = ve->operands[0];
+        return toplevel_expression(oe);
+    default:
+        std::cerr << "Incorrect expression. Something went wrong\n";
+        return nullptr;
+    }
+}

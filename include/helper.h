@@ -42,7 +42,7 @@ static inline const char* getTokenName(int token) {
     case VOLATILE:          return "VOLATILE";
     case WHILE:             return "WHILE";
     case IDENTIFIER:        return "IDENTIFIER";
-    case CONSTANT:          return "CONSTANT";
+    case CONSTANT_LITERAL:          return "CONSTANT_LITERAL";
     case STRING_LITERAL:    return "STRING_LITERAL";
     case ELLIPSIS:          return "ELLIPSIS";
     case RIGHT_ASSIGN:      return "RIGHT_ASSIGN";

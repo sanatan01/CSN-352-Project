@@ -22,16 +22,17 @@ enum PrimitiveTypes
 	U_INT_T,
 	INT_T,
 	U_LONG_T,
-	LLONG_T,
-	U_LLONG_T,
 	LONG_T,
+	U_LLONG_T,
+	LLONG_T,
 	FLOAT_T,
 	DOUBLE_T,
 	LONG_DOUBLE_T,
 	VOID_T,
-	SIGNED_T,
-	UNSIGNED_T,
+	BOOL_T,
 };
+
+std::string typeName(int type);
 
 class Specifiers
 {
@@ -256,11 +257,15 @@ class GlobalType *create_struct_type(Struct *_struct, Specifiers *specifiers = n
 
 class GlobalType *create_primitive_type(PrimitiveTypes type, Specifiers *specifiers = nullptr);
 
-class GlobalType *create_function_type(class GlobalType *return_type, class VectorIdentifiers *args, Specifiers *specifiers = nullptr);
+class GlobalType *create_function_type(class GlobalType *return_type, class VectorIdentifiers *args = nullptr, Specifiers *specifiers = nullptr);
 
 class GlobalType *create_pointer_type(class GlobalType *return_type, int ptr_level = 1, Specifiers *specifiers = nullptr);
 
 class GlobalType *create_default_pointer_type();
+
+class GlobalType *create_array_type(class GlobalType *return_type, int dimension = 0);
+
+class GlobalType *add_dimension_array(class GlobalType* array_type, int dimension = 0);
 
 class GlobalType *create_invalid_type(std::string err_message, int line_num = 0, int column = 0);
 

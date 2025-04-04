@@ -1,27 +1,28 @@
 
-int main(){
-    int c;
-    int z;
-    struct  nice{
-        int a;
-        int fuck;
-    };
-    struct s;
+int main()
+{
+    // int c;
+    // int z;
+    // struct  nice {
+    //     int a;
+    //     int fuck;
+    // };
+    // struct s;
 
-    union p{
-        int a;
-    };
+    // union p {
+    //     int a;
+    // };
 
-    enum fuck{
-        FUCKALL,
-        FUCKYOU
-    };
+    // enum fuck {
+    //     FUCKALL,
+    //     FUCKYOU
+    // };
 
-    enum gay;
+    // enum gay;
 
-    int (a);
+    // int(a);
 
-    int a;
+    // int a;
 
-    unsigned int a;
+    // unsigned int a;
 }

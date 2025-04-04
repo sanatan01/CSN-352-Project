@@ -49,7 +49,7 @@ void yyerror(const char *s);
 
 
  %token<nice> IDENTIFIER
- %token<nice> CONSTANT
+ %token<nice> CONSTANT_LITERAL
  %token<nice> STRING_LITERAL
  %token<nice> SIZEOF
  %token<nice> PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
@@ -111,6 +111,8 @@ void yyerror(const char *s);
 %type<vector_identifiers> init_declarator_list
 %type<identifier> init_declarator
 %type<specifiers> storage_class_specifier
+%type<specifiers> storage_class_specifier_list
+%type<specifiers> qualifiers
 %type<global_type> type_specifier
 %type<union_type> union_specifier
 %type<struct_type> struct_specifier
@@ -176,22 +178,22 @@ void yyerror(const char *s);
 
 // /* Primary expressions */
 primary_expression
- 	: IDENTIFIER							{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
- 	| CONSTANT 								{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
- 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
- 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
+ 	: IDENTIFIER							//{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
+ 	| CONSTANT_LITERAL 								//{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
+ 	| STRING_LITERAL 						//{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
+ 	| LEFT_PAREN expression RIGHT_PAREN 	//{ $$ = $2 }
  	;
 
 // /* Postfix expressions */
 postfix_expression
- 	: primary_expression 											{ $$ = $1; }
- 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
- 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
+ 	: primary_expression 											//{ $$ = $1; }
+ 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		//{ $$ = create_postfix_expr_arr($1, $3); }
+ 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							//{ $$ = create_postfix_expr_voidfun($1); }
 // 	| IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
 // 	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
 // 	| postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
- 	| postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
- 	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
+ 	| postfix_expression INC_OP 									//{ $$ = create_postfix_expr_ido( $2, $1); } 
+ 	| postfix_expression DEC_OP 									//{ $$ = create_postfix_expr_ido( $2, $1); } 
  	;
 
 // /* Argument expression list for function calls */
@@ -202,12 +204,12 @@ postfix_expression
 
 // /* Unary expressions */
 unary_expression
- 	: postfix_expression 						{ $$ = $1; }
- 	| INC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
- 	| DEC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
- 	| unary_operator cast_expression 			{ $$ = create_unary_expression_cast($1, $2); }
- 	| SIZEOF unary_expression 					{ $$ = create_unary_expression($1, $2); }
- 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	{ $$ = create_unary_expression($1, $3); }
+ 	: postfix_expression 						//{ $$ = $1; }
+ 	| INC_OP unary_expression 					//{ $$ = create_unary_expression($1, $2); }
+ 	| DEC_OP unary_expression 					//{ $$ = create_unary_expression($1, $2); }
+ 	| unary_operator cast_expression 			//{ $$ = create_unary_expression_cast($1, $2); }
+ 	| SIZEOF unary_expression 					//{ $$ = create_unary_expression($1, $2); }
+ 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	//{ $$ = create_unary_expression($1, $3); }
  	;
 
 unary_operator
@@ -223,7 +225,7 @@ unary_operator
 cast_expression
  	: unary_expression 										{ $$ = $1; }
  	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ 
-		//$$ = create_cast_expression_typename($2, $4); \
+		
 	}
  	;
 
@@ -376,7 +378,7 @@ conditional_expression
 
 // /* Assignment */
 assignment_expression
- 	: conditional_expression								{ $$ = $1; }
+ 	: conditional_expression								//{ $$ = $1; }
 // 	| unary_expression assignment_operator assignment_expression { $$ = create_expression(ASSIGNMENT, std::string($1), $2, $3); }
  	;
 
@@ -456,17 +458,15 @@ declaration
 
 declaration_specifiers
  	: type_specifier { $$ = $1; }
- 	| storage_class_specifier declaration_specifiers {
-		$$ = $2;
-		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
- 	}
- 	| type_specifier declaration_specifiers { 
- 		$$ = combine_global_type($1, $2);
- 	}
- 	| type_qualifier declaration_specifiers {
- 		$$ = $2;
- 		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
- 	}
+	| qualifiers type_specifier { $$ = $2; $$->setSpecifiers(combine_specs($$->getSpecifiers(), $1)); }
+	;
+
+qualifiers
+	: storage_class_specifier_list { $$ = $1; }
+	| type_qualifier_list { $$ = $1; }
+	| storage_class_specifier_list qualifiers { $$ = combine_specs($1, $2); }
+	| type_qualifier_list qualifiers { $$ = combine_specs($1, $2); }
+	;
 	
 
  init_declarator_list
@@ -491,6 +491,12 @@ declaration_specifiers
  	;
 
  /* Storage classes */
+storage_class_specifier_list
+	: storage_class_specifier { $$ = $1; }
+	| storage_class_specifier storage_class_specifier_list { $$ = combine_specs($1, $2); }
+	;
+
+
 storage_class_specifier
  	: TYPEDEF { $$ = new Specifiers(); $$->is_typedef = true; }
  	| EXTERN { $$ = new Specifiers(); $$->is_extern = true; }
@@ -498,22 +504,45 @@ storage_class_specifier
  	| REGISTER { $$ = new Specifiers(); $$->is_register = true; }
  	;
 
-// /* Type specifiers */
+/* Type specifiers */
 type_specifier
-	: INT      { $$ = create_primitive_type(INT_T); }
-	| VOID     { $$ = create_primitive_type(VOID_T); }
-	| CHAR     { $$ = create_primitive_type(CHAR_T); }
-	| SHORT    { $$ = create_primitive_type(SHORT_T); }
-	| SHORT INT   { $$ = create_primitive_type(SHORT_T); }
-	| LONG     { $$ = create_primitive_type(LONG_T); }
-	| LONG INT { $$ = create_primitive_type(LONG_T); }
-	| LONG LONG { $$ = create_primitive_type(LLONG_T); }
+	: INT      		{ $$ = create_primitive_type(INT_T); }
+	| SIGNED		{ $$ = create_primitive_type(INT_T); }
+	| VOID     		{ $$ = create_primitive_type(VOID_T); }
+	| CHAR     		{ $$ = create_primitive_type(CHAR_T); }
+	| SIGNED CHAR     		{ $$ = create_primitive_type(CHAR_T); }
+	| UNSIGNED CHAR     		{ $$ = create_primitive_type(U_CHAR_T); }
+	| SHORT    		{ $$ = create_primitive_type(SHORT_T); }
+	| SIGNED SHORT    		{ $$ = create_primitive_type(SHORT_T); }
+	| UNSIGNED SHORT    		{ $$ = create_primitive_type(U_SHORT_T); }
+	| SHORT INT   	{ $$ = create_primitive_type(SHORT_T); }
+	| UNSIGNED SHORT INT   	{ $$ = create_primitive_type(U_SHORT_T); }
+	| SIGNED SHORT INT   	{ $$ = create_primitive_type(SHORT_T); }
+	| SHORT UNSIGNED INT   	{ $$ = create_primitive_type(U_SHORT_T); }
+	| SHORT SHORT INT   	{ $$ = create_primitive_type(SHORT_T); }
+	| LONG     		{ $$ = create_primitive_type(LONG_T); }
+	| SIGNED LONG     		{ $$ = create_primitive_type(LONG_T); }
+	| UNSIGNED LONG     		{ $$ = create_primitive_type(U_LONG_T); }
+	| LONG INT 		{ $$ = create_primitive_type(LONG_T); }
+	| LONG SIGNED INT 		{ $$ = create_primitive_type(LONG_T); }
+	| LONG UNSIGNED INT 		{ $$ = create_primitive_type(U_LONG_T); }
+	| SIGNED LONG INT 		{ $$ = create_primitive_type(LONG_T); }
+	| UNSIGNED LONG INT 		{ $$ = create_primitive_type(U_LONG_T); }
+	| LONG LONG 	{ $$ = create_primitive_type(LLONG_T); }
+	| UNSIGNED LONG LONG 	{ $$ = create_primitive_type(U_LLONG_T); }
+	| SIGNED LONG LONG 	{ $$ = create_primitive_type(LLONG_T); }
+	| LONG UNSIGNED LONG 	{ $$ = create_primitive_type(U_LLONG_T); }
+	| LONG SIGNED LONG 	{ $$ = create_primitive_type(LLONG_T); }
 	| LONG LONG INT { $$ = create_primitive_type(LLONG_T); }
-	| FLOAT    { $$ = create_primitive_type(FLOAT_T); }
-	| DOUBLE   { $$ = create_primitive_type(DOUBLE_T); }
-	| LONG DOUBLE { $$ = create_primitive_type(LONG_DOUBLE_T); }
-	| SIGNED   { $$ = create_primitive_type(SIGNED_T); }
-	| UNSIGNED { $$ = create_primitive_type(UNSIGNED_T); }
+	| UNSIGNED LONG LONG INT { $$ = create_primitive_type(U_LLONG_T); }
+	| SIGNED LONG LONG INT { $$ = create_primitive_type(LLONG_T); }
+	| LONG UNSIGNED LONG INT { $$ = create_primitive_type(U_LLONG_T); }
+	| LONG SIGNED LONG INT { $$ = create_primitive_type(LLONG_T); }
+	| LONG LONG UNSIGNED INT { $$ = create_primitive_type(U_LLONG_T); }
+	| LONG LONG SIGNED INT { $$ = create_primitive_type(LLONG_T); }
+	| FLOAT    		{ $$ = create_primitive_type(FLOAT_T); }
+	| DOUBLE   		{ $$ = create_primitive_type(DOUBLE_T); }
+	| LONG DOUBLE 	{ $$ = create_primitive_type(LONG_DOUBLE_T); }
  	| struct_specifier { $$ = create_struct_type($1); }
  	| union_specifier { $$ = create_union_type($1); }
  	| enum_specifier { $$ = create_enum_type($1); }
@@ -566,13 +595,11 @@ struct_declaration
  	;
 
  specifier_qualifier_list
- 	: type_specifier specifier_qualifier_list {
-		$$ = combine_global_type($1, $2);
- 	}
- 	| type_specifier{
+ 	: type_specifier {
 		$$ = $1;
 	}
- 	| type_qualifier specifier_qualifier_list{
+ 	| qualifiers specifier_qualifier_list {
+		// TODO: make sure here storage_class_specifier are not there as they are not possible
 		$$=$2;
 		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
 	}
@@ -649,6 +676,25 @@ declarator
  direct_declarator
  	: IDENTIFIER { $$ = new Identifier(std::string($1)); }
  	| LEFT_PAREN declarator RIGHT_PAREN { $$ = $2; }
+	| direct_declarator LEFT_BRACKET RIGHT_BRACKET { 
+ 		$$ = $1;
+		if ( $$->type->type_tag == NONE) {
+			$$->type = create_array_type($$->type);
+		}
+ 		else if ( $$->type->type_tag == ARRAY_TYPE ) {
+			$$->type = add_dimension_array($1->type);
+		} else {
+			// ERROR: code should not be here
+		}
+ 	}
+	// | direct_declarator LEFT_PAREN RIGHT_PAREN { 
+	// 	$$ = $1;
+	// 	if ($$->type->type_tag == NONE) {
+	// 		$$->type = create_function_type($$->type);
+	// 	} else {
+	// 		// ERROR: code should never reach here
+	// 	}
+	// }
 // 	| direct_declarator LEFT_BRACKET constant_expression RIGHT_BRACKET {
 // 		$$ = $1;
 // 		if ($$->type->array_type == NULL) {
@@ -658,15 +704,6 @@ declarator
 // 		$$->type->array_type->dim++;
 // 		$$->type->array_type->dims.push_back($3);
 
-// 	}
-// 	| direct_declarator LEFT_BRACKET RIGHT_BRACKET { 
-// 		$$ = $1;
-// 		if ($$->type->array_type == NULL) {
-// 			$$->type->array_type = new ArrayType();
-// 			$$->type->array_type->return_type = $1->type;
-// 		}
-// 		$$->type->array_type->dim++;
-// 		$$->type->array_type->dims.push_back(0);
 // 	}
 // 	| direct_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN { 
 // 		$$ = $1;
@@ -683,7 +720,7 @@ declarator
 
 // 	} // Function defnition?
 // 	// TODO : | direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN { $$ = $1; } // Fimctopm ca;;
-// 	// TODO: | direct_declarator LEFT_PAREN RIGHT_PAREN { $$ = $1; } // Function call
+
 // 	;
 
 pointer
@@ -737,7 +774,8 @@ parameter_list
  parameter_declaration
  	: declaration_specifiers declarator {
  		$$ = $2;
-		$$ = combine_global_type($1, $2->type);
+		// TODO: here type of right can be only array, function, or pointer
+		$$->type = combine_global_type($1, $2->type);
  	}
 	;
 // 	// Todo: | declaration_specifiers abstract_declarator
@@ -805,10 +843,12 @@ type_name
 // 	;
 
  compound_statement
- 	: INC_SCOPE LEFT_BRACE RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	| INC_SCOPE LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
- 	| INC_SCOPE LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	| INC_SCOPE LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
+ 	:  LEFT_BRACE RIGHT_BRACE { 
+		std::cout<<"YOOOO"<<std::endl;
+		SymbolTable::exit_scope(); }
+ 	// |  LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
+// 	|  LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
+// 	|  LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
  	;
 
  declaration_list
@@ -826,7 +866,7 @@ type_name
 
 expression_statement
  	: SEMICOLON
- 	| expression SEMICOLON { SymbolTable::add_symbol($1); }
+ 	| expression SEMICOLON
  	;
 
 // /* Control flow */
@@ -861,7 +901,7 @@ expression_statement
  translation_unit
  	: external_declaration
  	| translation_unit external_declaration
-	| expression_statement
+	// | expression_statement
 // 	| translation_unit error_statement_closed
  	;
 
@@ -885,6 +925,7 @@ function_identifier
 
 function_declaration
 	: declaration_specifiers function_identifier LEFT_PAREN RIGHT_PAREN {
+		std::cout<<"YOOOO"<<std::endl;
 		$$ = $2;
 		if ( $$->type->type_tag == NONE ) {
 			$$->type = create_function_type($1, new VectorIdentifiers(), $2->type->getSpecifiers());
@@ -905,14 +946,14 @@ function_declaration
 ;
 
 function_definition
- 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); } compound_statement { 
+ 	: function_declaration  { SymbolTable::add_symbols(&($1->type->function_type->args)); } compound_statement { 
  		$$ = $1;
 		SymbolTable::exit_scope();
  		SymbolTable::add_symbol($$);
  	}
 	; 
 
- INC_SCOPE: { SymbolTable::enter_scope(); };
+INC_SCOPE : { SymbolTable::enter_scope(); };
  %%
 
 void yyerror(const char *s) {

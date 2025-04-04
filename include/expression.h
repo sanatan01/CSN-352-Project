@@ -8,28 +8,6 @@
 // #include <3ac.h>
 
 
-enum ConstantTypeEnum{
-  INVALID,
-  BOOL,
-  CHAR_CONSTANT,
-  UNSIGNED_CHAR_CONSTANT,
-  SHORT_CONSTANT,
-  UNSIGNED_SHORT_CONSTANT,
-  INT_CONSTANT,
-  UNSIGNED_INT_CONSTANT,
-  LONG_CONSTANT,
-  UNSIGNED_LONG_CONSTANT,
-  LONG_LONG_CONSTANT,
-  UNSIGNED_LONG_LONG_CONSTANT,
-  FLOAT_CONSTANT,
-  UNSIGNED_FLOAT_CONSTANT,
-  DOUBLE_CONSTANT,
-  UNSIGNED_DOUBLE_CONSTANT,
-  LONG_DOUBLE_CONSTANT,
-  UNSIGNED_LONG_DOUBLE_CONSTANT,
-  STRING_CONSTANT,
-};
-
 // --------------------------------------------------------------------------------------------
 
 class ConstantType{
@@ -54,26 +32,26 @@ public:
 
   Expression(ConstantType type, int num_operands):
     type(type), num_operands(num_operands) {};
+  Expression() : type(ConstantType(ERROR_T)), num_operands(0) {};
 };
 
 class VectorExpression: public Expression {
 public:
-  std::vector<Expression>* operands;
+  std::vector<Expression> operands;
   VectorExpression() {
-    this->operands = new std::vector<Expression>();
+    this->operands = std::vector<Expression>();
   };
   void add_element(Expression* e) {
-    this->operands->push_back(*e);
+    this->operands.push_back(*e);
   };
   void add_elements(std::vector<Expression> elements) {
-    this->operands->insert(this->operands->end(), elements.begin(), elements.end());
+    this->operands.insert(this->operands.end(), elements.begin(), elements.end());
   };
 };
 // --------------------------------------------------------------------------------------------
 union ExpressionType {
   Identifier* id;
-  StringLiteral* str;
-  Constant* con;
+  ConstantType* constant;
   Expression* exp;
 };
 
@@ -90,7 +68,7 @@ Expression* create_primary_expression(ExpressionType* typ);
 class ArgumentExprList: public Expression {
 public:
   std::vector <Expression* > args;
-  ArgumentExprList() : Expression(ConstantType(INVALID), 0) {};
+  ArgumentExprList() ;
 };
 
 // Grammar warppers for ArguementExpressionList
@@ -123,7 +101,13 @@ public:
   ExpressionOpType op_type;
   std::string op;
 
-  OpExpression();
+  OpExpression(): Expression(ConstantType(ERROR_T), 2) {
+    op1 = Expression();
+    op2 = Expression();
+    op3 = Expression();
+    op_type = TOPLEVEL;
+    op = "";
+  }
 };
 
 // Grammar wrapper for OpExpression
@@ -135,7 +119,7 @@ public:
   Expression* op1;
   std::string op;
 
-  UnaryExpression() : Expression(ConstantType(INVALID), 1) {
+  UnaryExpression() : Expression(ConstantType(ERROR_T), 1) {
     op1 = nullptr;
     op = "";
   }
@@ -144,7 +128,7 @@ public:
 // Grammar warppers for UnaryExpression
 Expression* create_unary_expression(Terminal* op, Expression* ue); // INC_OP, DEC_OP, SIZEOF
 Expression* create_unary_expression_cast(Node* n_op, Expression* ce);
-Expression* create_unary_expression(Terminal* op, TypeName* t_name);
+// Expression* create_unary_expression(Terminal* op, TypeName* t_name);
 
 // --------------------------------------------------------------------------------------------
 
@@ -157,14 +141,14 @@ public:
   */
   int typeCast;
 
-  CastExpression() : Expression(ConstantType(INVALID), 1) {
+  CastExpression() : Expression(ConstantType(ERROR_T), 1) {
     op1 = nullptr;
     typeCast = -1;
   };
 };
 
 // Grammar wrapper for CastExpression
-Expression* create_cast_expression_typename(TypeName* tn, Expression* ce); // type_name wala add krna hai// can change string to node* later for assignment operator
+// Expression* create_cast_expression_typename(TypeName* tn, Expression* ce); // type_name wala add krna hai// can change string to node* later for assignment operator
 
 // --------------------------------------------------------------------------------------------
 class PostfixExpression: public Expression {
@@ -175,7 +159,7 @@ public:
   ArgumentExprList* ae_list;
   std::string op;
 
-  PostfixExpression(): Expression(ConstantType(INVALID), 0) {
+  PostfixExpression(): Expression(ConstantType(ERROR_T), 0) {
     pe = nullptr;
     exp = nullptr;
     id = nullptr;
@@ -191,31 +175,21 @@ Expression* create_postfix_expr_fun(Identifier* fi, ArgumentExprList* ae);
 Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Identifier* id);
 Expression* create_postfix_expr_ido(Terminal* op, Expression* pe);
 
-// --------------------------------------------------------------------------------------------
-class Constant {
-public:
-  ConstantType constant_type;
+// // --------------------------------------------------------------------------------------------
+// class Constant {
+// public:
+//   ConstantType constant_type;
 
-  Constant(std::string name, std::string value, unsigned int line_num=0, unsigned int column=0):
-    constant_type(ConstantType(STRING_CONSTANT)) {}
+//   Constant(std::string name, std::string value, int type, unsigned int line_num=0, unsigned int column=0):
+//     constant_type(ConstantType(type)) {}
 
-  int getConstantType() {
-    return constant_type.type;
-  }
-  void negate();
+//   int getConstantType() {
+//     return constant_type.type;
+//   }
+//   void negate();
 
-};
+// };
 
-Constant* create_constant(const char* name, const char* value, unsigned int line_num, unsigned int column);
-
-// --------------------------------------------------------------------------------------------
-class StringLiteral: public Constant {
-public:
-// check :todo
-  StringLiteral(int name): Constant(std::to_string(name), std::to_string(name)) {
-    constant_type.type = STRING_CONSTANT;
-    constant_type.value = name;
-  }
-};
+//Constant* create_constant(const char* name, const char* value, unsigned int line_num, unsigned int column);
 
 Expression *create_assignment_expression(OpExpression *oe, Node *n_op);
