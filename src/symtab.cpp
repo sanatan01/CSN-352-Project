@@ -39,7 +39,8 @@ void SymbolTable::add_symbol(Identifier* id, int line, int column) {
     } else if (id->type->type_tag == ENUM_TYPE) {
         id->name = id->type->enum_type->enum_name;
     }
-    Symbol symbol(*id, current_scope_level, line, column);
+
+    Symbol symbol(*id, current_scope_level, id->type->isDefined(), line, column);
     std::string name = symbol.identifier.name;
     symbol_map[name].push_back(symbol);
     SymbolTable::print_symbol(symbol);
@@ -53,6 +54,15 @@ void SymbolTable::add_symbols(VectorIdentifiers* ids, int line, int column) {
 
 bool SymbolTable::lookup_symbol(const std::string& identifier) {
     return symbol_map.find(identifier) != symbol_map.end() && !symbol_map[identifier].empty();
+}
+
+bool SymbolTable::lookup_symbols(VectorIdentifiers* ids) {
+    for (auto& id : ids->identifiers) {
+        if (!lookup_symbol(id.name)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 Symbol* SymbolTable::get_symbol(const std::string& identifier) {

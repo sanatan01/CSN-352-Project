@@ -1,7 +1,7 @@
 syntax_analyser
 lexer
 .DS_Store
-.vscode/
+.vscode/*
 include/y.tab.h
 src/y.tab.c
 src/lex.yy.c

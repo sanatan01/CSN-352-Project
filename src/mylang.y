@@ -2,9 +2,10 @@
 #include <helper.h>
 #include <types.h>
 #include <symtab.h>
+#include <expression.h>
+#include <tac.h>
 
 // #include <statementh>
-// #include <expression.h>
 // #include <ast.h>
 // #include <3ach>
 
@@ -12,15 +13,18 @@ void yyerror(const char *s);
  extern int yylex();
  extern int yylineno;
  extern FILE *yyin;
+ int test_count = 0;
 // // Global variable to hold the current type for declaration
 // char *currentType = NULL;
 // int grammarErrorCount = 0;
  %}
 
+ %define parse.error verbose
+
  %union {
 // 	Terminal* terminal;
     char *nice;
- 	Expression* expression;
+ 	class Expression* expression;
 // 	PrimaryExpression* primary_expression;
 // 	ArguemmentExpressionList* argument_expression_list;
 // 	UnaryExpression* unary_expression;
@@ -41,6 +45,7 @@ void yyerror(const char *s);
  	class VectorStructElement* struct_element_list;
  	class VectorIdentifiers* vector_identifiers;
  	class StructElement* struct_element;
+ 	class VectorExpression* vector_expression;
 // 	FunctionType* function_type;
 // 	ArrayType* array_type;
  }
@@ -48,7 +53,7 @@ void yyerror(const char *s);
 
 
  %token<nice> IDENTIFIER
- %token<nice> CONSTANT
+ %token<nice> CONSTANT_LITERAL
  %token<nice> STRING_LITERAL
  %token<nice> SIZEOF
  %token<nice> PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
@@ -75,13 +80,14 @@ void yyerror(const char *s);
 // /* %type<array_type> array_declaration */
  %type<nice> translation_unit
  %type<nice> external_declaration
- %type<identifier> function_identifier
+ //%type<identifier> function_identifier
  %type<identifier> function_definition
  %type<identifier> function_declaration
  %type<vector_identifiers> declaration
  %type<vector_identifiers> declaration_list
  %type<nice> statement
  %type<nice> statement_list
+ %type<nice> all_statements
 
 %type<expression> expression
 %type<expression> assignment_expression
@@ -104,12 +110,17 @@ void yyerror(const char *s);
 // %type<argument_expression_list> argument_expression_list
 // %type<expression> constant_expression
 
+%type<nice> empty_expression
+%type<nice> init_clause
+
 %type<nice> assignment_operator
 %type<nice> unary_operator
 %type<global_type> declaration_specifiers
 %type<vector_identifiers> init_declarator_list
 %type<identifier> init_declarator
 %type<specifiers> storage_class_specifier
+%type<specifiers> storage_class_specifier_list
+%type<specifiers> qualifiers
 %type<global_type> type_specifier
 %type<union_type> union_specifier
 %type<struct_type> struct_specifier
@@ -126,22 +137,22 @@ void yyerror(const char *s);
 %type<identifier> direct_declarator
 %type<pointer_type> pointer
 %type<specifiers> type_qualifier_list
-// %type<vector_identifiers> parameter_type_list
- %type<vector_identifiers> parameter_list
- %type<identifier> parameter_declaration
-// %type<vector_identifiers> identifier_list
- %type<nice> type_name
- %type<nice> abstract_declarator
- %type<nice> direct_abstract_declarator
- %type<nice> initializer
- %type<nice> initializer_list
- %type<nice> labeled_statement
- %type<nice> compound_statement
- %type<nice> selection_statement
- %type<nice> iteration_statement
- %type<nice> jump_statement
- %type<nice> error_statement_closed
- %type<nice> error_statement_open
+%type<vector_identifiers> parameter_type_list
+%type<vector_identifiers> parameter_list
+%type<identifier> parameter_declaration
+%type<vector_identifiers> identifier_list
+%type<global_type> type_name
+%type<global_type> abstract_declarator
+%type<global_type> direct_abstract_declarator
+%type<nice> initializer
+%type<nice> initializer_list
+%type<nice> labeled_statement
+%type<nice> compound_statement
+%type<nice> selection_statement
+%type<nice> iteration_statement
+%type<nice> jump_statement
+%type<nice> error_statement_closed
+%type<nice> error_statement_open
 
  %%
 
@@ -175,22 +186,22 @@ void yyerror(const char *s);
 
 // /* Primary expressions */
 primary_expression
- 	: IDENTIFIER							{ $$ = create_primary_expression(&(ExpressionType){ .id = $1 }); }
- 	| CONSTANT 								{ $$ = create_primary_expression(&(ExpressionType){ .constant = $1 }); }
- 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
- 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
+ 	: IDENTIFIER							{ $$ = create_expression_simple(IDENTIFIER_ET, std::string($1)); }
+ 	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
+// 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
+// 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
  	;
 
 // /* Postfix expressions */
 postfix_expression
  	: primary_expression 											{ $$ = $1; }
+    | postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( "++", $1); } 
+ 	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( "--", $1); } 
  	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
- 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
-// 	| IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
-// 	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
-// 	| postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
- 	| postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
- 	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
+ 	// | IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
+ 	// | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
+ 	// | postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
+ 	// | postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
  	;
 
 // /* Argument expression list for function calls */
@@ -202,120 +213,250 @@ postfix_expression
 // /* Unary expressions */
 unary_expression
  	: postfix_expression 						{ $$ = $1; }
- 	| INC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
- 	| DEC_OP unary_expression 					{ $$ = create_unary_expression($1, $2); }
- 	| unary_operator cast_expression 			{ $$ = create_unary_expression_cast($1, $2); }
- 	| SIZEOF unary_expression 					{ $$ = create_unary_expression($1, $2); }
- 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	{ $$ = create_unary_expression($1, $3); }
+ 	| INC_OP unary_expression 					{ 
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($2);
+ 		$$ = create_expression(UNARY, "++", ve); 
+	}
+ 	| DEC_OP unary_expression 					{ 
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($2);
+ 		$$ = create_expression(UNARY, "--", ve); 
+	}
+	| SIZEOF unary_expression 					{ 
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($2);
+ 		$$ = create_expression(UNARY, "sizeof", ve); 
+	}
+ 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	{ 
+		class Expression* expr = new Expression($3);
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element(expr);
+ 		$$ = create_expression(UNARY, "sizeof", ve); 
+	}
+ 	// | unary_operator cast_expression 			{ 
+	// 	VectorExpression* ve = new VectorExpression();
+ 	// 	ve->add_element($2);
+ 	// 	$$ = create_expression(UNARY, std::string($1), ve); 
+	// }
  	;
 
 unary_operator
-	: AMPERSAND     { $$ = "&"; }
- 	| ASTERISK      { $$ = "*"; }
- 	| PLUS          { $$ = "+"; }
- 	| MINUS         { $$ = "-"; }
- 	| TILDE         { $$ = "~"; }
- 	| EXCLAMATION   { $$ = "!"; }
- 	;
+	: AMPERSAND     { $$ = strdup("&"); }
+	| ASTERISK      { $$ = strdup("*"); }
+	| PLUS          { $$ = strdup("+"); }
+	| MINUS         { $$ = strdup("-"); }
+	| TILDE         { $$ = strdup("~"); }
+	| EXCLAMATION   { $$ = strdup("!"); }
+	;
 
 // /* Type casting */
 cast_expression
  	: unary_expression 										{ $$ = $1; }
- 	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ $$ = create_cast_expression_typename($2, $4); }
+ 	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ 
+		class Expression* expr = new Expression($2);
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element(expr);
+		ve->add_element($4);
+		$$ = create_expression(CAST_TYPE, "", ve); 
+	}
  	;
 
 // /* Arithmetic expressions */
 multiplicative_expression
  	: cast_expression 										{ $$ = $1; }
- 	| multiplicative_expression ASTERISK cast_expression 	{ $$ = create_expression(MULTIPLICATIVE, "*", $1, $3); }
- 	| multiplicative_expression SLASH cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "/", $1, $3); }
- 	| multiplicative_expression PERCENT cast_expression		{ $$ = create_expression(MULTIPLICATIVE, "%", $1, $3); }
+ 	| multiplicative_expression ASTERISK cast_expression 	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(MULTIPLICATIVE, "*", ve); 
+ 	}
+ 	| multiplicative_expression SLASH cast_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(MULTIPLICATIVE, "/", ve); 
+ 	}
+ 	| multiplicative_expression PERCENT cast_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(MULTIPLICATIVE, "%", ve); 
+ 	}
  	;
 
 additive_expression
  	: multiplicative_expression 							{ $$ = $1; }
- 	| additive_expression PLUS multiplicative_expression 	{ $$ = create_expression(ADDITIVE, "+", $1, $3); }
- 	| additive_expression MINUS multiplicative_expression	{ $$ = create_expression(ADDITIVE, "-", $1, $3); }
+ 	| additive_expression PLUS multiplicative_expression 	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(ADDITIVE, "+", ve); 
+ 	}
+ 	| additive_expression MINUS multiplicative_expression	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3); 
+		$$ = create_expression(ADDITIVE, "-", ve); 
+ 	}
  	;
-
 shift_expression
  	: additive_expression									{ $$ = $1; }
- 	| shift_expression LEFT_OP additive_expression			{ $$ = create_expression(SHIFT, "<<", $1, $3); }
- 	| shift_expression RIGHT_OP additive_expression			{ $$ = create_expression(SHIFT, ">>", $1, $3); }
- 	;
-
+ 	| shift_expression LEFT_OP additive_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(SHIFT, "<<", ve); 
+ 	}
+ 	| shift_expression RIGHT_OP additive_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3); 
+		$$ = create_expression(SHIFT, ">>", ve); 
+ 	}
+	;
 // /* Relational expressions */
 relational_expression
  	: shift_expression										{ $$ = $1; }
- 	| relational_expression LESS_THAN shift_expression		{ $$ = create_expression(RELATIONAL, "<", $1, $3); }
- 	| relational_expression GREATER_THAN shift_expression	{ $$ = create_expression(RELATIONAL, ">", $1, $3); }
- 	| relational_expression LE_OP shift_expression			{ $$ = create_expression(RELATIONAL, "<=", $1, $3); }
- 	| relational_expression GE_OP shift_expression			{ $$ = create_expression(RELATIONAL, ">=", $1, $3); }
+ 	| relational_expression LESS_THAN shift_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(RELATIONAL, "<", ve); 
+ 	}
+ 	| relational_expression GREATER_THAN shift_expression	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(RELATIONAL, ">", ve); 
+ 	}
+ 	| relational_expression LE_OP shift_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(RELATIONAL, "<=", ve); 
+ 	}
+ 	| relational_expression GE_OP shift_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(RELATIONAL, ">=", ve); 
+ 	}
  	;
-
 equality_expression
  	: relational_expression									{ $$ = $1; }
- 	| equality_expression EQ_OP relational_expression		{ $$ = create_expression(EQUALITY, "==", $1, $3); }
- 	| equality_expression NE_OP relational_expression		{ $$ = create_expression(EQUALITY, "!=", $1, $3); }
+ 	| equality_expression EQ_OP relational_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(EQUALITY, "==", ve); 
+ 	}
+ 	| equality_expression NE_OP relational_expression		{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(EQUALITY, "!=", ve); 
+ 	}
  	;
 
 // /* Bitwise expressions */
 and_expression
  	: equality_expression									{ $$ = $1; }
- 	| and_expression AMPERSAND equality_expression			{ $$ = create_expression(AND, "&", $1, $3); }
+ 	| and_expression AMPERSAND equality_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(AND, "&", ve); 
+ 	}
  	;
 
 exclusive_or_expression
  	: and_expression 										{ $$ = $1; }
- 	| exclusive_or_expression CARET and_expression			{ $$ = create_expression(XOR, "^", $1, $3); }
+ 	| exclusive_or_expression CARET and_expression			{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(XOR, "^", ve); 
+ 	}
  	;
 
 inclusive_or_expression
  	: exclusive_or_expression								{ $$ = $1; }
- 	| inclusive_or_expression PIPE exclusive_or_expression	{ $$ = create_expression(OR, "|", $1, $3); }
+ 	| inclusive_or_expression PIPE exclusive_or_expression	{ 
+ 		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+ 		ve->add_element($3);
+ 		$$ = create_expression(OR, "|", ve); 
+ 	}
  	;
 
 // /* Logical expressions */
 logical_and_expression
  	: inclusive_or_expression								{ $$ = $1; }
- 	| logical_and_expression AND_OP inclusive_or_expression	
+ 	| logical_and_expression AND_OP inclusive_or_expression	{
+		VectorExpression* ve = new VectorExpression();
+		ve->add_element($1);
+		ve->add_element($3);
+		$$ = create_expression(LOGICAL_AND, "&&", ve);
+	}
  	;
 
  logical_or_expression
  	: logical_and_expression								{ $$ = $1; }
- 	| logical_or_expression OR_OP logical_and_expression	
+ 	| logical_or_expression OR_OP logical_and_expression	{ 
+		VectorExpression* ve = new VectorExpression();
+		ve->add_element($1);
+		ve->add_element($3);
+		$$ = create_expression(LOGICAL_OR, "||",ve);
+	}
  	;
 
 // /* Conditional expression (ternary operator) */
 conditional_expression
  	: logical_or_expression									{ $$ = $1; }
- 	| logical_or_expression QUESTION expression COLON conditional_expression { $$ = create_expression(CONDITIONAL, "?:", $1, $3, $5); }
+	| logical_or_expression QUESTION expression COLON conditional_expression { 
+		VectorExpression* ve = new VectorExpression();
+		ve->add_element($1);
+		ve->add_element($3);
+		ve->add_element($5);
+		$$ = create_expression(CONDITIONAL, "?:", ve); 
+	}
  	;
 
 // /* Assignment */
 assignment_expression
  	: conditional_expression								{ $$ = $1; }
-// 	| unary_expression assignment_operator assignment_expression { $$ = create_expression(ASSIGNMENT, std::string($1), $2, $3); }
+ 	| unary_expression assignment_operator assignment_expression { 
+		VectorExpression *ve = new VectorExpression();
+		ve->add_element($1);
+		ve->add_element($3);
+		$$ = create_expression(ASSIGNMENT, std::string($2), ve); 
+		}
  	;
 
  assignment_operator
  	: ASSIGN		{ $$ = strdup("="); }
  	| MUL_ASSIGN	{ $$ = strdup("*="); }
  	| DIV_ASSIGN	{ $$ = strdup("/="); }
- 	| MOD_ASSIGN	{ $$ = $1; }
- 	| ADD_ASSIGN	{ $$ = $1; }
- 	| SUB_ASSIGN	{ $$ = $1; }
- 	| LEFT_ASSIGN	{ $$ = $1; }
- 	| RIGHT_ASSIGN	{ $$ = $1; }
- 	| AND_ASSIGN	{ $$ = $1; }
- 	| XOR_ASSIGN	{ $$ = $1; }
- 	| OR_ASSIGN		{ $$ = $1; }
+ 	| MOD_ASSIGN	{ $$ = strdup("%="); }
+ 	| ADD_ASSIGN	{ $$ = strdup("+="); }
+ 	| SUB_ASSIGN	{ $$ = strdup("-="); }
+ 	| LEFT_ASSIGN	{ $$ = strdup("<<="); }
+ 	| RIGHT_ASSIGN	{ $$ = strdup(">>"); }
+ 	| AND_ASSIGN	{ $$ = strdup("&="); }
+ 	| XOR_ASSIGN	{ $$ = strdup("^="); }
+ 	| OR_ASSIGN		{ $$ = strdup("|"); }
  	;
 
 // /* Expressions */
 expression
  	: assignment_expression { $$ = $1; }
- 	| expression COMMA assignment_expression { $$ = create_expression(TOPLEVEL, ' ', $1, $3); }
+ 	// | expression COMMA assignment_expression { 
+ 	// 	VectorExpression* ve = new VectorExpression();
+ 	// 	ve->add_element($1);
+ 	// 	ve->add_element($3);
+ 	// 	$$ = create_expression(TOPLEVEL, "", ve); 
+ 	// }
  	;
 
 // constant_expression
@@ -330,56 +471,43 @@ declaration
  		  SymbolTable::add_symbols($$);
  	  }
  	| declaration_specifiers init_declarator_list SEMICOLON {
- 		  /* Use the variable name from init_declarator */
- 		  for(auto &element : $2->identifiers) {
- 			  element.type = $1;
- 		  }
-		  $$=$2;
-		  SymbolTable::add_symbols($$);
+		/* Use the variable name from init_declarator */
+		for(auto &element : $2->identifiers) {
+			if (element.type->type_tag == FUNCTION_TYPE) {
+				if (element.type->function_type->return_type != NULL && element.type->function_type->return_type->type_tag == POINTER_TYPE) {
+					element.type->function_type->return_type->pointer_type->return_type = $1;
+					element.type->function_type->return_type->pointer_type->specifiers = combine_specs(element.type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+				} else {
+					element.type->function_type->return_type = $1;
+				}
+			} else if (element.type->type_tag == NONE) {
+				element.type = $1;
+			} else if (element.type->type_tag == POINTER_TYPE) {
+				element.type->pointer_type->return_type = $1;
+				element.type->pointer_type->specifiers = combine_specs(element.type->pointer_type->specifiers, $1->getSpecifiers());
+			} else if (element.type->type_tag == ARRAY_TYPE) {
+				element.type->array_type->return_type = $1;
+				element.type->array_type->specifiers = combine_specs(element.type->array_type->specifiers, $1->getSpecifiers());
+			} else {
+				std::cerr << "Cannot create a type for the following identifier" << std::endl;
+			}
+		}
+		$$=$2;
+		SymbolTable::add_symbols($$);
  	  }
 	;
 
-
-// 	/* | declaration_specifiers IDENTIFIER array_declaration SEMICOLON {
-// 		$$ = new std::vector<Identifier>();
-// 		$$->push_back(new Identifier(std::string($2)));
-// 		$$->back()->type->array_type = $3;
-// 		$$->back()->type->array_type->return_type = $1;
-// 	} */
-// 	;
-
-// /* array_declaration
-// 	: LEFT_BRACKET constant_expression RIGHT_BRACKET {
-// 		$$ = new ArrayType();
-// 		$$->dim=1;
-// 		// to be seen
-// 		// $$->dims.push_back($2);
-// 	}
-// 	| array_declaration LEFT_BRACKET constant_expression RIGHT_BRACKET {
-// 		char *temp = malloc(strlen("[]") + strlen($1) + 2);
-// 		sprintf(temp, "[]%s", $1);
-// 		$$ = temp;
-// 	}
-// 	| array_declaration LEFT_BRACKET RIGHT_BRACKET {
-// 		char *temp = malloc(strlen("[]") + strlen($1) + 2);
-// 		sprintf(temp, "[]%s", $1);
-// 		$$ = temp;
-// 	}
-// 	; */
-
 declaration_specifiers
  	: type_specifier { $$ = $1; }
- 	| storage_class_specifier declaration_specifiers {
-		$$ = $2;
-		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
- 	}
- 	| type_specifier declaration_specifiers { 
- 		$$ = combine_global_type($1, $2);
- 	}
- 	| type_qualifier declaration_specifiers {
- 		$$ = $2;
- 		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
- 	}
+	| qualifiers type_specifier { $$ = $2; $$->setSpecifiers(combine_specs($$->getSpecifiers(), $1)); }
+	;
+
+qualifiers
+	: storage_class_specifier_list { $$ = $1; }
+	| type_qualifier_list { $$ = $1; }
+	| storage_class_specifier_list qualifiers { $$ = combine_specs($1, $2); }
+	| type_qualifier_list qualifiers { $$ = combine_specs($1, $2); }
+	;
 	
 
  init_declarator_list
@@ -404,6 +532,12 @@ declaration_specifiers
  	;
 
  /* Storage classes */
+storage_class_specifier_list
+	: storage_class_specifier { $$ = $1; }
+	| storage_class_specifier storage_class_specifier_list { $$ = combine_specs($1, $2); }
+	;
+
+
 storage_class_specifier
  	: TYPEDEF { $$ = new Specifiers(); $$->is_typedef = true; }
  	| EXTERN { $$ = new Specifiers(); $$->is_extern = true; }
@@ -411,22 +545,45 @@ storage_class_specifier
  	| REGISTER { $$ = new Specifiers(); $$->is_register = true; }
  	;
 
-// /* Type specifiers */
+/* Type specifiers */
 type_specifier
-	: INT      { $$ = create_primitive_type(INT_T); }
-	| VOID     { $$ = create_primitive_type(VOID_T); }
-	| CHAR     { $$ = create_primitive_type(CHAR_T); }
-	| SHORT    { $$ = create_primitive_type(SHORT_T); }
-	| SHORT INT   { $$ = create_primitive_type(SHORT_T); }
-	| LONG     { $$ = create_primitive_type(LONG_T); }
-	| LONG INT { $$ = create_primitive_type(LONG_T); }
-	| LONG LONG { $$ = create_primitive_type(LLONG_T); }
+	: INT      		{ $$ = create_primitive_type(INT_T); }
+	| SIGNED		{ $$ = create_primitive_type(INT_T); }
+	| VOID     		{ $$ = create_primitive_type(VOID_T); }
+	| CHAR     		{ $$ = create_primitive_type(CHAR_T); }
+	| SIGNED CHAR     		{ $$ = create_primitive_type(CHAR_T); }
+	| UNSIGNED CHAR     		{ $$ = create_primitive_type(U_CHAR_T); }
+	| SHORT    		{ $$ = create_primitive_type(SHORT_T); }
+	| SIGNED SHORT    		{ $$ = create_primitive_type(SHORT_T); }
+	| UNSIGNED SHORT    		{ $$ = create_primitive_type(U_SHORT_T); }
+	| SHORT INT   	{ $$ = create_primitive_type(SHORT_T); }
+	| UNSIGNED SHORT INT   	{ $$ = create_primitive_type(U_SHORT_T); }
+	| SIGNED SHORT INT   	{ $$ = create_primitive_type(SHORT_T); }
+	| SHORT UNSIGNED INT   	{ $$ = create_primitive_type(U_SHORT_T); }
+	| SHORT SHORT INT   	{ $$ = create_primitive_type(SHORT_T); }
+	| LONG     		{ $$ = create_primitive_type(LONG_T); }
+	| SIGNED LONG     		{ $$ = create_primitive_type(LONG_T); }
+	| UNSIGNED LONG     		{ $$ = create_primitive_type(U_LONG_T); }
+	| LONG INT 		{ $$ = create_primitive_type(LONG_T); }
+	| LONG SIGNED INT 		{ $$ = create_primitive_type(LONG_T); }
+	| LONG UNSIGNED INT 		{ $$ = create_primitive_type(U_LONG_T); }
+	| SIGNED LONG INT 		{ $$ = create_primitive_type(LONG_T); }
+	| UNSIGNED LONG INT 		{ $$ = create_primitive_type(U_LONG_T); }
+	| LONG LONG 	{ $$ = create_primitive_type(LLONG_T); }
+	| UNSIGNED LONG LONG 	{ $$ = create_primitive_type(U_LLONG_T); }
+	| SIGNED LONG LONG 	{ $$ = create_primitive_type(LLONG_T); }
+	| LONG UNSIGNED LONG 	{ $$ = create_primitive_type(U_LLONG_T); }
+	| LONG SIGNED LONG 	{ $$ = create_primitive_type(LLONG_T); }
 	| LONG LONG INT { $$ = create_primitive_type(LLONG_T); }
-	| FLOAT    { $$ = create_primitive_type(FLOAT_T); }
-	| DOUBLE   { $$ = create_primitive_type(DOUBLE_T); }
-	| LONG DOUBLE { $$ = create_primitive_type(LONG_DOUBLE_T); }
-	| SIGNED   { $$ = create_primitive_type(SIGNED_T); }
-	| UNSIGNED { $$ = create_primitive_type(UNSIGNED_T); }
+	| UNSIGNED LONG LONG INT { $$ = create_primitive_type(U_LLONG_T); }
+	| SIGNED LONG LONG INT { $$ = create_primitive_type(LLONG_T); }
+	| LONG UNSIGNED LONG INT { $$ = create_primitive_type(U_LLONG_T); }
+	| LONG SIGNED LONG INT { $$ = create_primitive_type(LLONG_T); }
+	| LONG LONG UNSIGNED INT { $$ = create_primitive_type(U_LLONG_T); }
+	| LONG LONG SIGNED INT { $$ = create_primitive_type(LLONG_T); }
+	| FLOAT    		{ $$ = create_primitive_type(FLOAT_T); }
+	| DOUBLE   		{ $$ = create_primitive_type(DOUBLE_T); }
+	| LONG DOUBLE 	{ $$ = create_primitive_type(LONG_DOUBLE_T); }
  	| struct_specifier { $$ = create_struct_type($1); }
  	| union_specifier { $$ = create_union_type($1); }
  	| enum_specifier { $$ = create_enum_type($1); }
@@ -438,15 +595,15 @@ type_specifier
 // /* Struct and union specifiers */
 struct_specifier
   	: STRUCT IDENTIFIER { $$ = new Struct(std::string($2)); }
- 	| STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(std::string($2), $4); }
- 	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct($3); }
+ 	| STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(std::string($2), $4); $$->is_defined = true; }
+ 	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct($3); $$->is_defined = true; }
 
  	;
 
  union_specifier
   	: UNION IDENTIFIER { $$ = new Union(std::string($2)); }
- 	| UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), $4); }
- 	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union($3); }
+ 	| UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), $4); $$->is_defined = true; }
+ 	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union($3); $$->is_defined = true; }
  	;
 
 struct_declaration_list
@@ -479,13 +636,11 @@ struct_declaration
  	;
 
  specifier_qualifier_list
- 	: type_specifier specifier_qualifier_list {
-		$$ = combine_global_type($1, $2);
- 	}
- 	| type_specifier{
+ 	: type_specifier {
 		$$ = $1;
 	}
- 	| type_qualifier specifier_qualifier_list{
+ 	| qualifiers specifier_qualifier_list {
+		// TODO: make sure here storage_class_specifier are not there as they are not possible
 		$$=$2;
 		$$->setSpecifiers(combine_specs($$->getSpecifiers(), $1));
 	}
@@ -495,13 +650,15 @@ struct_declaration
  	: declarator {
  		$$ = new StructElement($1, $1->type->getSize()); 
 	}
-// 	| COLON constant_expression {
-// 		$$ = new StructElement($1, 0 /* Get return value from constant expression*/);
-// 	}
-// 	| declarator COLON constant_expression {
-// 		$$ = new StructElement($1, 0 /* Get return value from constant expression*/);
-// 	}
-// 	;
+	| COLON CONSTANT_LITERAL {
+		unsigned int value = convert_to_unsigned(std::string($2));
+		$$ = new StructElement(value);
+	}
+	| declarator COLON CONSTANT_LITERAL {
+		unsigned int value = convert_to_unsigned(std::string($2));
+		$$ = new StructElement($1, value);
+	}
+	;
 
  /* Enum specifiers */
  enum_specifier
@@ -528,13 +685,14 @@ struct_declaration
  	;
 
  enumerator
- 	: IDENTIFIER{
+ 	: IDENTIFIER {
  		$$ = new EnumElement(std::string($1));
  	}
-// 	| IDENTIFIER ASSIGN constant_expression{
-// 		$$ = new EnumElement(std::string($1), /* to do $3*/);
-// 	}
-// 	;
+	| IDENTIFIER ASSIGN CONSTANT_LITERAL {
+		int value = convert_to_signed(std::string($3));
+		$$ = new EnumElement(std::string($1), value);
+	}
+	;
 
  /* Type qualifiers */
  type_qualifier
@@ -549,12 +707,14 @@ declarator
  		$$ = $2; 
  		if($$->type->type_tag == NONE) {
  			$$->type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
-
- 		} else{
- 			$$->type->pointer_type->ptr_level = $1->ptr_level;
+ 		} else if ($$->type->type_tag == FUNCTION_TYPE) {
+ 			$$->type->function_type->return_type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
+ 		} else if ($$->type->type_tag == POINTER_TYPE) {
+			$$->type->pointer_type->ptr_level += $1->ptr_level;
+			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->specifiers);
+ 		} else {
+ 			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
  		}
-
-		// Combine types
  	}
 
  	;
@@ -562,42 +722,67 @@ declarator
  direct_declarator
  	: IDENTIFIER { $$ = new Identifier(std::string($1)); }
  	| LEFT_PAREN declarator RIGHT_PAREN { $$ = $2; }
-// 	| direct_declarator LEFT_BRACKET constant_expression RIGHT_BRACKET {
-// 		$$ = $1;
-// 		if ($$->type->array_type == NULL) {
-// 			$$->type->array_type = new ArrayType();
-// 			$$->type->array_type->return_type = $1->type;
-// 		}
-// 		$$->type->array_type->dim++;
-// 		$$->type->array_type->dims.push_back($3);
+	| direct_declarator LEFT_BRACKET RIGHT_BRACKET { 
+ 		$$ = $1;
+		if ( $$->type->type_tag == NONE) {
+			std::cerr << "Array type" << std::endl;
+			$$->type = create_array_type($1->type);
+			$$->type = add_dimension_array($$->type);
+		}
+ 		else if ( $$->type->type_tag == ARRAY_TYPE ) {
+			$$->type = add_dimension_array($1->type);
+		} else {
+			std::cerr << "Cannot create an array type for the following identifier" << std::endl;
+		}
+ 	}
+	| direct_declarator LEFT_PAREN RIGHT_PAREN { 
+		$$ = $1;
+		if ($$->type->type_tag == NONE) {
+			$$->type = create_function_type($$->type);
+		} else {
+			std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+		}
+	}
+	| direct_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN { 
+		$$ = $1;
+		if ($$->type->type_tag == NONE) {
+			$$->type = create_function_type($$->type, $3);
+		} else {
+			std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+		}
+	}
+	| direct_declarator LEFT_BRACKET CONSTANT_LITERAL RIGHT_BRACKET {
+		unsigned int constant = convert_to_unsigned(std::string($3));
+		$$ = $1;
+		if ( $$->type->type_tag == NONE) {
+			$$->type = create_array_type($1->type);
+			$$->type = add_dimension_array($$->type, constant);
+		}
+ 		else if ( $$->type->type_tag == ARRAY_TYPE ) {
+			$$->type = add_dimension_array($1->type, constant);
 
-// 	}
-// 	| direct_declarator LEFT_BRACKET RIGHT_BRACKET { 
-// 		$$ = $1;
-// 		if ($$->type->array_type == NULL) {
-// 			$$->type->array_type = new ArrayType();
-// 			$$->type->array_type->return_type = $1->type;
-// 		}
-// 		$$->type->array_type->dim++;
-// 		$$->type->array_type->dims.push_back(0);
-// 	}
-// 	| direct_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN { 
-// 		$$ = $1;
-// 		if($$->type == NULL) {
-// 			$$->type = new GlobalType();
-// 			$$->type->function_type = new FunctionType($1, &($3));
-// 		}
-// 		else{
-// 			GlobalType *temp = $$->type;
-// 			temp->pointer_type->return_type = $1;
-// 			$$->type = new GlobalType();
-// 			$$->type->function_type = new FunctionType(temp,&($3));
-// 		}
+		} else {
+			std::cerr << "Cannot create an array type for the following identifier" << std::endl;
+		}
 
-// 	} // Function defnition?
-// 	// TODO : | direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN { $$ = $1; } // Fimctopm ca;;
-// 	// TODO: | direct_declarator LEFT_PAREN RIGHT_PAREN { $$ = $1; } // Function call
-// 	;
+	}
+	// | direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN { 
+	// 	$$ = $1;
+	// 	if ($$->type->type_tag == NONE) {
+	// 		// This is a function call so we need to make sure all identifiers are present
+	// 		// All identifiers must be defined in the symbol table
+	// 		if (SymbolTable::lookup_symbols($3)) {
+	// 			// Check if function is defined in the symbol table
+	// 			if (SymbolTable::lookup_symbol($$->name)) {
+					
+	// 			}
+	// 		}
+
+	// 	} else {
+	// 		std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+	// 	}
+	// } 
+	;
 
 pointer
  	: ASTERISK { $$ = new PointerType(); }
@@ -631,16 +816,16 @@ type_qualifier_list
  	}
  	;
 
-// /* Function parameters */
-// parameter_type_list
-// 	: parameter_list{
-// 		$$ = $1;
-// 	}
-// 	| parameter_list COMMA ELLIPSIS{
-// 		//TODO: fix later
-// 		$$=$1;
-// 	}
-// 	;
+/* Function parameters */
+parameter_type_list
+	: parameter_list{
+		$$ = $1;
+	}
+	// | parameter_list COMMA ELLIPSIS{
+	// 	//TODO: fix later
+	// 	$$=$1;
+	// }
+	;
 
 parameter_list
  	: parameter_declaration { $$ = new VectorIdentifiers(); $$->add_identifier($1); }
@@ -650,43 +835,155 @@ parameter_list
  parameter_declaration
  	: declaration_specifiers declarator {
  		$$ = $2;
-		$$ = combine_global_type($1, $2);
+		// Function 
+		if ($$->type->type_tag == FUNCTION_TYPE) {
+			if ($$->type->function_type->return_type != NULL && $$->type->function_type->return_type->type_tag == POINTER_TYPE) {
+				$$->type->function_type->return_type->pointer_type->return_type = $1;;
+				$$->type->function_type->return_type->pointer_type->specifiers = combine_specs($$->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$$->type->function_type->return_type = $1;
+			}
+		// We only got identifier
+		} else if ($$->type->type_tag == NONE) {
+			$$->type = $1;
+		/// If we get array type
+		} else if ($$->type->type_tag == ARRAY_TYPE) {
+			$$->type->array_type->return_type = $1;
+		// If we get somehing else
+		} else if ($$->type->type_tag == POINTER_TYPE) {
+			$$->type->pointer_type->return_type = $1;
+			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->getSpecifiers());
+		} else {
+			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+			$$->type = create_invalid_type("Cannot create a pointer type for the following identifier");
+		}
  	}
-	;
-// 	// Todo: | declaration_specifiers abstract_declarator
-// 	// todo: later| declaration_specifiers
-// 	;
-
-// identifier_list
-// 	: IDENTIFIER { $$ = new std::vector<Identifier>(); $$->push_back(new Identifier($1)); }
-// 	| identifier_list COMMA IDENTIFIER { 
-// 		$$ = $1;
-// 		$$->push_back(new Identifier($3));
-// 	}
-// 	;
-
-type_name
- 	: specifier_qualifier_list
-// 	| specifier_qualifier_list abstract_declarator
+	| declaration_specifiers abstract_declarator {
+		$$ = new Identifier($2);
+		// Function 
+		if ($$->type->type_tag == FUNCTION_TYPE) {
+			if ($$->type->function_type->return_type != NULL && $$->type->function_type->return_type->type_tag == POINTER_TYPE) {
+				$$->type->function_type->return_type->pointer_type->return_type = $1;;
+				$$->type->function_type->return_type->pointer_type->specifiers = combine_specs($$->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$$->type->function_type->return_type = $1;
+			}
+		// We only got identifier
+		} else if ($$->type->type_tag == NONE) {
+			$$->type = $1;
+		// If we get array type
+		} else if ($$->type->type_tag == ARRAY_TYPE) {
+			$$->type->array_type->return_type = $1;
+			$$->type->array_type->specifiers = combine_specs($$->type->array_type->specifiers, $1->getSpecifiers());
+		// If we get somehing else
+		} else if ($$->type->type_tag == POINTER_TYPE) {
+			$$->type->pointer_type->return_type = $1;
+			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->getSpecifiers());
+		} else {
+			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+			$$->type = create_invalid_type("Cannot create a pointer type for the following identifier");
+		}
+	}
+	| declaration_specifiers {
+		$$ = new Identifier($1);
+	}
  	;
 
-// abstract_declarator
-// 	: pointer
-// 	| direct_abstract_declarator
-// 	| pointer direct_abstract_declarator
-// 	;
+identifier_list
+ 	: IDENTIFIER { $$ = new VectorIdentifiers(); $$->add_identifier(new Identifier(std::string($1))); }
+ 	| identifier_list COMMA IDENTIFIER { 
+ 		$$ = $1;
+ 		$$->add_identifier(new Identifier(std::string($3)));
+ 	}
+ 	;
 
-// direct_abstract_declarator
-// 	: LEFT_PAREN abstract_declarator RIGHT_PAREN
-// 	| LEFT_BRACKET RIGHT_BRACKET
-// 	| LEFT_BRACKET constant_expression RIGHT_BRACKET
-// 	| direct_abstract_declarator LEFT_BRACKET RIGHT_BRACKET
-// 	| direct_abstract_declarator LEFT_BRACKET constant_expression RIGHT_BRACKET
-// 	| LEFT_PAREN RIGHT_PAREN
-// 	| LEFT_PAREN parameter_type_list RIGHT_PAREN
-// 	| direct_abstract_declarator LEFT_PAREN RIGHT_PAREN
-// 	| direct_abstract_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN
-// 	;
+type_name
+ 	: specifier_qualifier_list { $$ = $1; }
+ 	| specifier_qualifier_list abstract_declarator {
+		$$ = $2;
+		if ($$->type_tag == FUNCTION_TYPE) {
+			if ($$->function_type->return_type != NULL && $$->function_type->return_type->type_tag == POINTER_TYPE) {
+				$$->function_type->return_type->pointer_type->return_type = $1;
+				$$->function_type->return_type->pointer_type->specifiers = combine_specs($$->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$$->function_type->return_type = $1;
+			}
+		} else if ($$->type_tag == ARRAY_TYPE) {
+			$$->array_type->return_type = $1;
+		} else if ($$->type_tag == POINTER_TYPE) {
+			$$->pointer_type->return_type = $1;
+		} else {
+			std::cerr << "Cannot create a type name for the following abstract declarator" << std::endl;
+		}
+ 	}
+ 	;
+
+abstract_declarator
+ 	: pointer { 
+		$$ = new GlobalType();
+		$$->type_tag = POINTER_TYPE;
+		$$->pointer_type = $1;
+	}
+ 	| direct_abstract_declarator {
+		$$ = $1;
+	}
+ 	| pointer direct_abstract_declarator {
+		$$ = $2;
+		if ($$->type_tag == FUNCTION_TYPE) {
+ 			$$->function_type->return_type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
+ 		} else if ($$->type_tag == POINTER_TYPE) {
+			$$->pointer_type->ptr_level += $1->ptr_level;
+			$$->pointer_type->specifiers = combine_specs($$->pointer_type->specifiers, $1->specifiers);
+		} else {
+			std::cerr << "Cannot create a pointer type for the following abstract declarator" << std::endl;
+ 		}
+	}
+ 	;
+
+direct_abstract_declarator
+ 	: LEFT_PAREN abstract_declarator RIGHT_PAREN { $$ = $2; }
+ 	| LEFT_BRACKET RIGHT_BRACKET {
+		$$ = create_array_type(new GlobalType());
+		$$ = add_dimension_array($$);
+	}
+ 	| LEFT_BRACKET CONSTANT_LITERAL RIGHT_BRACKET {
+		unsigned int constant = convert_to_unsigned(std::string($2));
+		$$ = create_array_type(new GlobalType());
+		$$ = add_dimension_array($$, constant);
+	}
+ 	| direct_abstract_declarator LEFT_BRACKET RIGHT_BRACKET {
+		$$ = $1;
+		if ( $$->type_tag == NONE) {
+			$$ = create_array_type($1);
+			$$ = add_dimension_array($$);
+		}
+ 		else if ( $$->type_tag == ARRAY_TYPE ) {
+			$$ = add_dimension_array($1);
+		} else {
+			std::cerr << "Cannot create an array type for the following abstract declarator" << std::endl;
+		}
+	}
+	| direct_abstract_declarator LEFT_BRACKET CONSTANT_LITERAL RIGHT_BRACKET {
+		unsigned int constant = convert_to_unsigned(std::string($3));
+		$$ = $1;
+		if ( $$->type_tag == NONE) {
+			$$ = create_array_type($1);
+			$$ = add_dimension_array($$, constant);
+		}
+ 		else if ( $$->type_tag == ARRAY_TYPE ) {
+			$$ = add_dimension_array($1, constant);
+
+		} else {
+			std::cerr << "Cannot create an array type for the following abstract declarator" << std::endl;
+		}
+	}
+ 	| LEFT_PAREN RIGHT_PAREN {
+		$$ = create_function_type(new GlobalType());
+	}
+ 	| LEFT_PAREN parameter_type_list RIGHT_PAREN {
+		$$ = create_function_type(new GlobalType(), $2);
+	}
+	;
 
 // /* Initializers */
 // initializer
@@ -700,29 +997,34 @@ type_name
 // 	| initializer_list COMMA initializer
 // 	;
 
-// /* Statements */
-// statement
-// 	: expression_statement
-// 	: labeled_statement
-// 	| compound_statement
-// 	| selection_statement
-// 	| iteration_statement
-// 	| jump_statement
+ /* Statements */
+statement
+ 	: expression_statement
+ 	| iteration_statement
+ 	| compound_statement
+ 	| selection_statement
+ 	// | labeled_statement
+ 	// | jump_statement
 // 	| error_statement_closed
  	;
 
 // labeled_statement
 // 	: IDENTIFIER COLON statement
-// 	| CASE constant_expression COLON statement
+// 	| CASE CONSTANT_LITERAL COLON statement
 // 	| DEFAULT COLON statement
 // 	;
 
- compound_statement
+compound_statement
  	: INC_SCOPE LEFT_BRACE RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	| INC_SCOPE LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
- 	| INC_SCOPE LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	| INC_SCOPE LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
- 	;
+	| INC_SCOPE LEFT_BRACE all_statements RIGHT_BRACE { SymbolTable::exit_scope(); }
+	;
+
+all_statements
+	: all_statements statement_list
+	| all_statements declaration_list
+	| statement_list
+	| declaration_list
+	;
 
  declaration_list
  	: declaration { $$ = $1; }
@@ -732,35 +1034,60 @@ type_name
 	}
  	;
 
-// statement_list
-// 	: statement
-// 	| statement_list statement
-// 	;
+statement_list
+	: statement
+	| statement_list statement
+	;
 
 expression_statement
- 	: SEMICOLON
- 	| expression SEMICOLON { SymbolTable::add_symbol($1); }
+ 	: SEMICOLON {$$ = new Expression(); $$->name="empty";}
+ 	| expression SEMICOLON {
+		$$ = $1;
+		std::cout << "Expression statment" << std::endl;
+	}
  	;
 
-// /* Control flow */
-// selection_statement
-// 	: IF LEFT_PAREN expression RIGHT_PAREN statement
-// 	| IF LEFT_PAREN expression RIGHT_PAREN statement ELSE statement
-// 	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
-// 	;
+empty_else
+	: %empty
+	| ELSE INC_SCOPE statement { SymbolTable::exit_scope();}
+	;
 
-//declaration_statement
-// 	: SEMICOLON
-// 	| declaration
-// 	;
+/* Control flow */
+selection_statement
+	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C); } RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
+//	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
+	;
 
-// iteration_statement
-// 	: WHILE LEFT_PAREN expression RIGHT_PAREN statement
-// 	| DO statement WHILE LEFT_PAREN expression RIGHT_PAREN SEMICOLON
-// 	| FOR LEFT_PAREN expression_statement expression_statement RIGHT_PAREN statement
-// 	| FOR LEFT_PAREN declaration_statement expression_statement expression RIGHT_PAREN statement
-// 	| FOR LEFT_PAREN expression_statement declaration_statement expression RIGHT_PAREN statement
-// 	;
+
+init_clause
+	: SEMICOLON
+	| expression SEMICOLON
+	| declaration SEMICOLON
+	;
+
+empty_expression
+	: %empty
+	| expression
+	;
+
+iteration_statement
+	: WHILE INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN expression { TAC::print_label(CONTINUE_C); TAC::print_goto_conditional($5, BREAK_C); } RIGHT_PAREN statement {
+		TAC::remove_break_label();
+		TAC::remove_continue_label();
+		SymbolTable::exit_scope();
+	}
+	| DO INC_SCOPE {TAC::create_loop_statement(); TAC::print_label(CONTINUE_C); } statement WHILE LEFT_PAREN expression { TAC::print_goto_do_while($7); } RIGHT_PAREN SEMICOLON{
+		TAC::remove_break_label();
+		TAC::remove_continue_label();
+		SymbolTable::exit_scope();
+	}
+	| FOR INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN init_clause {TAC::print_label(CONTINUE_C);} expression_statement { TAC::print_goto_conditional($7, BREAK_C); TAC::dump_to_file(); } empty_expression { TAC::dump_to_temp(); } RIGHT_PAREN statement {
+		TAC::get_from_temp();
+		TAC::print_goto(CONTINUE_C, true);
+		TAC::remove_break_label();
+		SymbolTable::exit_scope();
+	}
+	;
 
 // jump_statement
 // 	: GOTO IDENTIFIER SEMICOLON
@@ -773,59 +1100,41 @@ expression_statement
  /* Top-level constructs */
  translation_unit
  	: external_declaration
- 	| translation_unit external_declaration
-	| expression_statement
+	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
  	;
 
  external_declaration
- 	: function_declaration
- 	| function_definition
+ 	: function_definition
 	| declaration
  	;
 
-function_identifier
- 	: IDENTIFIER { $$ = new Identifier($1); }
- 	| pointer function_identifier { 
- 		$$ = $2; 
- 		if($$->type->type_tag == NONE) {
- 			$$->type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
- 		} else{
- 			$$->type->pointer_type->ptr_level = $1->ptr_level;
- 		}
- 	}
- 	;
-
 function_declaration
-	: declaration_specifiers function_identifier LEFT_PAREN RIGHT_PAREN {
+	: declaration_specifiers declarator {
 		$$ = $2;
-		if ( $$->type->type_tag == NONE ) {
-			$$->type = create_function_type($1, new VectorIdentifiers(), $2->type->getSpecifiers());
-		} else {
-			class GlobalType* temp = create_pointer_type($1, $$->type->pointer_type->ptr_level);
-			$$->type = create_function_type(temp, new VectorIdentifiers(), $2->type->getSpecifiers());
+		if ($$->type->type_tag == FUNCTION_TYPE) {
+			if ($$->type->function_type->return_type != NULL && $$->type->function_type->return_type->type_tag == POINTER_TYPE) {
+				$$->type->function_type->return_type->pointer_type->return_type = $1;;
+				$$->type->function_type->return_type->pointer_type->specifiers = combine_specs($$->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$$->type->function_type->return_type = $1;
+			}
+		} else{
+			std::cerr << "Error: function declaration with non-function type" << std::endl;
 		}
 	}
-	| declaration_specifiers function_identifier LEFT_PAREN parameter_list RIGHT_PAREN {
-		$$ = $2;
-		if($$->type->type_tag == NONE) {
-			$$->type = create_function_type($1, $4, $2->type->getSpecifiers());
-		} else {
-			class GlobalType* temp = create_pointer_type($1, $$->type->pointer_type->ptr_level);
-			$$->type = create_function_type(temp, $4, $2->type->getSpecifiers());
-		}
-	}
-;
+	;
 
 function_definition
- 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); } compound_statement { 
+ 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); TAC::create_function_definition(std::string($1->name)); } compound_statement { 
  		$$ = $1;
+		$$->type->setDefined();
 		SymbolTable::exit_scope();
  		SymbolTable::add_symbol($$);
  	}
 	; 
 
- INC_SCOPE: { SymbolTable::enter_scope(); };
+INC_SCOPE : { SymbolTable::enter_scope(); };
  %%
 
 void yyerror(const char *s) {

@@ -14,10 +14,12 @@ EXECUTABLE := $(SRC_DIR)/syntax_analyser
 HEADERS := $(wildcard $(INCLUDE_DIR)/*.h)
 
 # Additional source files for parsing phase
-PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp 
+PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp  $(SRC_DIR)/expression.cpp $(SRC_DIR)/tac.cpp
 
-all: clean build run
+all:  clear clean build run
 
+clear:
+	clear
 clean:
 	@echo "Cleaning up output and generated files..."
 	rm -rf $(OUTPUT_DIR)
@@ -27,7 +29,7 @@ clean:
 
 build: $(BISON_OUT) $(FLEX_OUT)
 	@echo "Compiling the generated C files with g++..."
-	g++ -o --std=c++11 $(EXECUTABLE) $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
+	g++ -o $(EXECUTABLE) --std=c++17 $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
 
 $(BISON_OUT) $(BISON_HDR_TMP): $(BISON_SRC)
 	@echo "Compiling $(BISON_SRC) with bison..."
@@ -45,10 +47,13 @@ run:
 		filename=$$(basename -- "$$input_file"); \
 		filename_no_ext=$${filename%.*}; \
 		filename_no_prefix=$${filename_no_ext#input}; \
-		output_file=$(OUTPUT_DIR)/output$${filename_no_prefix}.txt; \
-		error_file=$(OUTPUT_DIR)/error$${filename_no_prefix}.txt; \
-		symtab_file=$(OUTPUT_DIR)/symtab$${filename_no_prefix}.txt; \
-		$(EXECUTABLE) "$$input_file" "$$symtab_file " > "$$output_file" 2> "$$error_file"; \
+		test_dir=$(OUTPUT_DIR)/$${filename_no_ext}; \
+		mkdir -p "$$test_dir"; \
+		output_file=$$test_dir/output.txt; \
+		error_file=$$test_dir/error.txt; \
+		symtab_file=$$test_dir/symtab.txt; \
+		tac_file=$$test_dir/tac.txt; \
+		$(EXECUTABLE) "$$input_file" "$$symtab_file" "$$tac_file"> "$$output_file" 2> "$$error_file"; \
 	done
 	@echo "All test cases executed successfully!"
 

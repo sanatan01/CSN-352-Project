@@ -18,8 +18,10 @@ public:
   int column_number;
   int current_level;
 
-  Symbol(Identifier& id, int level, int line = 0, int column = 0)
-    : identifier(id), line_number(line), column_number(column), current_level(level) {}
+  bool is_defined;
+
+  Symbol(Identifier& id, int level, bool is_defined, int line = 0, int column = 0)
+    : identifier(id), is_defined(is_defined), line_number(line), column_number(column), current_level(level) {}
 
   // Missing getter that was referenced in the code
   Identifier get_identifier() const { return identifier; }
@@ -41,6 +43,7 @@ public:
   static void add_symbol(Identifier* id, int line = 0, int column = 0);
   static void add_symbols(VectorIdentifiers* ids, int line = 0, int column = 0);
   static bool lookup_symbol(const std::string& identifier);
+  static bool lookup_symbols(VectorIdentifiers* ids);
   static Symbol* get_symbol(const std::string& identifier);
   static void print_symbol(Symbol symbol);
 };

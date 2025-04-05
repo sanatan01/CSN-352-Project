@@ -1,0 +1,53 @@
+// ternary
+// if, if-else
+
+
+if (cond) {
+
+}
+
+if !cond goto falseLabel
+
+falseLabel:
+
+
+
+if (cond) {
+
+} else {
+
+}
+
+if !cond goto falseLabel
+
+
+goto trueLabel
+falselabel;
+
+
+trueLabel
+
+// loops
+
+keyword (cond) {
+
+    ...
+    break;
+    ...
+    continue....
+
+}
+
+for(int i = 0; i < 10; i++) {
+
+}
+
+Declarations..
+
+Expression inner code
+continueLabel:
+if expr->name goto breakLabel
+...
+goto breakLabel
+...
+goto continueLabel
