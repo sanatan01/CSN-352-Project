@@ -267,16 +267,11 @@ class GlobalType *create_default_pointer_type();
 
 class GlobalType *create_array_type(class GlobalType *return_type);
 
-class GlobalType *create_default_array_type();
-
 class GlobalType *add_dimension_array(class GlobalType* array_type, int dimension = 0);
 
 class GlobalType *create_invalid_type(std::string err_message, int line_num = 0, int column = 0);
 
 class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *right);
-
-// extern InvalidType INVALID_TYPE;
-
 
 unsigned int convert_to_unsigned(std::string input);
 
