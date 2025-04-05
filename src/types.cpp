@@ -556,7 +556,6 @@ class GlobalType* create_invalid_type(std::string err_message, int line_num, int
     class GlobalType* type = new GlobalType();
     type->type_tag = INVALID_TYPE;
     type->invalid_type = new InvalidType(err_message, line_num, column);
-    std::cerr << err_message << std::endl;
     return type;
 }
 

@@ -37,7 +37,9 @@ enum ExpressionOpType {
   CONDITIONAL,
   CONSTANT,
   TOPLEVEL,
-  ASSIGNMENT
+  ASSIGNMENT,
+  CAST_TYPE,
+  UNARY
 };
 
 enum ExpressionType {
@@ -62,6 +64,8 @@ public:
 
   Expression(PrimitiveTypes type, int num_operands);
   Expression();
+  Expression(class GlobalType* type);
+  void printExpression();
 };
 
 class VectorExpression: public Expression {

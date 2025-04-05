@@ -188,13 +188,13 @@ primary_expression
 // /* Postfix expressions */
 postfix_expression
  	: primary_expression 											{ $$ = $1; }
-// 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		//{ $$ = create_postfix_expr_arr($1, $3); }
-// 	| IDENTIFIER LEFT_PAREN RIGHT_PAREN 							//{ $$ = create_postfix_expr_voidfun($1); }
-// 	| IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
-// 	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
-// 	| postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
-// 	| postfix_expression INC_OP 									//{ $$ = create_postfix_expr_ido( $2, $1); } 
-// 	| postfix_expression DEC_OP 									//{ $$ = create_postfix_expr_ido( $2, $1); } 
+ 	// | postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
+ 	// | IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
+ 	// | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
+ 	// | postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
+ 	// | postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
+ 	// | postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
+ 	// | postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
  	;
 
 // /* Argument expression list for function calls */
@@ -206,28 +206,53 @@ postfix_expression
 // /* Unary expressions */
 unary_expression
  	: postfix_expression 						{ $$ = $1; }
-// 	| INC_OP unary_expression 					//{ $$ = create_unary_expression($1, $2); }
-// 	| DEC_OP unary_expression 					//{ $$ = create_unary_expression($1, $2); }
-// 	| unary_operator cast_expression 			//{ $$ = create_unary_expression_cast($1, $2); }
-// 	| SIZEOF unary_expression 					///{ $$ = create_unary_expression($1, $2); }
-// 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	//{ $$ = create_unary_expression($1, $3); }
+ 	| INC_OP unary_expression 					{ 
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($2);
+ 		$$ = create_expression(UNARY, "++", ve); 
+	}
+ 	| DEC_OP unary_expression 					{ 
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($2);
+ 		$$ = create_expression(UNARY, "--", ve); 
+	}
+	| SIZEOF unary_expression 					{ 
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($2);
+ 		$$ = create_expression(UNARY, "sizeof", ve); 
+	}
+ 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	{ 
+		class Expression* expr = new Expression($3);
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element(expr);
+ 		$$ = create_expression(UNARY, "sizeof", ve); 
+	}
+ 	// | unary_operator cast_expression 			{ 
+	// 	VectorExpression* ve = new VectorExpression();
+ 	// 	ve->add_element($2);
+ 	// 	$$ = create_expression(UNARY, std::string($1), ve); 
+	// }
  	;
 
-// unary_operator
-// 	: AMPERSAND     { $$ = strdup("&"); }
-// 	| ASTERISK      { $$ = strdup("*"); }
-// 	| PLUS          { $$ = strdup("+"); }
-// 	| MINUS         { $$ = strdup("-"); }
-// 	| TILDE         { $$ = strdup("~"); }
-// 	| EXCLAMATION   { $$ = strdup("!"); }
-// 	;
+unary_operator
+	: AMPERSAND     { $$ = strdup("&"); }
+	| ASTERISK      { $$ = strdup("*"); }
+	| PLUS          { $$ = strdup("+"); }
+	| MINUS         { $$ = strdup("-"); }
+	| TILDE         { $$ = strdup("~"); }
+	| EXCLAMATION   { $$ = strdup("!"); }
+	;
 
 // /* Type casting */
 cast_expression
  	: unary_expression 										{ $$ = $1; }
- 	// | LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ 
-		
-	// }
+ 	| LEFT_PAREN type_name RIGHT_PAREN cast_expression 		{ 
+		class Expression* expr = new Expression($2);
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element(expr);
+		ve->add_element($4);
+		$$ = create_expression(CAST_TYPE, "", ve); 
+	}
  	;
 
 // /* Arithmetic expressions */
@@ -365,7 +390,7 @@ logical_and_expression
 		VectorExpression* ve = new VectorExpression();
 		ve->add_element($1);
 		ve->add_element($3);
-		$$ = create_expression(AND, "&&", ve);
+		$$ = create_expression(LOGICAL_AND, "&&", ve);
 	}
  	;
 
@@ -375,7 +400,7 @@ logical_and_expression
 		VectorExpression* ve = new VectorExpression();
 		ve->add_element($1);
 		ve->add_element($3);
-		$$ = create_expression(OR, "||",ve);
+		$$ = create_expression(LOGICAL_OR, "||",ve);
 	}
  	;
 
@@ -447,34 +472,6 @@ declaration
 		  SymbolTable::add_symbols($$);
  	  }
 	;
-
-
-// 	/* | declaration_specifiers IDENTIFIER array_declaration SEMICOLON {
-// 		$$ = new std::vector<Identifier>();
-// 		$$->push_back(new Identifier(std::string($2)));
-// 		$$->back()->type->array_type = $3;
-// 		$$->back()->type->array_type->return_type = $1;
-// 	} */
-// 	;
-
-// /* array_declaration
-// 	: LEFT_BRACKET constant_expression RIGHT_BRACKET {
-// 		$$ = new ArrayType();
-// 		$$->dim=1;
-// 		// to be seen
-// 		// $$->dims.push_back($2);
-// 	}
-// 	| array_declaration LEFT_BRACKET constant_expression RIGHT_BRACKET {
-// 		char *temp = malloc(strlen("[]") + strlen($1) + 2);
-// 		sprintf(temp, "[]%s", $1);
-// 		$$ = temp;
-// 	}
-// 	| array_declaration LEFT_BRACKET RIGHT_BRACKET {
-// 		char *temp = malloc(strlen("[]") + strlen($1) + 2);
-// 		sprintf(temp, "[]%s", $1);
-// 		$$ = temp;
-// 	}
-// 	; */
 
 declaration_specifiers
  	: type_specifier { $$ = $1; }
@@ -950,7 +947,7 @@ direct_abstract_declarator
 		$$ = create_function_type(new GlobalType());
 	}
  	| LEFT_PAREN parameter_type_list RIGHT_PAREN {
-		$$ = create_function_type(new GlobalType(), $3);
+		$$ = create_function_type(new GlobalType(), $2);
 	}
 	;
 
@@ -979,7 +976,7 @@ direct_abstract_declarator
 
 // labeled_statement
 // 	: IDENTIFIER COLON statement
-// 	| CASE constant_expression COLON statement
+// 	| CASE CONSTANT_LITERAL COLON statement
 // 	| DEFAULT COLON statement
 // 	;
 
@@ -996,6 +993,9 @@ compound_statement
 		$$ = $1;
 		$$->add_identifiers($2);
 	}
+	| declaration_list expression_statement {
+		$$ = $1;
+	}
  	;
 
 // statement_list
@@ -1005,7 +1005,9 @@ compound_statement
 
 expression_statement
  	: SEMICOLON
- 	| expression SEMICOLON
+ 	| expression SEMICOLON {
+		std::cout << "Expression statment" << std::endl;
+	}
  	;
 
 // /* Control flow */
@@ -1015,7 +1017,7 @@ expression_statement
 // 	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
 // 	;
 
-//declaration_statement
+// declaration_statement
 // 	: SEMICOLON
 // 	| declaration
 // 	;
@@ -1038,8 +1040,7 @@ expression_statement
 
  /* Top-level constructs */
  translation_unit
- 	: expression_statement
- 	| external_declaration
+ 	: external_declaration
  	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
  	;
