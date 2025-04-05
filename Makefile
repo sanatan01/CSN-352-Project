@@ -47,10 +47,12 @@ run:
 		filename=$$(basename -- "$$input_file"); \
 		filename_no_ext=$${filename%.*}; \
 		filename_no_prefix=$${filename_no_ext#input}; \
-		output_file=$(OUTPUT_DIR)/output$${filename_no_prefix}.txt; \
-		error_file=$(OUTPUT_DIR)/error$${filename_no_prefix}.txt; \
-		symtab_file=$(OUTPUT_DIR)/symtab$${filename_no_prefix}.txt; \
-		$(EXECUTABLE) "$$input_file" "$$symtab_file " > "$$output_file" 2> "$$error_file"; \
+		test_dir=$(OUTPUT_DIR)/$${filename_no_ext}; \
+		mkdir -p "$$test_dir"; \
+		output_file=$$test_dir/output.txt; \
+		error_file=$$test_dir/error.txt; \
+		symtab_file=$$test_dir/symtab.txt; \
+		$(EXECUTABLE) "$$input_file" "$$symtab_file" > "$$output_file" 2> "$$error_file"; \
 	done
 	@echo "All test cases executed successfully!"
 

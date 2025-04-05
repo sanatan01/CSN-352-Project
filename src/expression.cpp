@@ -58,6 +58,78 @@ std::unordered_map<std::string, PrimitiveTypes> type_map = {
     {"bool", BOOL_T}
   };
 
+  PrimitiveTypes getPrimitiveType(std::string type) {
+    auto it = type_map.find(type);
+    if (it != type_map.end()) {
+        return it->second;
+    }
+    return ERROR_T;
+}
+
+  PrimitiveTypes deduceType(const std::string& input) {
+    // Check if the string contains a decimal point or exponent,
+    // indicating a floating point literal.
+
+    PrimitiveTypes ret_type = ERROR_T;
+
+    if (input.find('.') != std::string::npos || input.find('e') != std::string::npos || input.find('E') != std::string::npos) {
+        try {
+            long double val = std::stold(input);
+            // First try float; if the converted value is nearly identical, we choose float.
+            float f = static_cast<float>(val);
+            if (std::abs(static_cast<long double>(f) - val) < 1e-6L) {
+                ret_type = FLOAT_T;
+            }
+            else {
+                // Next try double.
+                double d = static_cast<double>(val);
+                if (std::abs(static_cast<long double>(d) - val) < 1e-12L) {
+                    ret_type = DOUBLE_T;
+                }
+                else {
+                    // Otherwise, use long double.
+                    ret_type = LONG_DOUBLE_T;
+                }
+            }
+        } catch (...) {
+            ;
+        }
+    }
+    else {
+        // Determine the base and convert the literal accordingly.
+        long long val = 0;
+        try {
+            if (input.size() > 2 && input[0] == '0' &&
+                (input[1] == 'x' || input[1] == 'X')) {
+                // Hexadecimal literal
+                val = std::stoll(input, nullptr, 16);
+            }
+            else if (input[0] == '0' && input.size() > 1) {
+                // Octal literal
+                val = std::stoll(input, nullptr, 8);
+            }
+            else {
+                // Decimal literal
+                val = std::stoll(input, nullptr, 10);
+            }
+
+            if (val >= std::numeric_limits<int>::min() &&
+                val <= std::numeric_limits<int>::max())
+                ret_type = INT_T;
+            else if (val >= std::numeric_limits<long>::min() &&
+                     val <= std::numeric_limits<long>::max())
+                ret_type = LONG_T;
+            else
+                ret_type = LLONG_T;
+        } catch (...) {
+            ret_type = ERROR_T;
+        }
+    }
+
+    std::cerr << "Deduced type: " << typeName(ret_type) << std::endl;
+    return ret_type;
+}
+
 // void castTypes(PrimitiveTypes& op1, PrimitiveTypes& op2) {
 //     if (op1 != op2) {
 //         if (op1 == VOID_T || op2 == VOID_T || op1 == ERROR_T || op2 == ERROR_T) {
@@ -1031,57 +1103,79 @@ Expression *create_cast_expression_typename(OpExpression *oe)
     return oe;
 }
 
-// Expression *create_postfix_expr_arr(Expression *pe, Expression* exp)
-// {
-//     PostfixExpression *P = new PostfixExpression();
-//     if (pe ) {
-//         P->pe = dynamic_cast<PostfixExpression *>(pe);
-//     } else {
-//         P->pe = nullptr;
-//     }
-//     P->exp = exp;
-//     P->name = "ARRAY ACCESS";
+Expression *create_postfix_expr_arr(Expression *pe, Expression* exp)
+{
+    Expression *P = new Expression();
+    // if (pe ) {
+    //     P->pe = dynamic_cast<PostfixExpression *>(pe);
+    // } else {
+    //     P->pe = nullptr;
+    // }
+    // P->exp = exp;
+    // P->name = "ARRAY ACCESS";
+    PrimitiveTypes op1Type = PrimitiveTypes(pe->prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(exp->prim_type);
 
-//     if (isInvalid({pe->prim_type, exp->prim_type})) {
-//         P->prim_type= ERROR_T;
-//         return P;
-//     }
-//     PrimitiveTypes op1Type = PrimitiveTypes(pe->prim_type);
-//     PrimitiveTypes op2Type = PrimitiveTypes(exp->prim_type);
-//     if ( !isInt(op2Type) ) {
-//         error_msg( "Array index must be of type integer", line_num );
-//     P->prim_type= ERROR_T;
-//         return P;
-//     }
 
-// 	if ( pe->exp_type->type_tag == ARRAY_TYPE ) {
-// 		P->prim_type = pe->prim_type;
-//         P->exp_type->array_type = new ArrayType();
-// 	    P->exp_type->array_type->dim--;
-// 		P->exp_type->array_type->dims.erase( P->exp_type->array_type->dims.begin() );
-// 		// oe->prim_type.is_const = false; //TODO: make it non-constant
-// 	} else if ( pe->exp_type->type_tag == POINTER_TYPE ) {
-// 		P->prim_type = pe->prim_type;
-// 		P->exp_type->pointer_type->ptr_level--;
-// 		// P->prim_type.is_const = false; //TODO: make it non-constant
-//         // TODO: What type to update to?
-// 		if ( P->exp_type->pointer_type->ptr_level == 0 ) {
-// 			P->exp_type = new GlobalType();
-//             P->exp_type->standard_type=P->exp_type->pointer_type->return_type->standard_type;
-//             P->exp_type->type_tag = STANDARD_TYPE;
-//             P->prim_type = deduceType(P->exp_type->standard_type->name);
-// 		}
-// 	} else {
-// 		error_msg( "Subscripted value is neither array nor pointer",
-// 				   line_num );
-// 		P->prim_type= ERROR_T;
-// 	}
+    if (isInvalid({op2Type})) {
+        P->prim_type= ERROR_T;
+        error_msg( "Invalid types for array access", line_num, column );
+        return P;
+    }
+    if ( !isInt(op2Type) ) {
+        error_msg( "Array index must be of type integer", line_num );
+        P->prim_type= ERROR_T;
+        return P;
+    }
 
-//     // oe->add_children({pe, exp});
-//     // oe->line_num = pe->line_num;
-//     // oe->column = pe->column;
-//     return oe;
-// }
+    if(pe->exp_type == nullptr){
+        error_msg( "Array index must be of type integer", line_num );
+        P->prim_type= ERROR_T;
+        return P;
+    }
+
+	if ( pe->exp_type->type_tag == ARRAY_TYPE ) {
+
+		P->prim_type = ERROR_T;
+        P->exp_type = pe->exp_type;
+	    P->exp_type->array_type->dim--;
+		P->exp_type->array_type->dims.erase( P->exp_type->array_type->dims.begin() );
+
+        if( P->exp_type->array_type->dim == 0 ) {
+            P->exp_type = new GlobalType();
+            P->exp_type->standard_type=pe->exp_type->array_type->return_type->standard_type;
+            P->exp_type->type_tag = STANDARD_TYPE;
+            P->prim_type = getPrimitiveType(pe->exp_type->array_type->return_type->standard_type->name);
+        }
+		// oe->prim_type.is_const = false; //TODO: make it non-constant
+	} else if ( pe->exp_type->type_tag == POINTER_TYPE ) {
+        P->exp_type= pe->exp_type;
+		P->prim_type = ERROR_T;
+		P->exp_type->pointer_type->ptr_level--;
+		// P->prim_type.is_const = false; //TODO: make it non-constant
+        // TODO: What type to update to?
+		if ( P->exp_type->pointer_type->ptr_level == 0 ) {
+			P->exp_type = new GlobalType();
+            P->exp_type->standard_type=pe->exp_type->pointer_type->return_type->standard_type;
+            P->exp_type->type_tag = STANDARD_TYPE;
+            // std::cerr<< P->prim_type <<std::endl;
+            P->prim_type = getPrimitiveType(pe->exp_type->pointer_type->return_type->standard_type->name);
+            // std::cerr<< P->prim_type <<std::endl;
+		}
+	} else {
+		error_msg( "Subscripted value is neither array nor pointer",
+				   line_num );
+		P->prim_type= ERROR_T;
+        return P;
+	}
+
+
+
+    // oe->add_children({pe, exp});
+    // oe->line_num = line_num;
+    // oe->column = column;
+    return P;
+}
 
 // // check its implementation
 // Expression *create_postfix_expr_voidfun(Identifier *fi)
@@ -1249,62 +1343,55 @@ Expression *create_cast_expression_typename(OpExpression *oe)
 //     return P;
 // }
 
-// Expression *create_postfix_expr_ido(Terminal *op, Expression *pe){
+Expression *create_postfix_expr_ido(std::string op, Expression *pe){
 
-//     PostfixExpression *P = new PostfixExpression();
-//     if ( dynamic_cast<PostfixExpression *>( pe ) ) {
-//         P->pe = dynamic_cast<PostfixExpression *>( pe );
-//     } else {
-//         P->pe = nullptr;
-//     }
+    Expression *P = new Expression();
 
-//     if ( pe->prim_type == ERROR_T ) {
-//         P->prim_type= ERROR_T;
-//         return P;
-//     }
+    if ( pe->prim_type == ERROR_T ) {
+        P->prim_type= ERROR_T;
+        if (pe->exp_type!=NULL && pe->exp_type->type_tag == POINTER_TYPE) {
+            if(pe->exp_type->getSpecifiers()->is_const == true) {
+                error_msg( "Invalid operand " + op + " with constant type",
+                    line_num, column );
+                    return P;
+                }
+            P->exp_type = pe->exp_type;
+        } else {
+            error_msg( "Invalid operand " + op + " with type " +
+                           typeName(pe->exp_type->type_tag),
+                       line_num, column );
+        }
+        return P;
+    }
 
-//     P->op = op->name;
+    // P->op = op;
+    if ( op == "++" )
+        P->name = "POST INCREMENT";
+    else
+        P->name = "POST DECREMENT";
 
-//     if ( op->name == "++" )
-//         P->name = "POST INCREMENT";
-//     else
-//         P->name = "POST DECREMENT";
+    // std::string op_code = op.substr( 0, 1 );
 
-//     std::string op_code = op->name.substr( 0, 1 );
+    // Address *inc_value;
+    if (  op != "++" && op != "--" ) {
+		std::cerr << "PANIC: Invalid operation " << op <<"\n";
+		return P;
+    }
 
-//     Address *inc_value;
-//         if (  op->name != "++" && op->name != "--" ) {
-// 		std::cerr << "PANIC: Invalid operation " << op->name <<"\n";
-// 		assert(0);
-// 		return P;
-//     }
-// 	if ( pe->prim_type.is_const == true ) {
-// 		error_msg( "Invalid operand " + op->name + " with constant type",
-// 				   op->line_num, op->column );
-// 		P->prim_type= ERROR_T;
-// 		return P;
-// 	}
+	if ( isInt(PrimitiveTypes(pe->prim_type)) || isFloat(PrimitiveTypes(pe->prim_type))) {
+		P->prim_type = PrimitiveTypes(pe->prim_type);
+	} else {
+		// Error postfix operator
+		error_msg( "Invalid operand " + op + " with type " +
+					   typeName(pe->exp_type->type_tag),
+				   line_num, column );
+		P->prim_type= ERROR_T;
+		return P;
+	}
 
-// 	if ( pe->prim_type.pointer_type->ptr_level > 0 ) {
-// 		P->prim_type = pe->prim_type;
-// 		GlobalType t = pe->prim_type;
-// 		t.pointer_type->ptr_level--;
-// 	} else if ( type_specifiers[INT_T].isEqual(*pe->prim_type.standard_type) ) {
-// 		P->prim_type = pe->prim_type;
-// 	} else if ( type_specifiers[FLOAT_T].isEqual(*pe->prim_type.standard_type) ) {
-// 		P->prim_type = pe->prim_type;
-// 	} else {
-// 		// Error postfix operator
-// 		error_msg( "Invalid operand " + op->name + " with type " +
-// 					   pe->exp_type->type_tag,
-// 				   op->line_num, op->column );
-// 		P->prim_type= ERROR_T;
-// 		return P;
-// 	}
-
-//     P->add_children({pe});
-//     return P;
-// }
+    // P->add_children({pe});
+    return P;
+}
 
 // // Unary Expression
 Expression *create_unary_expression( OpExpression *oe ) {
@@ -1384,69 +1471,7 @@ Expression *create_unary_expression( OpExpression *oe ) {
     return oe;
 }
 
-PrimitiveTypes deduceType(const std::string& input) {
-    // Check if the string contains a decimal point or exponent,
-    // indicating a floating point literal.
 
-    PrimitiveTypes ret_type = ERROR_T;
-
-    if (input.find('.') != std::string::npos || input.find('e') != std::string::npos || input.find('E') != std::string::npos) {
-        try {
-            long double val = std::stold(input);
-            // First try float; if the converted value is nearly identical, we choose float.
-            float f = static_cast<float>(val);
-            if (std::abs(static_cast<long double>(f) - val) < 1e-6L) {
-                ret_type = FLOAT_T;
-            }
-            else {
-                // Next try double.
-                double d = static_cast<double>(val);
-                if (std::abs(static_cast<long double>(d) - val) < 1e-12L) {
-                    ret_type = DOUBLE_T;
-                }
-                else {
-                    // Otherwise, use long double.
-                    ret_type = LONG_DOUBLE_T;
-                }
-            }
-        } catch (...) {
-            ;
-        }
-    }
-    else {
-        // Determine the base and convert the literal accordingly.
-        long long val = 0;
-        try {
-            if (input.size() > 2 && input[0] == '0' &&
-                (input[1] == 'x' || input[1] == 'X')) {
-                // Hexadecimal literal
-                val = std::stoll(input, nullptr, 16);
-            }
-            else if (input[0] == '0' && input.size() > 1) {
-                // Octal literal
-                val = std::stoll(input, nullptr, 8);
-            }
-            else {
-                // Decimal literal
-                val = std::stoll(input, nullptr, 10);
-            }
-
-            if (val >= std::numeric_limits<int>::min() &&
-                val <= std::numeric_limits<int>::max())
-                ret_type = INT_T;
-            else if (val >= std::numeric_limits<long>::min() &&
-                     val <= std::numeric_limits<long>::max())
-                ret_type = LONG_T;
-            else
-                ret_type = LLONG_T;
-        } catch (...) {
-            ret_type = ERROR_T;
-        }
-    }
-
-    std::cerr << "Deduced type: " << typeName(ret_type) << std::endl;
-    return ret_type;
-}
 
 Expression* create_expression_simple(ExpressionType exp_type, std::string token) {
     Expression* e = new Expression();

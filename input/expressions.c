@@ -62,7 +62,7 @@ int main() {
     // Unary expressions
     int pre_inc, post_dec;
     pre_inc = ++a;
-    post_dec = --b;
+    post_dec = b--;
 
     // Cast expression
     double cast_expr;
@@ -72,8 +72,16 @@ int main() {
     int size;
     size = sizeof(a);
 
+    char *ptr1;
+
+    int za,zb;
+
+    za = ptr1[3];
+
+    int arr1[];
+    zb = arr1[10];
     // Comma operator
-    int comma_expr = (a = 1, b = 2, a + b);
+    // int comma_expr = (a = 1, b = 2, a + b);
 
     // // Function call expression (side-effect)
     // int sum = add(a, b);

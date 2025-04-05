@@ -188,13 +188,13 @@ primary_expression
 // /* Postfix expressions */
 postfix_expression
  	: primary_expression 											{ $$ = $1; }
- 	// | postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
+    | postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( "++", $1); } 
+ 	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( "--", $1); } 
+ 	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
  	// | IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
  	// | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
  	// | postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
  	// | postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
- 	// | postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
- 	// | postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( $2, $1); } 
  	;
 
 // /* Argument expression list for function calls */
@@ -464,12 +464,29 @@ declaration
  		  SymbolTable::add_symbols($$);
  	  }
  	| declaration_specifiers init_declarator_list SEMICOLON {
- 		  /* Use the variable name from init_declarator */
- 		  for(auto &element : $2->identifiers) {
- 			  element.type = $1;
- 		  }
-		  $$=$2;
-		  SymbolTable::add_symbols($$);
+		/* Use the variable name from init_declarator */
+		for(auto &element : $2->identifiers) {
+			if (element.type->type_tag == FUNCTION_TYPE) {
+				if (element.type->function_type->return_type != NULL && element.type->function_type->return_type->type_tag == POINTER_TYPE) {
+					element.type->function_type->return_type->pointer_type->return_type = $1;
+					element.type->function_type->return_type->pointer_type->specifiers = combine_specs(element.type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+				} else {
+					element.type->function_type->return_type = $1;
+				}
+			} else if (element.type->type_tag == NONE) {
+				element.type = $1;
+			} else if (element.type->type_tag == POINTER_TYPE) {
+				element.type->pointer_type->return_type = $1;
+				element.type->pointer_type->specifiers = combine_specs(element.type->pointer_type->specifiers, $1->getSpecifiers());
+			} else if (element.type->type_tag == ARRAY_TYPE) {
+				element.type->array_type->return_type = $1;
+				element.type->array_type->specifiers = combine_specs(element.type->array_type->specifiers, $1->getSpecifiers());
+			} else {
+				std::cerr << "Cannot create a type for the following identifier" << std::endl;
+			}
+		}
+		$$=$2;
+		SymbolTable::add_symbols($$);
  	  }
 	;
 
@@ -701,6 +718,7 @@ declarator
 	| direct_declarator LEFT_BRACKET RIGHT_BRACKET { 
  		$$ = $1;
 		if ( $$->type->type_tag == NONE) {
+			std::cerr << "Array type" << std::endl;
 			$$->type = create_array_type($1->type);
 			$$->type = add_dimension_array($$->type);
 		}
@@ -825,8 +843,12 @@ parameter_list
 		} else if ($$->type->type_tag == ARRAY_TYPE) {
 			$$->type->array_type->return_type = $1;
 		// If we get somehing else
+		} else if ($$->type->type_tag == POINTER_TYPE) {
+			$$->type->pointer_type->return_type = $1;
+			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->getSpecifiers());
 		} else {
 			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+			$$->type = create_invalid_type("Cannot create a pointer type for the following identifier");
 		}
  	}
 	| declaration_specifiers abstract_declarator {
@@ -842,12 +864,17 @@ parameter_list
 		// We only got identifier
 		} else if ($$->type->type_tag == NONE) {
 			$$->type = $1;
-		/// If we get array type
+		// If we get array type
 		} else if ($$->type->type_tag == ARRAY_TYPE) {
 			$$->type->array_type->return_type = $1;
+			$$->type->array_type->specifiers = combine_specs($$->type->array_type->specifiers, $1->getSpecifiers());
 		// If we get somehing else
+		} else if ($$->type->type_tag == POINTER_TYPE) {
+			$$->type->pointer_type->return_type = $1;
+			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->getSpecifiers());
 		} else {
 			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+			$$->type = create_invalid_type("Cannot create a pointer type for the following identifier");
 		}
 	}
 	| declaration_specifiers {

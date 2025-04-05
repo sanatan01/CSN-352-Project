@@ -170,7 +170,7 @@ public:
 
   PostfixExpression(): Expression(PrimitiveTypes(ERROR_T), 0) {
     pe = nullptr;
-    exp = nullptr;
+    exp = new Expression();
     id = nullptr;
     ae_list = nullptr;
     op = "";
@@ -182,7 +182,7 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp);
 Expression* create_postfix_expr_voidfun(Identifier* fi);
 Expression* create_postfix_expr_fun(Identifier* fi, ArgumentExprList* ae);
 Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Identifier* id);
-Expression* create_postfix_expr_ido(Terminal* op, Expression* pe);
+Expression* create_postfix_expr_ido(std::string  op, Expression* pe);
 
 // // --------------------------------------------------------------------------------------------
 // class Constant {
