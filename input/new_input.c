@@ -1,5 +1,5 @@
 
-int* main(int c, int z(), char f[5][]) {
+int* main(int c, int z(), char f[5][0]) {
 
     int g;
 
@@ -16,6 +16,8 @@ int* main(int c, int z(), char f[5][]) {
         short b;
         char : 5;
     };
+
+    int fuck = 10*19;
 
 }
 

@@ -1269,58 +1269,56 @@ Expression* assignment_expression(OpExpression* oe) {
 // }
 
 // // Unary Expression
-// Expression *create_unary_expression( Terminal *op, Expression *ue ) {
-//     UnaryExpression *U = new UnaryExpression();
-//     U->op1 = ue;
-//     U->op = op->name;
-//     GlobalType ueT = ue->prim_type;
-//     if ( ueT.getType() == "InvalidType" ) {
-//         U->prim_type.invalid_type = &INVALID_TYPE;
-//         return U;
-//     }
-//     std::string u_op = op->name;
-//     U->name = u_op;
-//     Address *inc_value = nullptr;
+Expression *create_unary_expression( OpExpression *oe ) {
+    
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    if ( op1Type == ERROR_T)
+        oe->prim_type = ERROR_T;
+        return oe;
+    }
+    //3AC
+    std::string u_op = oe->op;
+    // oe->name = u_op;
+    // Address *inc_value = nullptr;
 
-//     if ( u_op == "++" || u_op == "--" ) {
-//         if ( ueT.is_const == true ) {
-//             error_msg( "Invalid operand " + u_op + " with constant type",
-//                        op->line_num, op->column );
-//             U->prim_type.invalid_type = &INVALID_TYPE;
-//             return U;
-//         }
-
-// 		u_op = u_op.substr( 0, 1 );
-// 		if ( ue->prim_type.getType() == "PointerType" ) {
-// 			U->prim_type = ue->prim_type;
-// 			GlobalType t = ue->prim_type;
-// 			t.pointer_type->ptr_level--;
-// 		} else if ( ue->prim_type.getType() == "StandardType" ) {
-// 			U->prim_type = ue->prim_type;
-// 		} else if ( ue->prim_type.getType() == "FloatType" ) {
-// 			U->prim_type = ue->prim_type;
-// 		} else {
-// 			// Incorrect type throw error
-// 			error_msg( "Invalid operand " + u_op + " with type " +
-// 						   ue->prim_type.getType(),
-// 					   op->line_num, op->column );
-// 			U->prim_type.invalid_type = &INVALID_TYPE;
-// 			return U;
-// 		}
-//     } else if ( u_op == "sizeof" ) {
-//         U->name = "sizeof";
-//         U->prim_type.standard_type = &type_specifiers[PrimitiveTypes::INT_T];
-//         U->prim_type.pointer_type->ptr_level = 0;
-//         // U->prim_type.is_const = true;
-//     } else {
-//         // Raise Error
-//         std::cerr << "Error parsing Unary Expression.\n";
-//         std::cerr << "ERROR at line " << line_num << "\n";
-//         exit( 0 );
-//     }
-//     U->add_children({ue});
-//     return U;
-// }
+    if ( u_op == "++" || u_op == "--" ) {
+        if ( oe->exp_type->getSpecifiers()->is_const == true ) {
+            error_msg( "Invalid operand " + u_op + " with constant type",
+                       op->line_num, op->column );
+            oe->prim_type.invalid_type = &INVALID_TYPE;
+            return oe;
+        
+		u_op = u_op.substr( 0, 1 );
+		if ( ue->prim_type.getType() == "PointerType" ) {
+			oe->prim_type = ue->prim_type;
+			GlobalType t = ue->prim_type;
+			t.pointer_type->ptr_level--;
+		} else if ( ue->prim_type.getType() == "StandardType" ) {
+			oe->prim_type = ue->prim_type;
+		} else if ( ue->prim_type.getType() == "FloatType" ) {
+			oe->prim_type = ue->prim_type;
+		} else {
+			// Incorrect type throw error
+			error_msg( "Invalid operand " + u_op + " with type " +
+						   ue->prim_type.getType(),
+					   op->line_num, op->column );
+			oe->prim_type.invalid_type = &INVALID_TYPE;
+			return oe;
+		}
+    } else if ( u_op == "sizeof" ) {
+        oe->name = "sizeof";
+        oe->prim_type.standard_type = &type_specifiers[PrimitiveTypes::INT_T];
+        oe->prim_type.pointer_type->ptr_level = 0;
+        // oe->prim_type.is_const = true;
+    } else {
+        // Raise Error
+        std::cerr << "Error parsing Unary Expression.\n";
+        std::cerr << "ERROR at line " << line_num << "\n";
+        exit( 0 );
+    }
+    oe->add_children({ue});
+    return oe;
+}
 
 PrimitiveTypes deduceType(const std::string& input) {
     // Check if the string contains a decimal point or exponent,
@@ -1482,6 +1480,9 @@ Expression* create_expression(ExpressionOpType op_type, std::string op, VectorEx
         oe->op2 = ve->operands[1];
         //Node* n_op?
         return assignment_expression(oe);
+    case UNARY:
+        oe->op1 = ve->operands[0];
+        return create_unary_expression(oe);
     default:
         std::cerr << "Incorrect expression. Something went wrong\n";
         return nullptr;

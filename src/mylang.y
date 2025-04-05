@@ -182,7 +182,7 @@ primary_expression
  	: IDENTIFIER							{ $$ = create_expression_simple(IDENTIFIER_ET, std::string($1)); }
  	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
 // 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
- 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2 }
+ 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
  	;
 
 // /* Postfix expressions */
@@ -937,7 +937,7 @@ expression_statement
 
  /* Top-level constructs */
  translation_unit
- 	: primary_expression
+ 	: expression_statement
  	| external_declaration
  	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
