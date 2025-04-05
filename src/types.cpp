@@ -461,6 +461,69 @@ void GlobalType::setSpecifiers(Specifiers* specifiers) {
     }
 }
 
+bool GlobalType::isDefined() const {
+    switch (type_tag) {
+    case STANDARD_TYPE:
+        return standard_type ? standard_type->is_defined : false;
+    case STRUCT_TYPE:
+        return struct_type ? struct_type->is_defined : false;
+    case UNION_TYPE:
+        return union_type ? union_type->is_defined : false;
+    case ARRAY_TYPE:
+        return array_type ? array_type->is_defined : false;
+    case FUNCTION_TYPE:
+        return function_type ? function_type->is_defined : false;
+    case POINTER_TYPE:
+        return pointer_type ? pointer_type->is_defined : false;
+    case ENUM_TYPE:
+        return enum_type ? enum_type->is_defined : false;
+    default:
+        return false;
+    }
+}
+
+void GlobalType::setDefined() {
+    switch (type_tag) {
+    case STANDARD_TYPE:
+        if (standard_type != nullptr) {
+            standard_type->is_defined = true;
+        }
+        break;
+    case STRUCT_TYPE:
+        if (struct_type != nullptr) {
+            struct_type->is_defined = true;
+        }
+        break;
+    case UNION_TYPE:
+        if (union_type != nullptr) {
+            union_type->is_defined = true;
+        }
+        break;
+    case ARRAY_TYPE:
+        if (array_type != nullptr) {
+            array_type->is_defined = true;
+        }
+        break;
+    case FUNCTION_TYPE:
+        if (function_type != nullptr) {
+            function_type->is_defined = true;
+        }
+        break;
+    case POINTER_TYPE:
+        if (pointer_type != nullptr) {
+            pointer_type->is_defined = true;
+        }
+        break;
+    case ENUM_TYPE:
+        if (enum_type != nullptr) {
+            enum_type->is_defined = true;
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 // -------------------------- GlobalType Functions -------------------------
 
 class GlobalType* create_enum_type(EnumType* _enum, Specifiers* specifiers) {

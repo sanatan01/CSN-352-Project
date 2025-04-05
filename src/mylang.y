@@ -571,15 +571,15 @@ type_specifier
 // /* Struct and union specifiers */
 struct_specifier
   	: STRUCT IDENTIFIER { $$ = new Struct(std::string($2)); }
- 	| STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(std::string($2), $4); }
- 	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct($3); }
+ 	| STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(std::string($2), $4); $$->is_defined = true; }
+ 	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct($3); $$->is_defined = true; }
 
  	;
 
  union_specifier
   	: UNION IDENTIFIER { $$ = new Union(std::string($2)); }
- 	| UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), $4); }
- 	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union($3); }
+ 	| UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), $4); $$->is_defined = true; }
+ 	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union($3); $$->is_defined = true; }
  	;
 
 struct_declaration_list
@@ -1069,6 +1069,7 @@ function_declaration
 function_definition
  	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); } compound_statement { 
  		$$ = $1;
+		$$->type->setDefined();
 		SymbolTable::exit_scope();
  		SymbolTable::add_symbol($$);
  	}

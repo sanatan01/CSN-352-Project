@@ -72,6 +72,8 @@ public:
 	StandardType();
 	StandardType(std::string name, size_t size);
 
+	bool is_defined;
+
 	// Important: Always use references when creating the objects to prevent object slicing
 	virtual bool isEqual(const StandardType &obj) const;
 	bool operator==(const StandardType &obj) const { return isEqual(obj); };
@@ -152,7 +154,6 @@ class FunctionType : public StandardType
 {
 public:
 	class VectorIdentifiers args;
-	bool is_defined;
 	class GlobalType *return_type;
 
 	FunctionType(class GlobalType *return_type, class VectorIdentifiers *args);
@@ -249,6 +250,8 @@ public:
 	bool isEqual(const class GlobalType &obj) const;
 	Specifiers *getSpecifiers() const;
 	void setSpecifiers(Specifiers *specifiers);
+	bool isDefined() const;
+	void setDefined();
 };
 
 class GlobalType *create_enum_type(EnumType *_enum, Specifiers *specifiers = nullptr);

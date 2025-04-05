@@ -39,7 +39,8 @@ void SymbolTable::add_symbol(Identifier* id, int line, int column) {
     } else if (id->type->type_tag == ENUM_TYPE) {
         id->name = id->type->enum_type->enum_name;
     }
-    Symbol symbol(*id, current_scope_level, line, column);
+
+    Symbol symbol(*id, current_scope_level, id->type->isDefined(), line, column);
     std::string name = symbol.identifier.name;
     symbol_map[name].push_back(symbol);
     SymbolTable::print_symbol(symbol);
