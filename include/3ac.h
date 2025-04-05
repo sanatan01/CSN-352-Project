@@ -1,14 +1,14 @@
 #pragma once
 
-#include <ast.h>
 #include <iostream>
 #include <sstream>
 #include <deque>
 #include <map>
 #include <string>
-#include <symtab.h>
 #include <unordered_set>
-
+#include <symtab.h>
+#include <types.h>
+#define WORD_SIZE 4
 extern unsigned long long instructions;
 unsigned long long get_next_instr();
 extern std::stringstream tac_ss;
@@ -37,7 +37,7 @@ public:
 	//	long value;
 	ADD_TYPE type;
 	ThreeAC* ta_instr;
-	unsigned int table_id;
+	unsigned int table_id; // dunno about this
 	Address(std::string name, ADD_TYPE type);
 	Address(long value, ADD_TYPE type);
 
@@ -50,30 +50,30 @@ typedef struct _addresses {
 } ADDRESS;
 
 class TacInfo {
-private:
+public:
 	bool alive;
 	ADDRESS* next_use;
-	SymTabEntry* symbol;
-public:
+	Symbol* symbol;
 	TacInfo();
-	TacInfo(SymTabEntry*);
+	TacInfo(Symbol*);
 	TacInfo(bool);
-	friend TacInfo* create_tac_info(SymTabEntry* symbol);
+	friend TacInfo* create_tac_info(Symbol* symbol);
 	friend void reset_tac_info_table();
 	friend void create_next_use_info();
 };
 
-TacInfo* create_tac_info(SymTabEntry* symbol);
-TacInfo* create_tac_info(SymTabEntry* symbol, bool live, ThreeAC* next_use);
+TacInfo* create_tac_info(Symbol* symbol); // done
+TacInfo* create_tac_info(Symbol* symbol, bool live, ThreeAC* next_use); // done
 
 extern std::map< unsigned int, TacInfo > tac_info_table;
-std::map< unsigned int, TacInfo >::iterator get_entry_from_table(Address*);
+std::map< unsigned int, TacInfo >::iterator get_entry_from_table(Address*); // done
 
 std::ostream& operator<<(std::ostream& os, const Address& a);
 
 extern unsigned long long instructions;
 Address* new_temp();
-Address* new_mem(GlobalType& t);
+Address* new_mem_global_type(GlobalType& t); // generic type needed?
+Address* new_mem_primitive_type(PrimitiveTypes& t);
 
 
 typedef enum _const_type {
@@ -87,8 +87,8 @@ Address* new_3const(T val, CONST_TYPE con) {
 }
 
 
-Address* new_3id(SymTabEntry* symbol);
-Address* new_3string(StringLiteral* sl);
+Address* new_3id(Symbol* symbol);
+// Address* new_3string(StringLiteral* sl);
 
 class ThreeAC {
 public:
@@ -264,11 +264,11 @@ extern std::unordered_set<std::string> var_rep;
 void backpatch(std::vector <GoTo* >& go_v, Label* label);
 void backpatch(GoTo* _goto, Label* label);
 
-// Append v2 at the end of vector 1
+// Append v2 at the end of v1
 void append(std::vector <GoTo*>& v1, std::vector <GoTo*>& v2);
 
 void dump_and_reset_3ac();
-void optimise_pass1();
 void create_basic_blocks();
 void create_next_use_info();
 void reset_tac_info_table();
+// void optimise_pass1();
