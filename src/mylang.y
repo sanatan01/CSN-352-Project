@@ -3,6 +3,7 @@
 #include <types.h>
 #include <symtab.h>
 #include <expression.h>
+#include <tac.h>
 
 // #include <statementh>
 // #include <ast.h>
@@ -17,6 +18,8 @@ void yyerror(const char *s);
 // char *currentType = NULL;
 // int grammarErrorCount = 0;
  %}
+
+ %define parse.error verbose
 
  %union {
 // 	Terminal* terminal;
@@ -84,6 +87,7 @@ void yyerror(const char *s);
  %type<vector_identifiers> declaration_list
  %type<nice> statement
  %type<nice> statement_list
+ %type<nice> all_statements
 
 %type<expression> expression
 %type<expression> assignment_expression
@@ -105,6 +109,9 @@ void yyerror(const char *s);
 %type<expression> expression_statement
 // %type<argument_expression_list> argument_expression_list
 // %type<expression> constant_expression
+
+%type<nice> empty_expression
+%type<nice> init_clause
 
 %type<nice> assignment_operator
 %type<nice> unary_operator
@@ -182,7 +189,7 @@ primary_expression
  	: IDENTIFIER							{ $$ = create_expression_simple(IDENTIFIER_ET, std::string($1)); }
  	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
 // 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
- 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
+// 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
  	;
 
 // /* Postfix expressions */
@@ -990,14 +997,14 @@ direct_abstract_declarator
 // 	| initializer_list COMMA initializer
 // 	;
 
-// /* Statements */
-// statement
-// 	: expression_statement
-// 	: labeled_statement
-// 	| compound_statement
-// 	| selection_statement
-// 	| iteration_statement
-// 	| jump_statement
+ /* Statements */
+statement
+ 	: expression_statement
+ 	| iteration_statement
+ 	| compound_statement
+ 	| selection_statement
+ 	// | labeled_statement
+ 	// | jump_statement
 // 	| error_statement_closed
  	;
 
@@ -1009,10 +1016,15 @@ direct_abstract_declarator
 
 compound_statement
  	: INC_SCOPE LEFT_BRACE RIGHT_BRACE { SymbolTable::exit_scope(); }
-	| INC_SCOPE LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	|  LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
-// 	|  LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
- 	;
+	| INC_SCOPE LEFT_BRACE all_statements RIGHT_BRACE { SymbolTable::exit_scope(); }
+	;
+
+all_statements
+	: all_statements statement_list
+	| all_statements declaration_list
+	| statement_list
+	| declaration_list
+	;
 
  declaration_list
  	: declaration { $$ = $1; }
@@ -1020,42 +1032,62 @@ compound_statement
 		$$ = $1;
 		$$->add_identifiers($2);
 	}
-	| declaration_list expression_statement {
-		$$ = $1;
-	}
  	;
 
-// statement_list
-// 	: statement
-// 	| statement_list statement
-// 	;
+statement_list
+	: statement
+	| statement_list statement
+	;
 
 expression_statement
- 	: SEMICOLON
+ 	: SEMICOLON {$$ = new Expression(); $$->name="empty";}
  	| expression SEMICOLON {
+		$$ = $1;
 		std::cout << "Expression statment" << std::endl;
 	}
  	;
 
-// /* Control flow */
-// selection_statement
-// 	: IF LEFT_PAREN expression RIGHT_PAREN statement
-// 	| IF LEFT_PAREN expression RIGHT_PAREN statement ELSE statement
-// 	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
-// 	;
+empty_else
+	: %empty
+	| ELSE INC_SCOPE statement { SymbolTable::exit_scope();}
+	;
 
-// declaration_statement
-// 	: SEMICOLON
-// 	| declaration
-// 	;
+/* Control flow */
+selection_statement
+	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C); } RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
+//	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
+	;
 
-// iteration_statement
-// 	: WHILE LEFT_PAREN expression RIGHT_PAREN statement
-// 	| DO statement WHILE LEFT_PAREN expression RIGHT_PAREN SEMICOLON
-// 	| FOR LEFT_PAREN expression_statement expression_statement RIGHT_PAREN statement
-// 	| FOR LEFT_PAREN declaration_statement expression_statement expression RIGHT_PAREN statement
-// 	| FOR LEFT_PAREN expression_statement declaration_statement expression RIGHT_PAREN statement
-// 	;
+
+init_clause
+	: SEMICOLON
+	| expression SEMICOLON
+	| declaration SEMICOLON
+	;
+
+empty_expression
+	: %empty
+	| expression
+	;
+
+iteration_statement
+	: WHILE INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN expression { TAC::print_label(CONTINUE_C); TAC::print_goto_conditional($5, BREAK_C); } RIGHT_PAREN statement {
+		TAC::remove_break_label();
+		TAC::remove_continue_label();
+		SymbolTable::exit_scope();
+	}
+	| DO INC_SCOPE {TAC::create_loop_statement(); TAC::print_label(CONTINUE_C); } statement WHILE LEFT_PAREN expression { TAC::print_goto_do_while($7); } RIGHT_PAREN SEMICOLON{
+		TAC::remove_break_label();
+		TAC::remove_continue_label();
+		SymbolTable::exit_scope();
+	}
+	| FOR INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN init_clause {TAC::print_label(CONTINUE_C);} expression_statement { TAC::print_goto_conditional($7, BREAK_C); TAC::dump_to_file(); } empty_expression { TAC::dump_to_temp(); } RIGHT_PAREN statement {
+		TAC::get_from_temp();
+		TAC::print_goto(CONTINUE_C, true);
+		TAC::remove_break_label();
+		SymbolTable::exit_scope();
+	}
+	;
 
 // jump_statement
 // 	: GOTO IDENTIFIER SEMICOLON
@@ -1068,7 +1100,7 @@ expression_statement
  /* Top-level constructs */
  translation_unit
  	: external_declaration
- 	| translation_unit external_declaration
+	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
  	;
 
@@ -1094,7 +1126,7 @@ function_declaration
 	;
 
 function_definition
- 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); } compound_statement { 
+ 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); TAC::create_function_definition(std::string($1->name)); } compound_statement { 
  		$$ = $1;
 		$$->type->setDefined();
 		SymbolTable::exit_scope();

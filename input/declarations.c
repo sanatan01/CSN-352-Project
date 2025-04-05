@@ -1,5 +1,5 @@
 
-int* main(int c, int z(), char f[5][0]) {
+int main() {
 
     int g;
 
@@ -18,6 +18,11 @@ int* main(int c, int z(), char f[5][0]) {
     };
 
     int fuck = 10*19;
+
+    bool c;
+
+
+
 
 }
 

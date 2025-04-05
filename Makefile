@@ -14,7 +14,7 @@ EXECUTABLE := $(SRC_DIR)/syntax_analyser
 HEADERS := $(wildcard $(INCLUDE_DIR)/*.h)
 
 # Additional source files for parsing phase
-PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp  $(SRC_DIR)/expression.cpp 
+PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp  $(SRC_DIR)/expression.cpp $(SRC_DIR)/tac.cpp
 
 all:  clear clean build run
 
@@ -52,7 +52,8 @@ run:
 		output_file=$$test_dir/output.txt; \
 		error_file=$$test_dir/error.txt; \
 		symtab_file=$$test_dir/symtab.txt; \
-		$(EXECUTABLE) "$$input_file" "$$symtab_file" > "$$output_file" 2> "$$error_file"; \
+		tac_file=$$test_dir/tac.txt; \
+		$(EXECUTABLE) "$$input_file" "$$symtab_file" "$$tac_file"> "$$output_file" 2> "$$error_file"; \
 	done
 	@echo "All test cases executed successfully!"
 

@@ -2,11 +2,13 @@
 #include <symtab.h>
 #include <iostream>
 #include <types.h>
+#include <tac.h>
 
 extern int yyparse();
 extern FILE* yyin;
 extern int yylineno;
 std::fstream symbol_table_file;
+std::ofstream tac_file;
 
 void formatSymbolTable(){
     symbol_table_file << std::left << std::setw(15) << "Symbol:" << '|'
@@ -18,8 +20,8 @@ void formatSymbolTable(){
 }
 
 int main(int argc, char** argv) {
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s <input_file> <symtab_file>\n", argv[0]);
+    if (argc < 4) {
+        fprintf(stderr, "Usage: %s <input_file> <symtab_file> <3ac_file>\n", argv[0]);
         exit(1);
     }
 
@@ -36,12 +38,24 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    tac_file.open(argv[3], std::ios::out | std::ios::app);
+    if (!tac_file.is_open()) {
+        std::cerr << "Error opening 3AC file" << std::endl;
+        fclose(input_file);
+        exit(1);
+    }
+
     formatSymbolTable(); // Format the symbol table header
+
 
     yylineno = 1; // Initialize line number counter
     yyin = input_file;
     yyparse(); // Invoke the parser
+
+    TAC::dump_to_file(); // Initialize TAC file
+
     fclose(input_file);
     symbol_table_file.close();
+    tac_file.close();
     return 0;
 }

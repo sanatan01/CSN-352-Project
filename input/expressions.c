@@ -5,46 +5,47 @@ int main() {
 
     a = 5;
     b = 3;
-    c = a + b;
-    d = a - b;
-    e = a * b;
-    f = a / b;
-    g = a % b;
+    // c = a + b;
+    // d = a - b;
+    // e = a * b;
+    // f = a / b;
+    // g = a % b;
+    // g = a + b * c - d / e;
 
-    int bw_and, bw_or, bw_xor, bw_not, shift_left, shift_right;
+    // int bw_and, bw_or, bw_xor, bw_not, shift_left, shift_right;
     
-    // Bitwise expressions
-    bw_and = a & b;    // bitwise AND
-    bw_or = a | b;    // bitwise OR
-    bw_xor = a ^ b;    // bitwise XOR
-    // bw_not = ~a;       // bitwise NOT
-    shift_left = a << 2;
-    shift_right = a >> 1;
+    // // Bitwise expressions
+    // bw_and = a & b;    // bitwise AND
+    // bw_or = a | b;    // bitwise OR
+    // bw_xor = a ^ b;    // bitwise XOR
+    // // bw_not = ~a;       // bitwise NOT
+    // shift_left = a << 2;
+    // shift_right = a >> 1;
 
-    int logic_and, logic_or, logic_not;
+    // int logic_and, logic_or, logic_not;
 
-    // Logical expressions
-    logic_and = (a > b) && (b > 0);
-    logic_or = (a < b) || (b < 0);
-    logic_not = (a == b);
+    // // Logical expressions
+    // logic_and = (a > b) && (b > 0);
+    // logic_or = (a < b) || (b < 0);
+    // logic_not = (a == b);
 
-    int eq, neq, lt, gt, le, ge;
+    // int eq, neq, lt, gt, le, ge;
 
-    // Relational expressions
-    eq = (a == b);
-    neq = (a != b);
-    lt = (a < b);
-    gt = (a > b);
-    le = (a <= b);
-    ge = (a >= b);
+    // // Relational expressions
+    // eq = (a == b);
+    // neq = (a != b);
+    // lt = (a < b);
+    // gt = (a > b);
+    // le = (a <= b);
+    // ge = (a >= b);
 
-    // Assignment expressions and compound assignments
+    // // Assignment expressions and compound assignments
     long long x;
     x = a;
-    x += b;
-    x -= b;
-    x *= a;
-    x /= 2;
+    // x += b;
+    // x -= b;
+    // x *= a;
+    // x /= 2;
 
     // Conditional (ternary) operator
     int cond;
@@ -59,27 +60,27 @@ int main() {
     // int ptr_diff;
     // ptr_diff = p - arr;
 
-    // Unary expressions
-    int pre_inc, post_dec;
-    pre_inc = ++a;
-    post_dec = b--;
+    // // Unary expressions
+    // int pre_inc, post_dec;
+    // pre_inc = ++a;
+    // post_dec = b--;
 
-    // Cast expression
-    double cast_expr;
-    cast_expr = (double)a;
+    // // Cast expression
+    // double cast_expr;
+    // cast_expr = (double)a;
 
-    // sizeof operator
-    int size;
-    size = sizeof(a);
+    // // sizeof operator
+    // int size;
+    // size = sizeof(a);
 
-    char *ptr1;
+    // char *ptr1;
 
-    int za,zb;
+    // int za,zb;
 
-    za = ptr1[3];
+    // za = ptr1[3];
 
-    int arr1[];
-    zb = arr1[10];
+    // int arr1[];
+    // zb = arr1[10];
     // Comma operator
     // int comma_expr = (a = 1, b = 2, a + b);
 
