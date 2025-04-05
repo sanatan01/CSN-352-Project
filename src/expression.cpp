@@ -838,8 +838,8 @@ Expression* assignment_expression(OpExpression* oe) {
 //     U->op1 = ue;
 //     U->op = op->name;
 //     GlobalType ueT = ue->prim_type;
-//     if ( ueT.getType() == "InvalidType" ) {
-//         U->prim_type.invalid_type = &INVALID_TYPE;
+//     if ( ueT == ERROR_T ) {
+//         U->prim_type= ERROR_T;
 //         return U;
 //     }
 //     std::string u_op = op->name;
@@ -850,11 +850,11 @@ Expression* assignment_expression(OpExpression* oe) {
 //         // if ( ueT.is_const == true ) {
 //         //     error_msg( "Invalid operand " + u_op + " with constant type",
 //         //                op->line_num, op->column );
-//         //     U->prim_type.invalid_type = &INVALID_TYPE;
+//         //     U->prim_type= ERROR_T;
 //         //     return U;
 //         // }
 // 		u_op = u_op.substr( 0, 1 );
-// 		if ( ue->prim_type.getType() == "Pointer" ) {
+// 		if ( ue->exp_type->type_tag == "Pointer" ) {
 // 			U->prim_type = ue->prim_type;
 // 		} else if ( type_specifiers[INT_T].isEqual(*ue->prim_type.standard_type) ) {
 // 			U->prim_type = ue->prim_type;
@@ -863,9 +863,9 @@ Expression* assignment_expression(OpExpression* oe) {
 // 		} else {
 // 			// Incorrect type throw error
 // 			error_msg( "Invalid operand " + u_op + "with type " +
-// 						   ue->prim_type.getType(),
+// 						   ue->exp_type->type_tag,
 // 					   op->line_num, op->column );
-// 			U->prim_type.invalid_type = &INVALID_TYPE;
+// 			U->prim_type= ERROR_T;
 // 			return U;
 // 		}
 //     } else if ( u_op == "sizeof" ) {
@@ -894,8 +894,8 @@ Expression* assignment_expression(OpExpression* oe) {
 //     U->op1 = ce;
 //     GlobalType ceT = ce->prim_type;
 
-//     if ( ceT.getType() == "InvalidType" ) {
-//         U->prim_type.invalid_type = &INVALID_TYPE;
+//     if ( ceT == ERROR_T ) {
+//         U->prim_type= ERROR_T;
 //         return U;
 //     }
 
@@ -903,18 +903,18 @@ Expression* assignment_expression(OpExpression* oe) {
 //         if ( ceT.getType() == "FunctionType" ) {
 //             error_msg( "lvalue required as unary & operand", n_op->line_num,
 //                        n_op->column );
-//             U->prim_type.invalid_type = &INVALID_TYPE;
+//             U->prim_type= ERROR_T;
 //             return U;
 //         }
 
 // 		U->prim_type = ce->prim_type;
 //         U->prim_type.pointer_type->ptr_level++;
 //     } else if ( u_op == "*" ) {
-//         if ( ceT.getType() == "ArrayType" ) {
+//         if ( ceT.getType() == ARRAY_TYPE ) {
 //             // Error because of dereference of non-pointer type
 //             error_msg( "Cannot dereference type " + ceT.getType(),
 //                        n_op->line_num, n_op->column );
-//             U->prim_type.invalid_type = &INVALID_TYPE;
+//             U->prim_type= ERROR_T;
 //             return U;
 //         }
 
@@ -926,7 +926,7 @@ Expression* assignment_expression(OpExpression* oe) {
 //             // Throw Error
 //             error_msg( "Invalid operand " + u_op + " on type " + ceT.getType(),
 //                        n_op->line_num, n_op->column );
-//             U->prim_type.invalid_type = &INVALID_TYPE;
+//             U->prim_type= ERROR_T;
 //             return U;
 //         }
 
@@ -938,7 +938,7 @@ Expression* assignment_expression(OpExpression* oe) {
 //             // Throw Error
 //             error_msg( "Invalid operand " + u_op + " on type " + ceT.getType(),
 //                        n_op->line_num, n_op->column );
-//             U->prim_type.invalid_type = &INVALID_TYPE;
+//             U->prim_type= ERROR_T;
 //             return U;
 //         }
 //         U->prim_type.standard_type = &type_specifiers[U_CHAR_T];
@@ -967,103 +967,120 @@ Expression* assignment_expression(OpExpression* oe) {
 //     return U;
 // }
 
-// Expression *create_cast_expression_typename(TypeName *tn, Expression *ce)
-// {
-//     CastExpression *P = new CastExpression();
-//     P->op1 = ce;
-//     GlobalType ceT = ce->prim_type;
-//     GlobalType tnT = tn->prim_type;
-//     if ( ceT.getType() == "InvalidType" || tnT.getType() == "InvalidType" ) {
-//         P->prim_type.invalid_type = &INVALID_TYPE;
-//         return P;
-//     }
-//     if ( (type_specifiers[INT_T].isEqual(*ceT.standard_type) || type_specifiers[FLOAT_T].isEqual(*ceT.standard_type)) && (type_specifiers[INT_T].isEqual(*tnT.standard_type) || type_specifiers[FLOAT_T].isEqual(*tnT.standard_type)) ) {
-//         P->prim_type = tn->prim_type;
-//     } else if ( ceT.pointer_type->ptr_level > 0 && tnT.pointer_type->ptr_level > 0 ) {
-//         P->prim_type = tn->prim_type;
-//     } else {
-//         error_msg( "Undefined casting operation of " + ceT.getType() +
-//                        " into " + tnT.getType(),
-//                    line_num );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
-//         return P;
-//     }
-//     P->name = "cast_expression";
-//     P->add_children({tn, ce});
+Expression *create_cast_expression_typename(OpExpression *oe)
+{
+    // CastExpression *P = new CastExpression();
+    // P->op1 = ce;
+    PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
+    if ( (isInvalid({op1Type})&&(!isInvalid({op2Type}))) || (isInvalid({op2Type})&&(!isInvalid({op1Type})))) {
+        oe->prim_type = PrimitiveTypes(ERROR_T);
+        error_msg("Invalid types for cast expression", line_num, column);
+        return oe;
+    }
+    if(op1Type==ERROR_T && op2Type==ERROR_T && oe->op1.exp_type->type_tag==NONE){
+        oe->prim_type = PrimitiveTypes(ERROR_T);
+        error_msg("Invalid types for cast expression", line_num, column);
+        return oe;
+    }
+    if ( (isInt(op1Type) || isFloat(op1Type)) && (isInt(op2Type) || isFloat(op2Type)) ) {
+        oe->prim_type = oe->op1.prim_type;
+    } else if ( oe->op1.exp_type->type_tag == POINTER_TYPE && oe->op2.exp_type->type_tag == POINTER_TYPE ) {
+        if(isCompatible(oe->op1.exp_type,oe->op2.exp_type)){
+            oe->prim_type = oe->op1.prim_type;
+            oe->exp_type = oe->op1.exp_type;
+        }
+        else{
+            error_msg("Invalid types for cast expression", line_num, column);
+            oe->prim_type = PrimitiveTypes(ERROR_T);
+            return oe;
+        }
+    } else {
+        error_msg( "Undefined casting operation"+line_num );
+        oe->prim_type = ERROR_T;
+        return oe;
+    }
+    // 3AC or AST
+    // P->name = "cast_expression";
+    // P->add_children({tn, ce});
 
-//     return P;
-// }
+    return oe;
+}
 
-// Expression *create_postfix_expr_arr(Expression *pe, Expression *exp)
-// {
-//  PostfixExpression *P = new PostfixExpression();
-//     if ( dynamic_cast<PostfixExpression *>( pe ) ) {
-//         P->pe = dynamic_cast<PostfixExpression *>( pe );
-//     } else {
-//         P->pe = nullptr;
-//     }
-//     P->exp = exp;
-//     P->name = "ARRAY ACCESS";
+Expression *create_postfix_expr_arr(Expression *pe, Expression* exp)
+{
+    PostfixExpression *P = new PostfixExpression();
+    if (pe ) {
+        P->pe = dynamic_cast<PostfixExpression *>(pe);
+    } else {
+        P->pe = nullptr;
+    }
+    P->exp = exp;
+    P->name = "ARRAY ACCESS";
 
-//     if ( pe->prim_type.getType() == "InvalidType" || exp->prim_type.getType() == "InvalidType" ) {
-//         P->prim_type.invalid_type = &INVALID_TYPE;
-//         return P;
-//     }
+    if (isInvalid({pe->prim_type, exp->prim_type})) {
+        P->prim_type= ERROR_T;
+        return P;
+    }
+    PrimitiveTypes op1Type = PrimitiveTypes(pe->prim_type);
+    PrimitiveTypes op2Type = PrimitiveTypes(exp->prim_type);
+    if ( !isInt(op2Type) ) {
+        error_msg( "Array index must be of type integer", line_num );
+    P->prim_type= ERROR_T;
+        return P;
+    }
 
-//     if ( !type_specifiers[INT_T].isEqual(*exp->prim_type.standard_type) ) {
-//         // Error
-//         error_msg( "Array index must be of type integer", line_num );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
-//         return P;
-//     }
+	if ( pe->exp_type->type_tag == ARRAY_TYPE ) {
+		P->prim_type = pe->prim_type;
+        P->exp_type->array_type = new ArrayType();
+	    P->exp_type->array_type->dim--;
+		P->exp_type->array_type->dims.erase( P->exp_type->array_type->dims.begin() );
+		// oe->prim_type.is_const = false; //TODO: make it non-constant
+	} else if ( pe->exp_type->type_tag == POINTER_TYPE ) {
+		P->prim_type = pe->prim_type;
+		P->exp_type->pointer_type->ptr_level--;
+		// P->prim_type.is_const = false; //TODO: make it non-constant
+        // TODO: What type to update to?
+		if ( P->exp_type->pointer_type->ptr_level == 0 ) {
+			P->exp_type = new GlobalType();
+            P->exp_type->standard_type=P->exp_type->pointer_type->return_type->standard_type;
+            P->exp_type->type_tag = STANDARD_TYPE;
+            P->prim_type = deduceType(P->exp_type->standard_type->name);
+		}
+	} else {
+		error_msg( "Subscripted value is neither array nor pointer",
+				   line_num );
+		P->prim_type= ERROR_T;
+	}
 
-// 	if ( pe->prim_type.getType() == "ArrayType" ) {
-// 		P->prim_type = pe->prim_type;
-// 		P->prim_type.array_type->dim--;
-// 		P->prim_type.array_type->dims.erase( P->prim_type.array_type->dims.begin() );
-// 		// P->prim_type.is_const = false; //TODO: make it non-constant
-// 	} else if ( pe->prim_type.getType() == "PointerType" ) {
-// 		P->prim_type = pe->prim_type;
-// 		P->prim_type.pointer_type->ptr_level--;
-// 		// P->prim_type.is_const = false; //TODO: make it non-constant
-//         // TODO: What type to update to?
-// 		// if ( P->prim_type.pointer_type->ptr_level == 0 ) {
-// 			// P->prim_type.pointer_type->is_pointer = false;
-// 		// }
-// 	} else {
-// 		error_msg( "Subscripted value is neither array nor pointer",
-// 				   line_num );
-// 		P->prim_type.invalid_type = &INVALID_TYPE;
-// 	}
-
-//     P->add_children({pe, exp});
-//     P->line_num = pe->line_num;
-//     P->column = pe->column;
-//     return P;
-// }
+    // oe->add_children({pe, exp});
+    // oe->line_num = pe->line_num;
+    // oe->column = pe->column;
+    return oe;
+}
 
 // // check its implementation
 // Expression *create_postfix_expr_voidfun(Identifier *fi)
 // {
 //     PostfixExpression *P = new PostfixExpression();
 //     // Lookup Function type from symbol table - should be void
-//     SymTabEntry *ste = global_symbol_table.get_symbol_from_table( fi->value );
+//     SymTabEntry *ste = global_symbol_table.get_symbol_from_table( fi->name );
 //     if ( ste == nullptr ) {
 //         // Error
-//         error_msg( "Undeclared symbol " + fi->value, fi->line_num, fi->column );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
+//         error_msg( "Undeclared symbol " + fi->name, fi->line_num, fi->column );
+//         P->prim_type= ERROR_T;
 //         return P;
-//     } else if ( ste->prim_type.getType() != "FunctionType" ) {
+//     } else if ( ste->exp_type->type_tag != "FunctionType" ) {
 //         // Error
-//         error_msg( "Called object '" + fi->value + "' is not a function",
+//         error_msg( "Called object '" + fi->name + "' is not a function",
 //                    fi->line_num, fi->column );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
+//         P->prim_type= ERROR_T;
 //         return P;
-//     } else if ( ste->prim_type.function_type->num_args != 0 ) {
+//     } else if ( ste->identifier.type->function_type->args.identifiers.size()  != 0 ) {
 //         // Error
-//         error_msg( "Too few arguments to function '" + fi->value + "'",
+//         error_msg( "Too few arguments to function '" + fi->name + "'",
 //                    fi->line_num, fi->column );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
+//         P->prim_type= ERROR_T;
 //         return P;
 //     }
 
@@ -1080,75 +1097,72 @@ Expression* assignment_expression(OpExpression* oe) {
 //     return P;
 // }
 
-// Expression *create_postfix_expr_fun( Identifier *fi, ArgumentExprList *ae )
-// {
-//    PostfixExpression *P = new PostfixExpression();
+Expression *create_postfix_expr_fun( Identifier *fi, ArgumentExprList *ae )
+{
+   PostfixExpression *P = new PostfixExpression();
 
-//     SymTabEntry *ste = global_symbol_table.get_symbol_from_table( fi->value );
-//     if ( ste == nullptr ) {
-//         // Error
-//         error_msg( "Undeclared symbol " + fi->value, fi->line_num, fi->column );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
-//         return P;
-//     } else if ( ste->prim_type.getType() != "FunctionType" ) {
-//         // Error
-//         error_msg( "Called object '" + fi->value + "' is not a function",
-//                    fi->line_num, fi->column );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
-//         return P;
-//     } else if ( ste->prim_type.function_type->num_args > ae->args.size() ) {
-//         // Error
-//         error_msg( "Too few arguments to function '" + fi->value +
-//                        "'. Expected " + std::to_string( ste->prim_type.function_type->num_args ) +
-//                        ", got " + std::to_string( ae->args.size() ),
-//                    fi->line_num, fi->column );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
-//         return P;
-//     } else if ( ste->prim_type.function_type->num_args < ae->args.size() ) {
-//         // Error
-//         error_msg( "Too many arguments to function '" + fi->value +
-//                        "'. Expected " + std::to_string( ste->prim_type.function_type->num_args ) +
-//                        ", got " + std::to_string( ae->args.size() ),
-//                    fi->line_num, fi->column );
-//         P->prim_type.invalid_type = &INVALID_TYPE;
-//         return P;
-//     } else if ( ste->prim_type.function_type->num_args == ae->args.size() ) {
-//         int i = 0;
-//         for (auto itr: ste->prim_type.function_type->args) {
-//             if ( itr.second.getType() == "InvalidType" ) {
-//                 P->prim_type.invalid_type = &INVALID_TYPE;
-//                 return P;
-//             }
-//             if ( !( itr.second.isEqual(ae->args[i]->prim_type) ) ) {
-//                 error_msg( "Type mismatch at argument " + std::to_string( i ) +
-//                                " of function '" + fi->value + "'. Expected " +
-//                                itr.second.getType() + ", got " +
-//                                ae->args[i]->prim_type.getType(),
-//                            fi->line_num, fi->column );
-//                 P->prim_type.invalid_type = &INVALID_TYPE;
-//                 return P;
-//             }
-//             i++;
-//         }
-//     }
+    Symbol *ste = SymbolTable::get_symbol( fi->name );
+    if ( ste == nullptr ) {
+        // Error
+        error_msg( "Undeclared symbol " + fi->name );
+        P->prim_type= ERROR_T;
+        return P;
+    } else if ( ste->identifier.type->type_tag != FUNCTION_TYPE ) {
+        // Error
+        error_msg( "Called object '" + fi->name + "' is not a function");
+        P->prim_type= ERROR_T;
+        return P;
+    } else if ( ste->identifier.type->function_type->args.identifiers.size() > ae->args.size() ) {
+        // Error
+        error_msg( "Too few arguments to function '" + fi->name +
+                       "'. Expected " + std::to_string( ste->identifier.type->function_type->args.identifiers.size()  ) +
+                       ", got " + std::to_string( ae->args.size()  );
+        P->prim_type= ERROR_T;
+        return P;
+    } else if ( ste->identifier.type->function_type->args.identifiers.size()  < ae->args.size() ) {
+        // Error
+        error_msg( "Too many arguments to function '" + fi->name +
+                       "'. Expected " + std::to_string( ste->identifier.type->function_type->args.identifiers.size()  ) +
+                       ", got " + std::to_string( ae->args.size() ));
+        P->prim_type= ERROR_T;
+        return P;
+    } else if ( ste->identifier.type->function_type->args.identifiers.size()  == ae->args.size() ) {
+        int i = 0;
+        for (auto itr: ste->identifier.type->function_type->args.identifiers) {
+            if ( itr.second == ERROR_T ) {
+                P->prim_type= ERROR_T;
+                return P;
+            }
+            if ( !( itr.second.isEqual(ae->args[i]->prim_type) ) ) {
+                error_msg( "Type mismatch at argument " + std::to_string( i ) +
+                               " of function '" + fi->name + "'. Expected " +
+                               itr.second.getType() + ", got " +
+                               ae->args[i]->exp_type->type_tag,
+                           fi->line_num, fi->column );
+                P->prim_type= ERROR_T;
+                return P;
+            }
+            i++;
+        }
+    }
 
-//     P->name = "FUNCTION CALL";
-//     P->add_children({fi, ae});
-//     P->line_num = fi->line_num;
-//     P->column = fi->column;
-//     P->prim_type = ste->prim_type;
-//     P->prim_type.function_type->is_defined = false;
-//     P->prim_type.function_type->num_args = 0;
-//     P->prim_type.function_type->args.clear();
+    P->name = "FUNCTION CALL";
+    P->add_children({fi, ae});
+    P->line_num = fi->line_num;
+    P->column = fi->column;
+    P->prim_type = ste->prim_type;
+    P->prim_type.function_type->is_defined = false;
+    P->prim_type.function_type->num_args = 0;
+    P->prim_type.function_type->args.clear();
 
-//     return P;
-// }
+    return P;
+}
 
 // Expression *create_postfix_expr_struct( std::string access_op, Expression *pe, Identifier *id){
 //     PostfixExpression *P = new PostfixExpression();
 
-//     if ( pe->prim_type.getType() == "InvalidType" ) {
-//         P->prim_type.invalid_type = &INVALID_TYPE;
+//     if ( pe->prim_type == ERROR_T ) {
+//         P->prim_type= ERROR_T;
 //         return P;
 //     }
 
@@ -1157,9 +1171,9 @@ Expression* assignment_expression(OpExpression* oe) {
 //         if ( ( peT.getType() == "Struct" || peT.getType() == "Union" ) && pe->prim_type.pointer_type->ptr_level == 0 ) {
 //             if ( peT.struct_type == nullptr ) {
 //                 error_msg( id->value + " is not a member of " +
-//                                pe->prim_type.getType(),
+//                                pe->exp_type->type_tag,
 //                            id->line_num, id->column );
-//                 P->prim_type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type= ERROR_T;
 //                 return P;
 //             }
 //             // whether i exists in Struct
@@ -1168,15 +1182,15 @@ Expression* assignment_expression(OpExpression* oe) {
 //                 // Error
 //                 error_msg( id->value + " is not a member of " + peT.getType(),
 //                            id->line_num, id->column );
-//                 P->prim_type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type= ERROR_T;
 //                 return P;
 //             } else {
 //                 P->prim_type = iType;
 //             }
 //         } else {
-//             error_msg( "Invalid operand . with type " + pe->prim_type.getType(), id->line_num,
+//             error_msg( "Invalid operand . with type " + pe->exp_type->type_tag, id->line_num,
 //                        id->column );
-//             P->prim_type.invalid_type = &INVALID_TYPE;
+//             P->prim_type= ERROR_T;
 //             return P;
 //         }
 //     } else if ( access_op == "->" ) {
@@ -1184,7 +1198,7 @@ Expression* assignment_expression(OpExpression* oe) {
 //             if ( peT.struct_type == nullptr ) {
 //                 error_msg( id->value + " is not a member of " + peT.getType(),
 //                            id->line_num, id->column );
-//                 P->prim_type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type= ERROR_T;
 //                 return P;
 //             }
 //             // whether i exists in Struct*
@@ -1193,15 +1207,15 @@ Expression* assignment_expression(OpExpression* oe) {
 //                 // Error
 //                 error_msg( id->value + " is not a member of " + peT.getType(),
 //                            id->line_num, id->column );
-//                 P->prim_type.invalid_type = &INVALID_TYPE;
+//                 P->prim_type= ERROR_T;
 //                 return P;
 //             } else {
 //                 P->prim_type = iType;
 //             }
 //         } else {
-//             error_msg( "Invalid operand -> with type " + pe->prim_type.getType(),
+//             error_msg( "Invalid operand -> with type " + pe->exp_type->type_tag,
 //                        id->line_num, id->column );
-//             P->prim_type.invalid_type = &INVALID_TYPE;
+//             P->prim_type= ERROR_T;
 //             return P;
 //         }
 //     }
@@ -1220,8 +1234,8 @@ Expression* assignment_expression(OpExpression* oe) {
 //         P->pe = nullptr;
 //     }
 
-//     if ( pe->prim_type.getType() == "InvalidType" ) {
-//         P->prim_type.invalid_type = &INVALID_TYPE;
+//     if ( pe->prim_type == ERROR_T ) {
+//         P->prim_type= ERROR_T;
 //         return P;
 //     }
 
@@ -1243,7 +1257,7 @@ Expression* assignment_expression(OpExpression* oe) {
 // 	if ( pe->prim_type.is_const == true ) {
 // 		error_msg( "Invalid operand " + op->name + " with constant type",
 // 				   op->line_num, op->column );
-// 		P->prim_type.invalid_type = &INVALID_TYPE;
+// 		P->prim_type= ERROR_T;
 // 		return P;
 // 	}
 
@@ -1258,9 +1272,9 @@ Expression* assignment_expression(OpExpression* oe) {
 // 	} else {
 // 		// Error postfix operator
 // 		error_msg( "Invalid operand " + op->name + " with type " +
-// 					   pe->prim_type.getType(),
+// 					   pe->exp_type->type_tag,
 // 				   op->line_num, op->column );
-// 		P->prim_type.invalid_type = &INVALID_TYPE;
+// 		P->prim_type= ERROR_T;
 // 		return P;
 // 	}
 
@@ -1272,7 +1286,7 @@ Expression* assignment_expression(OpExpression* oe) {
 Expression *create_unary_expression( OpExpression *oe ) {
     
     PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
-    if ( op1Type == ERROR_T)
+    if ( op1Type == ERROR_T) {
         oe->prim_type = ERROR_T;
         return oe;
     }
@@ -1282,41 +1296,60 @@ Expression *create_unary_expression( OpExpression *oe ) {
     // Address *inc_value = nullptr;
 
     if ( u_op == "++" || u_op == "--" ) {
-        if ( oe->exp_type->getSpecifiers()->is_const == true ) {
+        if ( (op1Type==ERROR_T) && (oe->op1.exp_type->type_tag!=NONE) && oe->op1.exp_type->getSpecifiers()->is_const == true ) {
             error_msg( "Invalid operand " + u_op + " with constant type",
-                       op->line_num, op->column );
-            oe->prim_type.invalid_type = &INVALID_TYPE;
+                       line_num, column );
+            // Assuming invalid_type handling remains unchanged
+            oe->prim_type = ERROR_T;
             return oe;
-        
-		u_op = u_op.substr( 0, 1 );
-		if ( ue->prim_type.getType() == "PointerType" ) {
-			oe->prim_type = ue->prim_type;
-			GlobalType t = ue->prim_type;
-			t.pointer_type->ptr_level--;
-		} else if ( ue->prim_type.getType() == "StandardType" ) {
-			oe->prim_type = ue->prim_type;
-		} else if ( ue->prim_type.getType() == "FloatType" ) {
-			oe->prim_type = ue->prim_type;
-		} else {
-			// Incorrect type throw error
-			error_msg( "Invalid operand " + u_op + " with type " +
-						   ue->prim_type.getType(),
-					   op->line_num, op->column );
-			oe->prim_type.invalid_type = &INVALID_TYPE;
-			return oe;
-		}
+        }
+        else if (op1Type == ERROR_T && (oe->op1.exp_type->type_tag == NONE)) {
+            error_msg( "Invalid operand " + u_op + " with type " +
+                           oe->op1.exp_type->getType(),
+                       line_num, column );
+            oe->prim_type = ERROR_T;
+            return oe;
+        }
+        u_op = u_op.substr( 0, 1 );
+        if(op1Type == ERROR_T && oe->op1.exp_type->type_tag != NONE) {
+
+        if ( oe->op1.exp_type->type_tag == POINTER_TYPE ) {
+            oe->prim_type = oe->op1.prim_type;
+            oe->exp_type = oe->op1.exp_type;
+        } else if ( oe->op1.exp_type->type_tag == STANDARD_TYPE ) {
+            oe->prim_type = oe->op1.prim_type;
+        } else {
+            error_msg( "Invalid operand " + u_op + " with type " +
+                           oe->op1.exp_type->getType(),
+                       line_num, column );
+            return oe;
+        }
+        } else{
+            if(isInt(op1Type)){
+                //3AC
+            }
+            else if(isFloat(op1Type)){
+                //3AC
+            }
+            else{
+                error_msg( "Invalid operand " + u_op + " with type " +
+                           oe->op1.exp_type->getType(),
+                       line_num, column );
+                oe->prim_type = ERROR_T;
+                return oe;
+            }
+        }
     } else if ( u_op == "sizeof" ) {
         oe->name = "sizeof";
-        oe->prim_type.standard_type = &type_specifiers[PrimitiveTypes::INT_T];
-        oe->prim_type.pointer_type->ptr_level = 0;
+        oe->prim_type = INT_T;
         // oe->prim_type.is_const = true;
     } else {
-        // Raise Error
         std::cerr << "Error parsing Unary Expression.\n";
         std::cerr << "ERROR at line " << line_num << "\n";
         exit( 0 );
     }
-    oe->add_children({ue});
+    // 3AC
+    // oe->add_children({oe->op1});
     return oe;
 }
 
@@ -1483,6 +1516,10 @@ Expression* create_expression(ExpressionOpType op_type, std::string op, VectorEx
     case UNARY:
         oe->op1 = ve->operands[0];
         return create_unary_expression(oe);
+    case CAST_TYPE:
+        oe->op1 = ve->operands[0];
+        oe->op2 = ve->operands[1];
+        return create_cast_expression_typename(oe);
     default:
         std::cerr << "Incorrect expression. Something went wrong\n";
         return nullptr;
