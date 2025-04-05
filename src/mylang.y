@@ -131,21 +131,21 @@ void yyerror(const char *s);
 %type<pointer_type> pointer
 %type<specifiers> type_qualifier_list
 %type<vector_identifiers> parameter_type_list
- %type<vector_identifiers> parameter_list
- %type<identifier> parameter_declaration
-// %type<vector_identifiers> identifier_list
- %type<nice> type_name
- %type<nice> abstract_declarator
- %type<nice> direct_abstract_declarator
- %type<nice> initializer
- %type<nice> initializer_list
- %type<nice> labeled_statement
- %type<nice> compound_statement
- %type<nice> selection_statement
- %type<nice> iteration_statement
- %type<nice> jump_statement
- %type<nice> error_statement_closed
- %type<nice> error_statement_open
+%type<vector_identifiers> parameter_list
+%type<identifier> parameter_declaration
+%type<vector_identifiers> identifier_list
+%type<global_type> type_name
+%type<global_type> abstract_declarator
+%type<global_type> direct_abstract_declarator
+%type<nice> initializer
+%type<nice> initializer_list
+%type<nice> labeled_statement
+%type<nice> compound_statement
+%type<nice> selection_statement
+%type<nice> iteration_statement
+%type<nice> jump_statement
+%type<nice> error_statement_closed
+%type<nice> error_statement_open
 
  %%
 
@@ -213,14 +213,14 @@ unary_expression
 // 	| SIZEOF LEFT_PAREN type_name RIGHT_PAREN 	//{ $$ = create_unary_expression($1, $3); }
  	;
 
-unary_operator
-	: AMPERSAND     { $$ = strdup("&"); }
-	| ASTERISK      { $$ = strdup("*"); }
-	| PLUS          { $$ = strdup("+"); }
-	| MINUS         { $$ = strdup("-"); }
-	| TILDE         { $$ = strdup("~"); }
-	| EXCLAMATION   { $$ = strdup("!"); }
-	;
+// unary_operator
+// 	: AMPERSAND     { $$ = strdup("&"); }
+// 	| ASTERISK      { $$ = strdup("*"); }
+// 	| PLUS          { $$ = strdup("+"); }
+// 	| MINUS         { $$ = strdup("-"); }
+// 	| TILDE         { $$ = strdup("~"); }
+// 	| EXCLAMATION   { $$ = strdup("!"); }
+// 	;
 
 // /* Type casting */
 cast_expression
@@ -688,10 +688,12 @@ declarator
  			$$->type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
  		} else if ($$->type->type_tag == FUNCTION_TYPE) {
  			$$->type->function_type->return_type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
+ 		} else if ($$->type->type_tag == POINTER_TYPE) {
+			$$->type->pointer_type->ptr_level += $1->ptr_level;
+			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->specifiers);
  		} else {
-			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+ 			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
  		}
-
  	}
 
  	;
@@ -742,9 +744,23 @@ declarator
 		}
 
 	}
-// 	// TODO : | direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN { $$ = $1; } // Fimctopm ca;;
+	// | direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN { 
+	// 	$$ = $1;
+	// 	if ($$->type->type_tag == NONE) {
+	// 		// This is a function call so we need to make sure all identifiers are present
+	// 		// All identifiers must be defined in the symbol table
+	// 		if (SymbolTable::lookup_symbols($3)) {
+	// 			// Check if function is defined in the symbol table
+	// 			if (SymbolTable::lookup_symbol($$->name)) {
+					
+	// 			}
+	// 		}
 
-// 	;
+	// 	} else {
+	// 		std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+	// 	}
+	// } 
+	;
 
 pointer
  	: ASTERISK { $$ = new PointerType(); }
@@ -816,41 +832,127 @@ parameter_list
 			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
 		}
  	}
-	;
-// 	// Todo: | declaration_specifiers abstract_declarator
-// 	// todo: later| declaration_specifiers
-// 	;
-
-// identifier_list
-// 	: IDENTIFIER { $$ = new std::vector<Identifier>(); $$->push_back(new Identifier($1)); }
-// 	| identifier_list COMMA IDENTIFIER { 
-// 		$$ = $1;
-// 		$$->push_back(new Identifier($3));
-// 	}
-// 	;
-
-type_name
- 	: specifier_qualifier_list
-// 	| specifier_qualifier_list abstract_declarator
+	| declaration_specifiers abstract_declarator {
+		$$ = new Identifier($2);
+		// Function 
+		if ($$->type->type_tag == FUNCTION_TYPE) {
+			if ($$->type->function_type->return_type != NULL && $$->type->function_type->return_type->type_tag == POINTER_TYPE) {
+				$$->type->function_type->return_type->pointer_type->return_type = $1;;
+				$$->type->function_type->return_type->pointer_type->specifiers = combine_specs($$->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$$->type->function_type->return_type = $1;
+			}
+		// We only got identifier
+		} else if ($$->type->type_tag == NONE) {
+			$$->type = $1;
+		/// If we get array type
+		} else if ($$->type->type_tag == ARRAY_TYPE) {
+			$$->type->array_type->return_type = $1;
+		// If we get somehing else
+		} else {
+			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+		}
+	}
+	| declaration_specifiers {
+		$$ = new Identifier($1);
+	}
  	;
 
-// abstract_declarator
-// 	: pointer
-// 	| direct_abstract_declarator
-// 	| pointer direct_abstract_declarator
-// 	;
+identifier_list
+ 	: IDENTIFIER { $$ = new VectorIdentifiers(); $$->add_identifier(new Identifier(std::string($1))); }
+ 	| identifier_list COMMA IDENTIFIER { 
+ 		$$ = $1;
+ 		$$->add_identifier(new Identifier(std::string($3)));
+ 	}
+ 	;
 
-// direct_abstract_declarator
-// 	: LEFT_PAREN abstract_declarator RIGHT_PAREN
-// 	| LEFT_BRACKET RIGHT_BRACKET
-// 	| LEFT_BRACKET constant_expression RIGHT_BRACKET
-// 	| direct_abstract_declarator LEFT_BRACKET RIGHT_BRACKET
-// 	| direct_abstract_declarator LEFT_BRACKET constant_expression RIGHT_BRACKET
-// 	| LEFT_PAREN RIGHT_PAREN
-// 	| LEFT_PAREN parameter_type_list RIGHT_PAREN
-// 	| direct_abstract_declarator LEFT_PAREN RIGHT_PAREN
-// 	| direct_abstract_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN
-// 	;
+type_name
+ 	: specifier_qualifier_list { $$ = $1; }
+ 	| specifier_qualifier_list abstract_declarator {
+		$$ = $2;
+		if ($$->type_tag == FUNCTION_TYPE) {
+			if ($$->function_type->return_type != NULL && $$->function_type->return_type->type_tag == POINTER_TYPE) {
+				$$->function_type->return_type->pointer_type->return_type = $1;
+				$$->function_type->return_type->pointer_type->specifiers = combine_specs($$->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$$->function_type->return_type = $1;
+			}
+		} else if ($$->type_tag == ARRAY_TYPE) {
+			$$->array_type->return_type = $1;
+		} else if ($$->type_tag == POINTER_TYPE) {
+			$$->pointer_type->return_type = $1;
+		} else {
+			std::cerr << "Cannot create a type name for the following abstract declarator" << std::endl;
+		}
+ 	}
+ 	;
+
+abstract_declarator
+ 	: pointer { 
+		$$ = new GlobalType();
+		$$->type_tag = POINTER_TYPE;
+		$$->pointer_type = $1;
+	}
+ 	| direct_abstract_declarator {
+		$$ = $1;
+	}
+ 	| pointer direct_abstract_declarator {
+		$$ = $2;
+		if ($$->type_tag == FUNCTION_TYPE) {
+ 			$$->function_type->return_type = create_pointer_type(new GlobalType(), $1->ptr_level, $1->specifiers);
+ 		} else if ($$->type_tag == POINTER_TYPE) {
+			$$->pointer_type->ptr_level += $1->ptr_level;
+			$$->pointer_type->specifiers = combine_specs($$->pointer_type->specifiers, $1->specifiers);
+		} else {
+			std::cerr << "Cannot create a pointer type for the following abstract declarator" << std::endl;
+ 		}
+	}
+ 	;
+
+direct_abstract_declarator
+ 	: LEFT_PAREN abstract_declarator RIGHT_PAREN { $$ = $2; }
+ 	| LEFT_BRACKET RIGHT_BRACKET {
+		$$ = create_array_type(new GlobalType());
+		$$ = add_dimension_array($$);
+	}
+ 	| LEFT_BRACKET CONSTANT_LITERAL RIGHT_BRACKET {
+		unsigned int constant = convert_to_unsigned(std::string($2));
+		$$ = create_array_type(new GlobalType());
+		$$ = add_dimension_array($$, constant);
+	}
+ 	| direct_abstract_declarator LEFT_BRACKET RIGHT_BRACKET {
+		$$ = $1;
+		if ( $$->type_tag == NONE) {
+			$$ = create_array_type($1);
+			$$ = add_dimension_array($$);
+		}
+ 		else if ( $$->type_tag == ARRAY_TYPE ) {
+			$$ = add_dimension_array($1);
+		} else {
+			std::cerr << "Cannot create an array type for the following abstract declarator" << std::endl;
+		}
+	}
+	| direct_abstract_declarator LEFT_BRACKET CONSTANT_LITERAL RIGHT_BRACKET {
+		unsigned int constant = convert_to_unsigned(std::string($3));
+		$$ = $1;
+		if ( $$->type_tag == NONE) {
+			$$ = create_array_type($1);
+			$$ = add_dimension_array($$, constant);
+		}
+ 		else if ( $$->type_tag == ARRAY_TYPE ) {
+			$$ = add_dimension_array($1, constant);
+
+		} else {
+			std::cerr << "Cannot create an array type for the following abstract declarator" << std::endl;
+		}
+	}
+ 	| LEFT_PAREN RIGHT_PAREN {
+		$$ = create_function_type(new GlobalType());
+	}
+ 	| LEFT_PAREN parameter_type_list RIGHT_PAREN {
+		$$ = create_function_type(new GlobalType(), $3);
+	}
+	;
 
 // /* Initializers */
 // initializer
@@ -882,8 +984,7 @@ type_name
 // 	;
 
 compound_statement
- 	: INC_SCOPE LEFT_BRACE RIGHT_BRACE { 
-		SymbolTable::exit_scope(); }
+ 	: INC_SCOPE LEFT_BRACE RIGHT_BRACE { SymbolTable::exit_scope(); }
 	| INC_SCOPE LEFT_BRACE declaration_list RIGHT_BRACE { SymbolTable::exit_scope(); }
 // 	|  LEFT_BRACE statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }
 // 	|  LEFT_BRACE declaration_list statement_list RIGHT_BRACE { SymbolTable::exit_scope(); }

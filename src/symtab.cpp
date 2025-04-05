@@ -55,6 +55,15 @@ bool SymbolTable::lookup_symbol(const std::string& identifier) {
     return symbol_map.find(identifier) != symbol_map.end() && !symbol_map[identifier].empty();
 }
 
+bool SymbolTable::lookup_symbols(VectorIdentifiers* ids) {
+    for (auto& id : ids->identifiers) {
+        if (!lookup_symbol(id.name)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 Symbol* SymbolTable::get_symbol(const std::string& identifier) {
     if (symbol_map.find(identifier) != symbol_map.end() && !symbol_map[identifier].empty()) {
         return &symbol_map[identifier].back();

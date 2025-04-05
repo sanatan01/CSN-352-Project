@@ -1,5 +1,6 @@
 #include <expression.h>
 #include <cassert>
+#include <initializer_list>
 
 int line_num = 0, column = 0;
 

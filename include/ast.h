@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <initializer_list>
 
 template<typename Base, typename T>
 inline bool instanceof(const T*) {

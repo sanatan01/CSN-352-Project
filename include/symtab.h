@@ -41,6 +41,7 @@ public:
   static void add_symbol(Identifier* id, int line = 0, int column = 0);
   static void add_symbols(VectorIdentifiers* ids, int line = 0, int column = 0);
   static bool lookup_symbol(const std::string& identifier);
+  static bool lookup_symbols(VectorIdentifiers* ids);
   static Symbol* get_symbol(const std::string& identifier);
   static void print_symbol(Symbol symbol);
 };

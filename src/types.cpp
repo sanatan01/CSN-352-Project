@@ -540,16 +540,6 @@ class GlobalType *create_array_type(class GlobalType* return_type) {
     return array;
 }
 
-class GlobalType* create_default_array_type() {
-    class GlobalType* array = new GlobalType();
-    array->array_type = new ArrayType();
-    array->type_tag = ARRAY_TYPE;
-    array->array_type->return_type = new GlobalType();
-    array->array_type->dims.push_back(0);
-
-    return array;
-}
-
 class GlobalType* add_dimension_array(class GlobalType* array_type, int dimension) {
     if (array_type->type_tag != ARRAY_TYPE) {
         std::cerr << "Add dimension called to invalid type\n";
