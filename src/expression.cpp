@@ -1290,72 +1290,77 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
     return P;
 }
 
-// Expression *create_postfix_expr_struct( std::string access_op, Expression *pe, Identifier *id){
-//     PostfixExpression *P = new PostfixExpression();
+Expression *create_postfix_expr_struct( std::string access_op, Expression *pe, Identifier *id){
+    Expression *P = new Expression();
 
-//     if ( pe->prim_type == ERROR_T ) {
-//         P->prim_type= ERROR_T;
-//         return P;
-//     }
 
-//     GlobalType peT = pe->prim_type;
-//     if ( access_op == "." ) {
-//         if ( ( peT.getType() == "Struct" || peT.getType() == "Union" ) && pe->prim_type.pointer_type->ptr_level == 0 ) {
-//             if ( peT.struct_type == nullptr ) {
-//                 error_msg( id->value + " is not a member of " +
-//                                pe->exp_type->type_tag,
-//                            id->line_num, id->column );
-//                 P->prim_type= ERROR_T;
-//                 return P;
-//             }
-//             // whether i exists in Struct
-//             GlobalType iType = *peT.union_type->definition->get_member( id );
-//             if ( iType == nullptr ) {
-//                 // Error
-//                 error_msg( id->value + " is not a member of " + peT.getType(),
-//                            id->line_num, id->column );
-//                 P->prim_type= ERROR_T;
-//                 return P;
-//             } else {
-//                 P->prim_type = iType;
-//             }
-//         } else {
-//             error_msg( "Invalid operand . with type " + pe->exp_type->type_tag, id->line_num,
-//                        id->column );
-//             P->prim_type= ERROR_T;
-//             return P;
-//         }
-//     } else if ( access_op == "->" ) {
-//         if ( ( peT.getType() == "Struct" || peT.getType() == "Union" ) && pe->prim_type.pointer_type->ptr_level == 1 ) {
-//             if ( peT.struct_type == nullptr ) {
-//                 error_msg( id->value + " is not a member of " + peT.getType(),
-//                            id->line_num, id->column );
-//                 P->prim_type= ERROR_T;
-//                 return P;
-//             }
-//             // whether i exists in Struct*
-//             GlobalType iType = *peT.union_type->definition->get_member( id );
-//             if ( iType==nullptr ) {
-//                 // Error
-//                 error_msg( id->value + " is not a member of " + peT.getType(),
-//                            id->line_num, id->column );
-//                 P->prim_type= ERROR_T;
-//                 return P;
-//             } else {
-//                 P->prim_type = iType;
-//             }
-//         } else {
-//             error_msg( "Invalid operand -> with type " + pe->exp_type->type_tag,
-//                        id->line_num, id->column );
-//             P->prim_type= ERROR_T;
-//             return P;
-//         }
-//     }
+    if ( pe->prim_type == ERROR_T ) {
+        P->prim_type= ERROR_T;
+        return P;
+    }
 
-//     P->name = access_op;
-//     P->add_children({pe, id});
-//     return P;
-// }
+    if ( access_op == "." ) {
+        if ( ( pe->exp_type->type_tag == STRUCT_TYPE || pe->exp_type->type_tag == UNION_TYPE ) ) {
+            if ( pe->exp_type->struct_type == nullptr ) {
+                error_msg( "Not a struct");
+                P->prim_type= ERROR_T;
+                return P;
+            }
+            // whether id exists in Struct
+            int offset = pe->exp_type->struct_type->get_offset(id->name);
+            if ( offset == -1 ) {
+                // Error
+                error_msg( id->name + " is not a member of " + typeName(pe->exp_type->type_tag),
+                           line_num, column );
+                P->prim_type= ERROR_T;
+                return P;
+            } else {
+                P->exp_type = pe->exp_type->struct_type->get_member_type(id->name);
+                if(P->exp_type->type_tag==STANDARD_TYPE){
+                    P->prim_type=getPrimitiveType(P->exp_type->standard_type->name);
+                }
+            }
+            std::string new_temp=TAC::get_temp();
+            TAC::print_tac(new_temp + " = " + pe->name + " + " +  std::to_string(offset));
+            P->name= " *" + new_temp;
+            // TAC::print_tac(" *"+temp1 + " = " + pe->name + " + " std::to_string(offset));
+
+        } else {
+            error_msg( "Invalid operand . with type " + typeName(pe->exp_type->type_tag), line_num,column );
+            P->prim_type= ERROR_T;
+            return P;
+        }
+    }
+    // else if ( access_op == "->" ) {
+    //     if ( ( peT.getType() == "Struct" || peT.getType() == "Union" ) && pe->prim_type.pointer_type->ptr_level == 1 ) {
+    //         if ( peT.struct_type == nullptr ) {
+    //             error_msg( id->value + " is not a member of " + peT.getType(),
+    //                        id->line_num, id->column );
+    //             P->prim_type= ERROR_T;
+    //             return P;
+    //         }
+    //         // whether i exists in Struct*
+    //         GlobalType iType = *peT.union_type->definition->get_member( id );
+    //         if ( iType==nullptr ) {
+    //             // Error
+    //             error_msg( id->value + " is not a member of " + peT.getType(),
+    //                        id->line_num, id->column );
+    //             P->prim_type= ERROR_T;
+    //             return P;
+    //         } else {
+    //             P->prim_type = iType;
+    //         }
+    //     } else {
+    //         error_msg( "Invalid operand -> with type " + pe->exp_type->type_tag,
+    //                    id->line_num, id->column );
+    //         P->prim_type= ERROR_T;
+    //         return P;
+    //     }
+    // }
+
+    // P->add_children({pe, id});
+    return P;
+}
 
 Expression* create_postfix_expr_ido(std::string op, Expression* pe) {
     pe = prim_to_type(pe);

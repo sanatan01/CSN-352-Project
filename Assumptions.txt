@@ -18,13 +18,29 @@ if (cond) {
 
 }
 
-if !cond goto nextLabel
+
+switch-case
+
+switch () {
+    case:
+        break
+    case:
+        break
+}
 
 
 
-Nextlabel;
-if !cond goto NextLable1
+store each case's label
 
+if cond==case1 goto L1
+if cond==case2 goto L2
+L1:
+
+gotoLend
+L2:
+
+gotoLend
+Lend:
 
 
 NextLabel1:
