@@ -53,7 +53,7 @@ extern std::unordered_map<std::string, PrimitiveTypes> type_map;
 class Expression {
 public:
   int num_operands;
-
+  bool is_assignable;
   class GlobalType* exp_type;
   int prim_type;
 
@@ -89,16 +89,16 @@ Expression* create_expression(ExpressionOpType op_type, std::string op, VectorEx
 Expression* create_primary_expression(int typ, std::string name);
 
 
-// --------------------------------------------------------------------------------------------
-class ArgumentExprList: public Expression {
-public:
-  std::vector <Expression* > args;
-  ArgumentExprList() ;
-};
+// // --------------------------------------------------------------------------------------------
+// class ArgumentExprList: public Expression {
+// public:
+//   std::vector <Expression* > args;
+//   ArgumentExprList() ;
+// };
 
-// Grammar warppers for ArguementExpressionList
-ArgumentExprList* create_argument_expr_assignement(Expression* ase);
-ArgumentExprList* create_argument_expr_list(ArgumentExprList* ae_list, Expression* ase);
+// // Grammar warppers for ArguementExpressionList
+// ArgumentExprList* create_argument_expr_assignement(Expression* ase);
+// ArgumentExprList* create_argument_expr_list(ArgumentExprList* ae_list, Expression* ase);
 
 // --------------------------------------------------------------------------------------------
 
@@ -165,7 +165,7 @@ public:
   PostfixExpression* pe;
   Expression* exp;
   Identifier* id;
-  ArgumentExprList* ae_list;
+  VectorExpression* ae_list;
   std::string op;
 
   PostfixExpression(): Expression(PrimitiveTypes(ERROR_T), 0) {
@@ -180,7 +180,7 @@ public:
 // Grammar for PostfixExpression
 Expression* create_postfix_expr_arr(Expression* pe, Expression* exp);
 Expression* create_postfix_expr_voidfun(Identifier* fi);
-Expression* create_postfix_expr_fun(Identifier* fi, ArgumentExprList* ae);
+Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae);
 Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Identifier* id);
 Expression* create_postfix_expr_ido(std::string  op, Expression* pe);
 

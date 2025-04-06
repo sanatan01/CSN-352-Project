@@ -26,7 +26,7 @@ void yyerror(const char *s);
     char *nice;
  	class Expression* expression;
 // 	PrimaryExpression* primary_expression;
-// 	ArguemmentExpressionList* argument_expression_list;
+	class VectorExpression* argument_expression_list;
 // 	UnaryExpression* unary_expression;
 // 	CastExpression* cast_expression;
 // 	PostfixExpression* postfix_expression;
@@ -107,7 +107,7 @@ void yyerror(const char *s);
 %type<expression> postfix_expression
 %type<expression> primary_expression
 %type<expression> expression_statement
-// %type<argument_expression_list> argument_expression_list
+%type<vector_expression> argument_expression_list
 // %type<expression> constant_expression
 
 %type<nice> empty_expression
@@ -189,7 +189,7 @@ primary_expression
  	: IDENTIFIER							{ $$ = create_expression_simple(IDENTIFIER_ET, std::string($1)); }
  	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
 // 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
-// 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
+	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
  	;
 
 // /* Postfix expressions */
@@ -198,17 +198,26 @@ postfix_expression
     | postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( "++", $1); } 
  	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( "--", $1); } 
  	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
+    | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{
+		$$ = create_postfix_expr_fun (new Identifier($1), $3); 
+	}
  	// | IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
- 	// | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{ $$ = create_postfix_expr_fun ($1, $3); }
  	// | postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
  	// | postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
  	;
 
 // /* Argument expression list for function calls */
-// argument_expression_list
-// 	: assignment_expression 								{ $$ = create_argument_expr_assignement($1); }
-// 	| argument_expression_list COMMA assignment_expression 	{ $$ = create_argument_expr_list($1, $3); }
-// 	;
+ argument_expression_list
+ 	: assignment_expression 								{ 
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($1);
+		$$ = ve; 
+	}
+ 	| argument_expression_list COMMA assignment_expression 	{ 
+		$$=$1;
+		$$->add_element($3); 
+	}
+ 	;
 
 // /* Unary expressions */
 unary_expression
@@ -234,11 +243,11 @@ unary_expression
  		ve->add_element(expr);
  		$$ = create_expression(UNARY, "sizeof", ve); 
 	}
- 	// | unary_operator cast_expression 			{ 
-	// 	VectorExpression* ve = new VectorExpression();
- 	// 	ve->add_element($2);
- 	// 	$$ = create_expression(UNARY, std::string($1), ve); 
-	// }
+ 	| unary_operator cast_expression 			{ 
+		VectorExpression* ve = new VectorExpression();
+ 		ve->add_element($2);
+ 		$$ = create_expression(UNARY, std::string($1), ve); 
+	}
  	;
 
 unary_operator

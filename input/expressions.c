@@ -1,3 +1,7 @@
+int add(int a, char b){
+    a+b;
+}
+
 int main() {
     // Basic arithmetic expressions
 
@@ -5,52 +9,63 @@ int main() {
 
     a = 5;
     b = 3;
-    // c = a + b;
-    // d = a - b;
-    // e = a * b;
-    // f = a / b;
-    // g = a % b;
-    // g = a + b * c - d / e;
+    c = a + b;
+    d = a - b;
+    e = a * b;
+    f = a / b;
+    g = a % b;
+    g = a + b * c - d / e;
 
-    // int bw_and, bw_or, bw_xor, bw_not, shift_left, shift_right;
+    int bw_and, bw_or, bw_xor, bw_not, shift_left, shift_right;
     
-    // // Bitwise expressions
-    // bw_and = a & b;    // bitwise AND
-    // bw_or = a | b;    // bitwise OR
-    // bw_xor = a ^ b;    // bitwise XOR
-    // // bw_not = ~a;       // bitwise NOT
-    // shift_left = a << 2;
-    // shift_right = a >> 1;
+    // Bitwise expressions
+    bw_and = a & b;    // bitwise AND
+    bw_or = a | b;    // bitwise OR
+    bw_xor = a ^ b;    // bitwise XOR
+    // bw_not = ~a;       // bitwise NOT
+    shift_left = a << 2;
+    shift_right = a >> 1;
 
-    // int logic_and, logic_or, logic_not;
+    int logic_and, logic_or, logic_not;
 
-    // // Logical expressions
-    // logic_and = (a > b) && (b > 0);
-    // logic_or = (a < b) || (b < 0);
-    // logic_not = (a == b);
+    // Logical expressions
+    logic_and = (a > b) && (b > 0);
+    logic_or = (a < b) || (b < 0);
+    logic_not = (a == b);
 
-    // int eq, neq, lt, gt, le, ge;
+    int eq, neq, lt, gt, le, ge;
 
-    // // Relational expressions
-    // eq = (a == b);
-    // neq = (a != b);
-    // lt = (a < b);
-    // gt = (a > b);
-    // le = (a <= b);
-    // ge = (a >= b);
+    // Relational expressions
+    eq = (a == b);
+    neq = (a != b);
+    lt = (a < b);
+    gt = (a > b);
+    le = (a <= b);
+    ge = (a >= b);
 
     // // Assignment expressions and compound assignments
     long long x;
     x = a;
-    // x += b;
-    // x -= b;
-    // x *= a;
-    // x /= 2;
+    x += b;
+    x -= b;
+    x *= a;
+    x /= 2;
 
     // Conditional (ternary) operator
     int cond;
     cond = (a > b) ? a : b;
     cond = (a > b) ? a : x;
+
+    int za;
+    int* zb;
+    // zb=10;
+    // za = *&zb;
+    // -zb=5;
+
+    int res;
+    // res=a(za,zb);
+    a=res++;
+    // za[0] = 1;
 
     // // Pointer expressions
     // int arr[10];
@@ -93,5 +108,7 @@ int main() {
     // // Combination of logical and bitwise expressions
     // int mix;
     // mix = ((a & b) || (a ^ b)) ? 1 : 0;
+
+
 
 }
