@@ -1135,11 +1135,11 @@ function_declaration
 	;
 
 function_definition
- 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); TAC::create_function_definition(std::string($1->name)); } compound_statement { 
+ 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); SymbolTable::add_symbol($1); TAC::create_function_definition(std::string($1->name)); } compound_statement { 
  		$$ = $1;
 		$$->type->setDefined();
 		SymbolTable::exit_scope();
- 		SymbolTable::add_symbol($$);
+
  	}
 	; 
 

@@ -1,5 +1,11 @@
-int add(int a, char b){
-    a+b;
+int add(int a, int b){
+    if(a==0){
+        // Teri maa kaaa
+    }
+    else{
+        // Not teri maa kaaa
+    }
+    add(a+1,b);
 }
 
 int main() {
@@ -57,14 +63,16 @@ int main() {
     cond = (a > b) ? a : x;
 
     int za;
-    int* zb;
+    int zb;
     // zb=10;
     // za = *&zb;
     // -zb=5;
 
     int res;
-    // res=a(za,zb);
-    a=res++;
+    res=add(za,zb);
+    // a=res++;
+    // int* bf;
+    // bf= &a;
     // za[0] = 1;
 
     // // Pointer expressions

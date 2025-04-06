@@ -293,7 +293,7 @@ Expression* multiplicative_expression(OpExpression* oe) {
 Expression* additive_expression(OpExpression* oe) {
     PrimitiveTypes op1Type = PrimitiveTypes(oe->op1.prim_type);
     PrimitiveTypes op2Type = PrimitiveTypes(oe->op2.prim_type);
-    if (oe->op2.exp_type->type_tag == STANDARD_TYPE && oe->op1.exp_type->type_tag == STANDARD_TYPE && isInvalid({ op1Type, op2Type })) {
+    if ( (op1Type == ERROR_T && op2Type != ERROR_T )|| (op2Type == ERROR_T && op1Type != ERROR_T)) {
         error_msg("Invalid types for addition/subtraction " + oe->op, line_num, column);
         oe->prim_type = PrimitiveTypes(ERROR_T);
         return oe;
@@ -303,7 +303,7 @@ Expression* additive_expression(OpExpression* oe) {
 
         oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
         PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
-        make_unsigned(tmp);
+        make_signed(tmp);
         oe->prim_type = tmp;
     }
     else if (isFloat(op1Type) && isFloat(op2Type)) {
@@ -650,11 +650,12 @@ Expression* logical_or_expression(OpExpression* oe) {
 }
 
 bool isCompatiblePrim(PrimitiveTypes p1, PrimitiveTypes p2) {
-    if ((isInt(p1) || isFloat(p1)) && (isInt(p2) || isFloat(p2))) {
-        return true;
-    }
+    std::cerr << "Comparing " << typeName(p1) << " and " << typeName(p2) << std::endl;
     if (p1 == ERROR_T || p2 == ERROR_T) {
         return false;
+    }
+    if ((isInt(p1) || isFloat(p1)) && (isInt(p2) || isFloat(p2))) {
+        return true;
     }
     return p1 == p2;
 }
@@ -1155,13 +1156,23 @@ Expression *create_postfix_expr_fun( Identifier *fi, VectorExpression *ae )
     } else if ( ste->identifier.type->function_type->args.identifiers.size()  == ae->operands.size() ) {
         int i = 0;
         for (auto &itr: ste->identifier.type->function_type->args.identifiers) {
-            if ( itr.type->type_tag == NONE ) {
-                error_msg( "Invalid type for argument " + std::to_string( i ) +
-                               " of function '" + fi->name + "'." );
+            if(itr.type->type_tag == STANDARD_TYPE && ae->operands[i].prim_type!=ERROR_T) {
+                if(!isCompatiblePrim(getPrimitiveType(itr.type->standard_type->name), PrimitiveTypes(ae->operands[i].prim_type))) {
+                    error_msg( "Type mismatch at argument " + std::to_string( i ) +
+                               " of function '" + fi->name + "'. Expected " +
+                               itr.type->getType() + ", got " +
+                               typeName(ae->operands[i].exp_type->type_tag),
+                            line_num, column );
+                    P->prim_type= ERROR_T;
+                    return P;
+
+                }
+            }else if(ae->operands[i].exp_type==NULL){
+                error_msg( "No argument type received from function call" );
                 P->prim_type= ERROR_T;
                 return P;
             }
-            if ( !( isCompatible(itr.type,ae->operands[i].exp_type) ) ) {
+            else if( !( isCompatible(itr.type, ae->operands[i].exp_type) ) ) {
                 error_msg( "Type mismatch at argument " + std::to_string( i ) +
                                " of function '" + fi->name + "'. Expected " +
                                itr.type->getType() + ", got " +
