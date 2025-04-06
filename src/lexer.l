@@ -79,7 +79,7 @@ UNTERMINATED_STRING   L?\"([^"\\\n]|\\.)*$
 "void"      { displayLexer(VOID, yytext);      yylval.nice = strdup(getTokenName(VOID));      yycolumn += yyleng; return VOID; }
 "volatile"  { displayLexer(VOLATILE, yytext);  yylval.nice = strdup(getTokenName(VOLATILE));  yycolumn += yyleng; return VOLATILE; }
 "while"     { displayLexer(WHILE, yytext);     yylval.nice = strdup(getTokenName(WHILE));     yycolumn += yyleng; return WHILE; }
-
+"bool"      { displayLexer(BOOL, yytext);     yylval.nice = strdup(getTokenName(BOOL));     yycolumn += yyleng; return BOOL; }
 
 {L}({L}|{D})* {
     displayLexer(IDENTIFIER, yytext);

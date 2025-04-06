@@ -59,6 +59,10 @@ int main() {
     f = a / b;
     g = a % b;
     g = a + b * c - d / e;
+
+    int kyun = 5;
+    int *kyu = &kyun;
+
     
     // Bitwise expressions
     int bw_and = a & b;    // bitwise AND

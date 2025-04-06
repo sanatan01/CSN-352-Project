@@ -48,7 +48,7 @@ int test_count = 0;
 %token<nice> ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 
 %token<nice> TYPEDEF EXTERN STATIC AUTO REGISTER
-%token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
+%token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID BOOL
 %token<nice> STRUCT UNION ENUM ELLIPSIS
 
 %token<nice> SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON 
@@ -101,6 +101,7 @@ int test_count = 0;
 %type<nice> assignment_operator
 %type<nice> unary_operator
 %type<global_type> declaration_specifiers
+%type<vector_identifiers> empty_init_declarator_list
 %type<vector_identifiers> init_declarator_list
 %type<identifier> init_declarator
 %type<specifiers> storage_class_specifier
@@ -478,34 +479,35 @@ unsigned_constant_expression
 	}
 	;
 
+empty_init_declarator_list
+	: SEMICOLON { std::cerr << "Empty called" ;$$ = new VectorIdentifiers(); }
+	| init_declarator_list SEMICOLON {
+		std::cerr << "Full called";
+		$$ = $1;
+	}
+
+
 // /* Declarations */
 declaration
- 	: { TAC::dump_to_file(); } declaration_specifiers init_declarator_list SEMICOLON {
-		/* Use the variable name from init_declarator */
-		for(auto &element : $3->identifiers) {
-			// if (element.type->type_tag == FUNCTION_TYPE) {
-			// 	if (element.type->function_type->return_type != NULL && element.type->function_type->return_type->type_tag == POINTER_TYPE) {
-			// 		element.type->function_type->return_type->pointer_type->return_type = $2;
-			// 		element.type->function_type->return_type->pointer_type->specifiers = combine_specs(element.type->function_type->return_type->pointer_type->specifiers, $2->getSpecifiers());
-			// 	} else {
-			// 		element.type->function_type->return_type = $2;
-			// 	}
-			// } else if (element.type->type_tag == NONE) {
-			// 	element.type = $2;
-			// } else if (element.type->type_tag == POINTER_TYPE) {
-			// 	element.type->pointer_type->return_type = $2;
-			// 	element.type->pointer_type->specifiers = combine_specs(element.type->pointer_type->specifiers, $2->getSpecifiers());
-			// } else if (element.type->type_tag == ARRAY_TYPE) {
-			// 	element.type->array_type->return_type = $2;
-			// 	element.type->array_type->specifiers = combine_specs(element.type->array_type->specifiers, $2->getSpecifiers());
-			// } else {
-			// 	std::cerr << "Cannot create a type for the following identifier" << std::endl;
-			// }
-			element.type = combine_global_type($2, element.type);
+	: { TAC::dump_to_file(); } declaration_specifiers empty_init_declarator_list {
+
+		bool is_err = false;
+		if ($2->type_tag == STRUCT_TYPE || $2->type_tag == UNION_TYPE || $2->type_tag == ENUM_TYPE ){
+			class GlobalType* temp = SymbolTable::get_global_type($2);
+			if(temp == NULL){
+				is_err = true;
+			}
+			if (!is_err) $2 = temp;
 		}
-		$$=$3;
-		SymbolTable::add_symbols($$);
- 	  }
+
+		if (!is_err) {
+			for(auto &element : $3->identifiers) {
+				element.type = combine_global_type($2, element.type);
+			}
+			$$=$3;
+			SymbolTable::add_symbols($$);
+		}
+	}
 	;
 
 declaration_specifiers
@@ -588,6 +590,9 @@ type_specifier
 	| SIGNED		{ $$ = create_primitive_type(INT_T); }
 	| VOID     		{ $$ = create_primitive_type(VOID_T); }
 	| CHAR     		{ $$ = create_primitive_type(CHAR_T); }
+	| BOOL			{ $$ = create_primitive_type(BOOL_T); }
+	| UNSIGNED INT 	{ $$ = create_primitive_type(U_INT_T); }
+	| SIGNED INT 	{ $$ = create_primitive_type(INT_T); }
 	| SIGNED CHAR     		{ $$ = create_primitive_type(CHAR_T); }
 	| UNSIGNED CHAR     		{ $$ = create_primitive_type(U_CHAR_T); }
 	| SHORT    		{ $$ = create_primitive_type(SHORT_T); }
@@ -631,14 +636,14 @@ type_specifier
 
 // /* Struct and union specifiers */
 struct_specifier
-  	: STRUCT IDENTIFIER { $$ = new Struct(std::string($2)); }
+  	: STRUCT IDENTIFIER { $$ = new Struct(std::string($2)); $$->is_defined = false; }
  	| STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(std::string($2), $4); $$->is_defined = true; }
  	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct($3); $$->is_defined = true; }
 
  	;
 
  union_specifier
-  	: UNION IDENTIFIER { $$ = new Union(std::string($2)); }
+  	: UNION IDENTIFIER { $$ = new Union(std::string($2)); $$->is_defined = false; }
  	| UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), $4); $$->is_defined = true; }
  	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union($3); $$->is_defined = true; }
  	;
@@ -701,12 +706,15 @@ struct_declaration
  enum_specifier
  	: ENUM LEFT_BRACE enumerator_list RIGHT_BRACE {
  		$$ = new EnumType($3);
+		$$->is_defined = false;
  	}
  	| ENUM IDENTIFIER LEFT_BRACE enumerator_list RIGHT_BRACE{
  		$$ = new EnumType(std::string($2),$4);
+		$$->is_defined = true;
  	}
  	| ENUM IDENTIFIER{
  		$$ = new EnumType(std::string($2));
+		$$->is_defined = true;
  	}
  	;
 

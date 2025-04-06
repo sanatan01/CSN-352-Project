@@ -94,6 +94,7 @@ static inline const char* getTokenName(int token) {
     case INVALID_CHAR:      return "INVALID_CHAR";
     case INVALID_OCT:       return "INVALID_OCT";
     case UNTERM_STRING:     return "UNTERM_STRING";
+    case BOOL:              return "BOOL";
     default:                return "UNKNOWN";
     }
 }

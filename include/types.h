@@ -243,7 +243,6 @@ public:
 	enum GlobalTypeTag type_tag;
 
 	GlobalType();
-	~GlobalType();
 
 	std::string getType() const;
 	size_t getSize() const;

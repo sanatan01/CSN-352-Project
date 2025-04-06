@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <types.h>
+#include <expression.h>
 #include <unordered_map>
 #include <iostream>
 #include <iomanip>
@@ -34,9 +35,9 @@ public:
 	int current_scope = 0;
 	bool is_defined = false;
 
-	UserDefinedType(class Struct struct_type);
-	UserDefinedType(class Union union_Type);
-	UserDefinedType(class EnumType enum_type);
+	UserDefinedType(class Struct* struct_type, int scope_level);
+	UserDefinedType(class Union* union_Type, int scope_level);
+	UserDefinedType(class EnumType* enum_type, int scope_level);
 };
 
 // A static symbol table to store and manage symbols
@@ -44,6 +45,7 @@ class SymbolTable {
 private:
 	static std::unordered_map<std::string, std::vector<Symbol> > symbol_map;
 	static int current_scope_level;
+	static std::vector<UserDefinedType> udt;
 
 public:
 	// Prevent instantiation
@@ -59,4 +61,9 @@ public:
 	static Symbol* get_symbol(const std::string& identifier);
 	static void print_symbol(Symbol symbol);
 	static void initialize_built_ins();
+
+	static void add_udt(class GlobalType* type);
+	static void decrement_scope();
+	static class GlobalType* get_global_type(class GlobalType* global_type);
+	static void print_udt();
 };
