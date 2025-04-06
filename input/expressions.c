@@ -41,33 +41,27 @@ int main() {
     f = a / b;
     g = a % b;
     g = a + b * c - d / e;
-
-    int bw_and, bw_or, bw_xor, bw_not, shift_left, shift_right;
     
     // Bitwise expressions
-    bw_and = a & b;    // bitwise AND
-    bw_or = a | b;    // bitwise OR
-    bw_xor = a ^ b;    // bitwise XOR
+    int bw_and = a & b;    // bitwise AND
+    int bw_or = a | b;    // bitwise OR
+    int bw_xor = a ^ b;    // bitwise XOR
     // bw_not = ~a;       // bitwise NOT
-    shift_left = a << 2;
-    shift_right = a >> 1;
-
-    int logic_and, logic_or, logic_not;
+    int shift_left = a << 2;
+    int shift_right = a >> 1;
 
     // Logical expressions
-    logic_and = (a > b) && (b > 0);
-    logic_or = (a < b) || (b < 0);
-    logic_not = (a == b);
-
-    int eq, neq, lt, gt, le, ge;
+    int logic_and = (a > b) && (b > 0);
+    int logic_or = (a < b) || (b < 0);
+    int logic_not = (a == b);
 
     // Relational expressions
-    eq = (a == b);
-    neq = (a != b);
-    lt = (a < b);
-    gt = (a > b);
-    le = (a <= b);
-    ge = (a >= b);
+    int eq = (a == b);
+    int neq = (a != b);
+    int lt = (a < b);
+    int gt = (a > b);
+    int le = (a <= b);
+    int ge = (a >= b);
 
     // // Assignment expressions and compound assignments
     long long x;

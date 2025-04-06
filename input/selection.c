@@ -1,9 +1,11 @@
 int main() {
     // Basic arithmetic expressions
-    int a;
-    int b;
-    a = 5;
-    b = 10; 
+    int a = 5;
+    int b = 10;
+
+    int *c = &a;
+
+    int d = c;
     
     if (a > b) {
         a=10;

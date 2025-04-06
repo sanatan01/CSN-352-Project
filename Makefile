@@ -29,16 +29,16 @@ clean:
 
 build: $(BISON_OUT) $(FLEX_OUT)
 	@echo "Compiling the generated C files with g++..."
-	g++ -o $(EXECUTABLE) --std=c++17 $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
+	g++ -o $(EXECUTABLE) --std=c++17 -w $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
 
 $(BISON_OUT) $(BISON_HDR_TMP): $(BISON_SRC)
 	@echo "Compiling $(BISON_SRC) with bison..."
-	bison -d -o $(BISON_OUT) $(BISON_SRC) 
+	bison -Wnone -d -o $(BISON_OUT) $(BISON_SRC) 
 	@mv $(BISON_HDR_TMP) $(BISON_HDR)
 
 $(FLEX_OUT): $(FLEX_SRC)
 	@echo "Compiling $(FLEX_SRC) with flex..."
-	flex -o $(FLEX_OUT) $(FLEX_SRC)
+	flex --nowarn -o $(FLEX_OUT) $(FLEX_SRC)
 
 run:
 	@echo "Running test cases from $(INPUT_DIR) and saving results to $(OUTPUT_DIR)..."

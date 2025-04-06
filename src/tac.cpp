@@ -49,6 +49,11 @@ void TAC::get_from_temp() {
     tac_temp_stream.clear(); 
 }
 
+void TAC::clear_stream() {
+    tac_stream.str(""); // Clear the stream
+    tac_stream.clear(); // Reset the stream state
+}
+
 void TAC::add_label(Case labelCase) {
     switch (labelCase)
     {

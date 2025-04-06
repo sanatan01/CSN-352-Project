@@ -202,3 +202,4 @@ Expression* create_postfix_expr_ido(std::string  op, Expression* pe);
 //Constant* create_constant(const char* name, const char* value, unsigned int line_num, unsigned int column);
 
 Expression *create_assignment_expression(OpExpression *oe, Node *n_op);
+bool isCompatible(class GlobalType *left, class GlobalType *right);

@@ -34,6 +34,7 @@ public:
     static void dump_to_file();
     static void dump_to_temp();
     static void get_from_temp();
+    static void clear_stream();
     static void print_tac(std::string str);
     static void print_tac(std::string result, std::string op1, std::string op, std::string op2);
     

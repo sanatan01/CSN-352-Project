@@ -5,34 +5,21 @@
 #include <expression.h>
 #include <tac.h>
 
-// #include <statementh>
-// #include <ast.h>
-// #include <3ach>
-
 void yyerror(const char *s);
- extern int yylex();
- extern int yylineno;
- extern FILE *yyin;
- int test_count = 0;
-// // Global variable to hold the current type for declaration
-// char *currentType = NULL;
-// int grammarErrorCount = 0;
- %}
+extern int yylex();
+extern int yylineno;
+extern FILE *yyin;
+int test_count = 0;
 
- %define parse.error verbose
+%}
 
- %union {
-// 	Terminal* terminal;
+%define parse.error verbose
+
+%union {
     char *nice;
  	class Expression* expression;
-// 	PrimaryExpression* primary_expression;
 	class VectorExpression* argument_expression_list;
-// 	UnaryExpression* unary_expression;
-// 	CastExpression* cast_expression;
-// 	PostfixExpression* postfix_expression;
-// 	OpExpression* op_expression;
  	class Identifier* identifier;
-// 	Constant* constant;
 // 	StringLiteral* string_literal;
  	class GlobalType* global_type;
  	class PointerType* pointer_type;
@@ -46,48 +33,44 @@ void yyerror(const char *s);
  	class VectorIdentifiers* vector_identifiers;
  	class StructElement* struct_element;
  	class VectorExpression* vector_expression;
-// 	FunctionType* function_type;
-// 	ArrayType* array_type;
- }
+}
 
 
 
- %token<nice> IDENTIFIER
- %token<nice> CONSTANT_LITERAL
- %token<nice> STRING_LITERAL
- %token<nice> SIZEOF
- %token<nice> PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
- %token<nice> AND_OP OR_OP
- %token<nice> TYPE_NAME
- %token<nice> ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
+%token<nice> IDENTIFIER
+%token<nice> CONSTANT_LITERAL
+%token<nice> STRING_LITERAL
+%token<nice> SIZEOF
+%token<nice> PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
+%token<nice> AND_OP OR_OP
+%token<nice> TYPE_NAME
+%token<nice> ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 
- %token<nice> TYPEDEF EXTERN STATIC AUTO REGISTER
- %token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
- %token<nice> STRUCT UNION ENUM ELLIPSIS
+%token<nice> TYPEDEF EXTERN STATIC AUTO REGISTER
+%token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
+%token<nice> STRUCT UNION ENUM ELLIPSIS
 
- %token<nice> SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON 
- %token<nice> LEFT_PAREN RIGHT_PAREN LEFT_BRACKET RIGHT_BRACKET DOT AMPERSAND EXCLAMATION 
- %token<nice> TILDE MINUS PLUS ASTERISK SLASH PERCENT LESS_THAN GREATER_THAN CARET PIPE QUESTION
+%token<nice> SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON 
+%token<nice> LEFT_PAREN RIGHT_PAREN LEFT_BRACKET RIGHT_BRACKET DOT AMPERSAND EXCLAMATION 
+%token<nice> TILDE MINUS PLUS ASTERISK SLASH PERCENT LESS_THAN GREATER_THAN CARET PIPE QUESTION
 
- %token<nice> INVALID_ID INVALID_CHAR INVALID_OCT UNTERM_STRING
+%token<nice> INVALID_ID INVALID_CHAR INVALID_OCT UNTERM_STRING
 
- %token<nice> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
+%token<nice> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
- %token<nice> ERROR
+%token<nice> ERROR
 
- %start translation_unit
+%start translation_unit
 
-// /* %type<array_type> array_declaration */
- %type<nice> translation_unit
- %type<nice> external_declaration
- //%type<identifier> function_identifier
- %type<identifier> function_definition
- %type<identifier> function_declaration
- %type<vector_identifiers> declaration
- %type<vector_identifiers> declaration_list
- %type<nice> statement
- %type<nice> statement_list
- %type<nice> all_statements
+%type<nice> translation_unit
+%type<nice> external_declaration
+%type<identifier> function_definition
+%type<identifier> function_declaration
+%type<vector_identifiers> declaration
+%type<vector_identifiers> declaration_list
+%type<nice> statement
+%type<nice> statement_list
+%type<nice> all_statements
 
 %type<expression> expression
 %type<expression> assignment_expression
@@ -108,7 +91,8 @@ void yyerror(const char *s);
 %type<expression> primary_expression
 %type<expression> expression_statement
 %type<vector_expression> argument_expression_list
-// %type<expression> constant_expression
+%type<nice> unsigned_constant_expression
+%type<nice> signed_constant_expression
 
 %type<nice> empty_expression
 %type<nice> init_clause
@@ -154,7 +138,7 @@ void yyerror(const char *s);
 %type<nice> error_statement_closed
 %type<nice> error_statement_open
 
- %%
+%%
 
 // /* Handling multiple errors */
 // error_statement_open
@@ -468,40 +452,41 @@ expression
  	// }
  	;
 
-// constant_expression
-// 	: conditional_expression { $$ = $1; }
-// 	;
+// TODO: add support for constant expressions, make checks for type
+signed_constant_expression
+	: conditional_expression { $$ = strdup($1->name.c_str()); }
+	;
+	
+unsigned_constant_expression
+	: conditional_expression { $$ = strdup($1->name.c_str()); }
+	;
 
 // /* Declarations */
 declaration
- 	: declaration_specifiers SEMICOLON {
- 		  $$ = new VectorIdentifiers();
- 		  $$->add_identifier(new Identifier($1));
- 		  SymbolTable::add_symbols($$);
- 	  }
- 	| declaration_specifiers init_declarator_list SEMICOLON {
+ 	: { TAC::dump_to_file(); } declaration_specifiers init_declarator_list SEMICOLON {
 		/* Use the variable name from init_declarator */
-		for(auto &element : $2->identifiers) {
-			if (element.type->type_tag == FUNCTION_TYPE) {
-				if (element.type->function_type->return_type != NULL && element.type->function_type->return_type->type_tag == POINTER_TYPE) {
-					element.type->function_type->return_type->pointer_type->return_type = $1;
-					element.type->function_type->return_type->pointer_type->specifiers = combine_specs(element.type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
-				} else {
-					element.type->function_type->return_type = $1;
-				}
-			} else if (element.type->type_tag == NONE) {
-				element.type = $1;
-			} else if (element.type->type_tag == POINTER_TYPE) {
-				element.type->pointer_type->return_type = $1;
-				element.type->pointer_type->specifiers = combine_specs(element.type->pointer_type->specifiers, $1->getSpecifiers());
-			} else if (element.type->type_tag == ARRAY_TYPE) {
-				element.type->array_type->return_type = $1;
-				element.type->array_type->specifiers = combine_specs(element.type->array_type->specifiers, $1->getSpecifiers());
-			} else {
-				std::cerr << "Cannot create a type for the following identifier" << std::endl;
-			}
+		for(auto &element : $3->identifiers) {
+			// if (element.type->type_tag == FUNCTION_TYPE) {
+			// 	if (element.type->function_type->return_type != NULL && element.type->function_type->return_type->type_tag == POINTER_TYPE) {
+			// 		element.type->function_type->return_type->pointer_type->return_type = $2;
+			// 		element.type->function_type->return_type->pointer_type->specifiers = combine_specs(element.type->function_type->return_type->pointer_type->specifiers, $2->getSpecifiers());
+			// 	} else {
+			// 		element.type->function_type->return_type = $2;
+			// 	}
+			// } else if (element.type->type_tag == NONE) {
+			// 	element.type = $2;
+			// } else if (element.type->type_tag == POINTER_TYPE) {
+			// 	element.type->pointer_type->return_type = $2;
+			// 	element.type->pointer_type->specifiers = combine_specs(element.type->pointer_type->specifiers, $2->getSpecifiers());
+			// } else if (element.type->type_tag == ARRAY_TYPE) {
+			// 	element.type->array_type->return_type = $2;
+			// 	element.type->array_type->specifiers = combine_specs(element.type->array_type->specifiers, $2->getSpecifiers());
+			// } else {
+			// 	std::cerr << "Cannot create a type for the following identifier" << std::endl;
+			// }
+			element.type = combine_global_type($2, element.type);
 		}
-		$$=$2;
+		$$=$3;
 		SymbolTable::add_symbols($$);
  	  }
 	;
@@ -519,25 +504,25 @@ qualifiers
 	;
 	
 
- init_declarator_list
- 	: init_declarator{
+init_declarator_list
+ 	: init_declarator {
  		$$ = new VectorIdentifiers();
  		$$->add_identifier($1);
  	}
- 	| init_declarator_list COMMA init_declarator{
+ 	| init_declarator_list COMMA init_declarator {
  		$$ = $1;
  		$$->add_identifier($3);
  	}
  	;
 
  init_declarator
- 	: declarator{
+ 	: declarator {
  		$$ = $1;
  	}
- 	/* | declarator ASSIGN initializer{
- 		// TODO: type checking
+ 	| declarator ASSIGN assignment_expression {
+		TAC::print_tac($1->name + " = " + $3->name);
  		$$ = $1;
- 	} */
+ 	}
  	;
 
  /* Storage classes */
@@ -659,11 +644,11 @@ struct_declaration
  	: declarator {
  		$$ = new StructElement($1, $1->type->getSize()); 
 	}
-	| COLON CONSTANT_LITERAL {
+	| COLON unsigned_constant_expression {
 		unsigned int value = convert_to_unsigned(std::string($2));
 		$$ = new StructElement(value);
 	}
-	| declarator COLON CONSTANT_LITERAL {
+	| declarator COLON unsigned_constant_expression {
 		unsigned int value = convert_to_unsigned(std::string($2));
 		$$ = new StructElement($1, value);
 	}
@@ -697,7 +682,7 @@ struct_declaration
  	: IDENTIFIER {
  		$$ = new EnumElement(std::string($1));
  	}
-	| IDENTIFIER ASSIGN CONSTANT_LITERAL {
+	| IDENTIFIER ASSIGN signed_constant_expression {
 		int value = convert_to_signed(std::string($3));
 		$$ = new EnumElement(std::string($1), value);
 	}
@@ -760,7 +745,7 @@ declarator
 			std::cerr << "Cannot create a function type for the following identifier" << std::endl;
 		}
 	}
-	| direct_declarator LEFT_BRACKET CONSTANT_LITERAL RIGHT_BRACKET {
+	| direct_declarator LEFT_BRACKET unsigned_constant_expression RIGHT_BRACKET {
 		unsigned int constant = convert_to_unsigned(std::string($3));
 		$$ = $1;
 		if ( $$->type->type_tag == NONE) {
@@ -972,7 +957,7 @@ direct_abstract_declarator
 			std::cerr << "Cannot create an array type for the following abstract declarator" << std::endl;
 		}
 	}
-	| direct_abstract_declarator LEFT_BRACKET CONSTANT_LITERAL RIGHT_BRACKET {
+	| direct_abstract_declarator LEFT_BRACKET unsigned_constant_expression RIGHT_BRACKET {
 		unsigned int constant = convert_to_unsigned(std::string($3));
 		$$ = $1;
 		if ( $$->type_tag == NONE) {
@@ -1018,7 +1003,7 @@ statement
  	;
 
 labeled_statement
-	: CASE CONSTANT_LITERAL COLON statement
+	: CASE signed_constant_expression COLON statement
 	| DEFAULT COLON statement
 	;
 
