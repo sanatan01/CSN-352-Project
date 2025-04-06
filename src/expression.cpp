@@ -29,7 +29,7 @@ void debug_msg(std::string msg, int line_num, int column)
 Expression::Expression(PrimitiveTypes type, int num_operands) : prim_type(static_cast<int>(type)), num_operands(num_operands), is_assignable(true), exp_type(create_primitive_type(type)) {};
 Expression::Expression() : prim_type(static_cast<int>(ERROR_T)), num_operands(0), is_assignable(true), exp_type(create_invalid_type("Invalid expression", line_num, column)) {};
 
-Expression::Expression(class GlobalType *type) : prim_type(static_cast<int>(ERROR_T)), num_operands(0), exp_type(type)
+Expression::Expression(class GlobalType *type) : prim_type(static_cast<int>(ERROR_T)), num_operands(0), exp_type(type), is_assignable(true)
 {
     if (type == nullptr)
     {
@@ -967,6 +967,7 @@ Expression *assignment_expression(OpExpression *oe)
             TAC::print_tac(oe->op1.name + " = " + oe->op2.name);
         }
         oe->name = oe->op1.name;
+        debug_msg("Assignment:  of type" + std::to_string(oe->prim_type) + "with operands" + oe->op1.name + " = " + oe->op2.name);
     }
     else if (oe->op == "+=" || oe->op == "-=")
     {
@@ -1164,7 +1165,7 @@ Expression *create_postfix_expr_arr(Expression *pe, Expression *exp)
     if (isInvalid({op2Type}))
     {
         P->prim_type = ERROR_T;
-        error_msg("Invalid types for array access", line_num, column);
+        error_msg("Invalid types for array access (ERROR_T)", line_num, column);
         return P;
     }
     if (!isInt(op2Type))
@@ -1176,10 +1177,11 @@ Expression *create_postfix_expr_arr(Expression *pe, Expression *exp)
 
     if (pe->exp_type == nullptr)
     {
-        error_msg("Array index must be of type integer", line_num);
+        error_msg("Array index must be of type integer, NULL expr found", line_num);
         P->prim_type = ERROR_T;
         return P;
     }
+    std::string temp1;
 
     if (pe->exp_type->type_tag == ARRAY_TYPE)
     {
@@ -1196,6 +1198,8 @@ Expression *create_postfix_expr_arr(Expression *pe, Expression *exp)
             P->exp_type->type_tag = STANDARD_TYPE;
             P->prim_type = getPrimitiveType(pe->exp_type->array_type->return_type->standard_type->name);
         }
+        temp1 = TAC::get_temp();
+        TAC::print_tac(temp1 + " = " + exp->name + " * " + std::to_string(pe->exp_type->array_type->return_type->getSize()));
         // oe->prim_type.is_const = false; //TODO: make it non-constant
     }
     else if (pe->exp_type->type_tag == POINTER_TYPE)
@@ -1212,6 +1216,8 @@ Expression *create_postfix_expr_arr(Expression *pe, Expression *exp)
             P->exp_type->type_tag = STANDARD_TYPE;
             P->prim_type = getPrimitiveType(pe->exp_type->pointer_type->return_type->standard_type->name);
         }
+        temp1 = TAC::get_temp();
+        TAC::print_tac(temp1 + " = " + exp->name + " * " + std::to_string(pe->exp_type->pointer_type->return_type->getSize()));
     }
     else
     {
@@ -1224,6 +1230,12 @@ Expression *create_postfix_expr_arr(Expression *pe, Expression *exp)
     // oe->add_children({pe, exp});
     // oe->line_num = line_num;
     // oe->column = column;
+
+    std::string temp2 = TAC::get_temp();
+    TAC::print_tac(temp2 + " = " + temp1);
+    std::string temp3 = TAC::get_temp();
+    TAC::print_tac(temp3 + " = " + pe->name + " + " + temp2);
+    P->name = "*" + temp3;
     return P;
 }
 
@@ -2085,10 +2097,21 @@ class Expression* prim_to_type(class Expression *expr)
         return new Expression();
     }
 
+    if(expr->prim_type == ERROR_T && expr->exp_type->standard_type != NULL){
+        expr->prim_type = getPrimitiveType(expr->exp_type->standard_type->name);
+        return expr;
+    }
+
     if (expr->prim_type != ERROR_T) {
         PrimitiveTypes temp = PrimitiveTypes(expr->prim_type);
         if (expr->exp_type == NULL) {
             expr->exp_type = create_primitive_type(temp);
+        }
+    }
+    else{
+        if(expr == NULL){
+            error_msg("Expression was NULL");
+            return new Expression();
         }
     }
 
