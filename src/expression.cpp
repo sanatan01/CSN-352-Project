@@ -1843,3 +1843,16 @@ Expression* create_expression(ExpressionOpType op_type, std::string op, VectorEx
     }
 }
 
+bool is_expr_signed(class Expression* expr) {
+    if (expr->prim_type == 5 || (expr->prim_type >= 0 && expr->prim_type < 4)) {
+        return true;
+    }
+    return false;
+}
+
+bool is_expr_unsigned(class Expression* expr) {
+    if (expr->prim_type == 0 || expr->prim_type == 2 || expr->prim_type == 4) {
+        return true;
+    }
+    return false;
+}

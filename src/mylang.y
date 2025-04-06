@@ -454,11 +454,26 @@ expression
 
 // TODO: add support for constant expressions, make checks for type
 signed_constant_expression
-	: conditional_expression { $$ = strdup($1->name.c_str()); }
+	: conditional_expression { 
+		if(is_expr_signed($1)) {
+			$$ = strdup($1->name.c_str());
+		} else {
+			std::cerr << "Error: signed constant expression expected" << std::endl;
+			$$ = NULL;
+		}
+		
+	}
 	;
-	
+
 unsigned_constant_expression
-	: conditional_expression { $$ = strdup($1->name.c_str()); }
+	: conditional_expression { 
+		if(is_expr_unsigned($1)) {
+			$$ = strdup($1->name.c_str());
+		} else {
+			std::cerr << "Error: unsigned constant expression expected" << std::endl;
+			$$ = NULL;
+		}
+	}
 	;
 
 // /* Declarations */

@@ -203,3 +203,6 @@ Expression* create_postfix_expr_ido(std::string  op, Expression* pe);
 
 Expression *create_assignment_expression(OpExpression *oe, Node *n_op);
 bool isCompatible(class GlobalType *left, class GlobalType *right);
+
+bool is_expr_signed(class Expression* expr);
+bool is_expr_unsigned(class Expression* expr);
