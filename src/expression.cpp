@@ -1148,23 +1148,23 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
             P->prim_type = ERROR_T;
             return P;
         }
-        int t=0;
-        for(auto& itr : ae->operands) {
-            if(t==0){
+        int t = 0;
+        for (auto& itr : ae->operands) {
+            if (t == 0) {
                 t++;
                 continue;
             }
             PrimitiveTypes temp_type = PrimitiveTypes(itr.prim_type);
-            if(!isInt(temp_type) && !isFloat(temp_type)) {
+            if (!isInt(temp_type) && !isFloat(temp_type)) {
                 error_msg("Invalid argument type for printf or scanf");
                 P->prim_type = ERROR_T;
                 return P;
             }
         }
-        int j=0;
-        for(auto& itr : ae->operands) {
+        int j = 0;
+        for (auto& itr : ae->operands) {
             TAC::print_tac("param " + ae->operands[j].name);
-            j++;   
+            j++;
         }
 
         P->prim_type = INT_T;
@@ -1173,7 +1173,7 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
         P->name = new_temp;
         return P;
     }
-    else if(ste->identifier.name == "scanf"){
+    else if (ste->identifier.name == "scanf") {
         // printf and scanf are special cases
         Expression* arg = &(ae->operands[0]);
         if (arg->exp_type->type_tag != POINTER_TYPE) {
@@ -1191,22 +1191,22 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
             P->prim_type = ERROR_T;
             return P;
         }
-        int t=0;
-        for(auto& itr : ae->operands) {
-            if(t==0){
+        int t = 0;
+        for (auto& itr : ae->operands) {
+            if (t == 0) {
                 t++;
                 continue;
             }
-            if((itr.exp_type->type_tag != POINTER_TYPE) || (itr.exp_type->pointer_type->ptr_level != 1) || (itr.exp_type->pointer_type->return_type->type_tag != STANDARD_TYPE)) {
+            if ((itr.exp_type->type_tag != POINTER_TYPE) || (itr.exp_type->pointer_type->ptr_level != 1) || (itr.exp_type->pointer_type->return_type->type_tag != STANDARD_TYPE)) {
                 error_msg("Invalid argument type for printf or scanf");
                 P->prim_type = ERROR_T;
                 return P;
             }
         }
-        int j=0;
-        for(auto& itr : ae->operands) {
+        int j = 0;
+        for (auto& itr : ae->operands) {
             TAC::print_tac("param " + ae->operands[j].name);
-            j++;   
+            j++;
         }
 
         P->prim_type = INT_T;
@@ -1389,10 +1389,14 @@ Expression* create_postfix_expr_ido(std::string op, Expression* pe) {
         TAC::dump_to_postfix();
 
     }
+    if (op == "--") {
 
-    else
-        P->name = "POST DECREMENT";
-
+        P->name = TAC::get_temp();
+        TAC::print_tac(P->name + " = " + pe->name);
+        TAC::dump_to_file();
+        TAC::print_tac(pe->name + " = " + P->name + " - 1");
+        TAC::dump_to_postfix();
+    }
     // std::string op_code = op.substr( 0, 1 );
 
     // Address *inc_value;

@@ -13,6 +13,10 @@ int main() {
         a = a + 1;
     } while (a < b);
 
+    do {
+        b++;
+    } while (a++);
+
     int z;
     int i;
     for(i=0; i < 10;){

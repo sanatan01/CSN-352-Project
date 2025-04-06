@@ -20,10 +20,6 @@ int main() {
     int fuck = 10*19;
 
     bool c;
-
-
-
-
 }
 
 

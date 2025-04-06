@@ -1113,12 +1113,12 @@ empty_expression
 	;
 
 iteration_statement
-	: WHILE INC_SCOPE { TAC::create_loop_statement(); TAC::dump_to_file(); } LEFT_PAREN expression { TAC::print_label(CONTINUE_C); TAC::print_goto_conditional($5, BREAK_C); } RIGHT_PAREN statement {
+	: WHILE INC_SCOPE { TAC::create_loop_statement(); TAC::dump_to_file(); TAC::print_label(CONTINUE_C); } LEFT_PAREN expression {  TAC::print_goto_conditional($5, BREAK_C); TAC::transfer_from_postfix(); } RIGHT_PAREN statement {
+		TAC::print_goto(CONTINUE_C, true);
 		TAC::remove_break_label();
-		TAC::remove_continue_label();
 		SymbolTable::exit_scope();
 	}
-	| DO INC_SCOPE {TAC::create_loop_statement(); TAC::print_label(CONTINUE_C); } statement WHILE LEFT_PAREN expression { TAC::print_goto_do_while($7); } RIGHT_PAREN SEMICOLON{
+	| DO INC_SCOPE {TAC::create_loop_statement(); TAC::print_label(CONTINUE_C); } statement WHILE LEFT_PAREN expression { TAC::transfer_from_postfix(); TAC::print_goto_do_while($7); } RIGHT_PAREN SEMICOLON{
 		TAC::remove_break_label();
 		TAC::remove_continue_label();
 		SymbolTable::exit_scope();

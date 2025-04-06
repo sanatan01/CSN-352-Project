@@ -345,7 +345,7 @@ std::string GlobalType::getType() const
     {
     case STANDARD_TYPE:
     {
-        return "1 " + standard_type->getSpecifierName();
+        return standard_type->getSpecifierName();
     }
     case STRUCT_TYPE:
         return struct_type->getSpecifierName();
@@ -374,7 +374,7 @@ std::string GlobalType::getType() const
         {
             st += "*";
         }
-        return "2 " + st + pointer_type->getSpecifierName() + pointer_type->return_type->getType();
+        return st + pointer_type->getSpecifierName() + pointer_type->return_type->getType();
     }
     case ENUM_TYPE:
         return enum_type->getSpecifierName();

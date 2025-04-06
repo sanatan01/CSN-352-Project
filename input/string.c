@@ -8,5 +8,11 @@ int main(){
         i+=1;
     }
 
+    while (i--) {
+        char c = 'f';
+    }
+
+    printf("%d\n", i);
+
     scanf("%d\n", &i);
 }
