@@ -10,11 +10,22 @@ int add(int a, int b){
     int i;
 }
 
-int foo(){
-    return 0;
+void foo(){
+     return foo();
+
+     int **a;
+
+     int *c = *a;
 }
 
+
+
 int main() {
+    int arr[5];
+
+    char * c = "hello";
+
+    arr[3]=5;
     // Basic arithmetic expressions
     int i;
     for(i = 0; i < 10; i +=1 ) {
@@ -27,7 +38,20 @@ int main() {
         }
     }
 
-    
+    for(i = 0; i < 10; i++ ) {
+        if(i == 5) {
+            i=6;
+            break;
+        }
+        else {
+            continue;
+        }
+    }
+
+    while(i == 0){
+        i += 2;
+    }
+
 
     return i;
 
@@ -41,6 +65,10 @@ int main() {
     f = a / b;
     g = a % b;
     g = a + b * c - d / e;
+
+    int kyun = 5;
+    int *kyu = &kyun;
+
     
     // Bitwise expressions
     int bw_and = a & b;    // bitwise AND
@@ -71,7 +99,7 @@ int main() {
     x *= a;
     x /= 2;
 
-    // Conditional (ternary) operator
+//    Conditional (ternary) operator
     int cond;
     cond = (a > b) ? a : b;
     cond = (a > b) ? a : x;
@@ -84,9 +112,10 @@ int main() {
 
     int res;
     res=add(za,zb);
-    // a=res++;
-    // int* bf;
-    // bf= &a;
+
+    a=res++;
+    int* bf;
+    bf= &a;
     // za[0] = 1;
 
     // // Pointer expressions
@@ -97,40 +126,57 @@ int main() {
     // int ptr_diff;
     // ptr_diff = p - arr;
 
-    // // Unary expressions
-    // int pre_inc, post_dec;
-    // pre_inc = ++a;
-    // post_dec = b--;
+    // Unary expressions
+    int pre_inc, post_dec;
+    pre_inc = ++a;
+    post_dec = b--;
 
-    // // Cast expression
-    // double cast_expr;
-    // cast_expr = (double)a;
+    // Cast expression
+    double cast_expr;
+    cast_expr = (double)a;
 
-    // // sizeof operator
-    // int size;
-    // size = sizeof(a);
+    // sizeof operator
+    int size;
+    size = sizeof(a);
 
-    // char *ptr1;
+    char *ptr1;
 
-    // int za,zb;
+    int za,zb;
 
-    // za = ptr1[3];
+    za = ptr1[3];
 
-    // int arr1[];
-    // zb = arr1[10];
+    int arr1[];
+    zb = arr1[10];
     // Comma operator
     // int comma_expr = (a = 1, b = 2, a + b);
 
-    // // Function call expression (side-effect)
-    // int sum = add(a, b);
+    // Function call expression (side-effect)
+    int sum = add(a, b);
 
-    // // Mixed expression with nested assignment and ternary operator
-    // c = (a > 0) ? (a = 10, a + b) : (b = 20, a + b);
+    // Mixed expression with nested assignment and ternary operator
+    c = (a > 0) ? (a + b) : (b - a);
 
-    // // Combination of logical and bitwise expressions
-    // int mix;
-    // mix = ((a & b) || (a ^ b)) ? 1 : 0;
+    // Combination of logical and bitwise expressions
+    int mix = ((a & b) || (a ^ b)) ? 1 : 0;
 
+    foo();
+    int s;
+    s = add(1,2);
 
 
 }
+
+   
+
+
+// int main(){
+//     // struct S{
+//     //     int a;
+//     //     int b;
+//     // } ;
+//     struct S;
+
+//     // struct S z;
+// //  z.a = 1;
+// //  z.b = 2;
+// }

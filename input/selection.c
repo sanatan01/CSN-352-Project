@@ -2,10 +2,6 @@ int main() {
     // Basic arithmetic expressions
     int a = 5;
     int b = 10;
-
-    int *c = &a;
-
-    int d = c;
     
     if (a > b) {
         a=10;
@@ -17,6 +13,21 @@ int main() {
 
     if (b >= a) {
         a = 990;
+    }
+
+    int z;
+    switch(z){
+        case 1:{
+            z=1;
+            break;
+        }
+        case 2:{
+            z=2;
+            break;
+        }
+        default :{
+            z=10;
+        }
     }
     
 }

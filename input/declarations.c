@@ -17,39 +17,30 @@ int main() {
         char : 5;
     };
 
-    int fuck = 10*19;
+    int fuck = 10;
 
-    bool c;
+    int c;
+    int z;
+    struct  nice {
+        int a;
+        int fuck;
+    };
+    struct s;
 
+    union p {
+        int a;
+    };
 
+    enum fuck {
+        FUCKALL,
+        FUCKYOU
+    };
 
+    enum gay;
 
+    int a;
+
+    unsigned int cq;
+
+    bool asdf;
 }
-
-
-
-//     // int c;
-//     // int z;
-//     // struct  nice {
-//     //     int a;
-//     //     int fuck;
-//     // };
-//     // struct s;
-
-//     // union p {
-//     //     int a;
-//     // };
-
-//     // enum fuck {
-//     //     FUCKALL,
-//     //     FUCKYOU
-//     // };
-
-//     // enum gay;
-
-//     // int(a);
-
-//     // int a;
-
-//     // unsigned int a;
-// }

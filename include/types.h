@@ -99,6 +99,7 @@ class VectorStructElement
 {
 public:
 	std::vector<StructElement> elements;
+
 	VectorStructElement();
 	void add_element(StructElement *id);
 	void add_elements(VectorStructElement *other);
@@ -109,9 +110,13 @@ class Struct : public StandardType
 public:
 	VectorStructElement members;
 	std::string struct_name;
+
 	Struct(std::string name, VectorStructElement *members);
 	Struct(std::string name);
 	Struct(VectorStructElement *members);
+
+	int get_offset(std::string member_name);
+	GlobalType* get_member_type(std::string member_name);
 };
 
 // -------------------------------------UNION----------------------------------------
@@ -243,7 +248,6 @@ public:
 	enum GlobalTypeTag type_tag;
 
 	GlobalType();
-	~GlobalType();
 
 	std::string getType() const;
 	size_t getSize() const;

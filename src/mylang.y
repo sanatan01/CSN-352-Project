@@ -8,8 +8,11 @@
 void yyerror(const char *s);
 extern int yylex();
 extern int yylineno;
+extern int yycolumn;
 extern FILE *yyin;
 int test_count = 0;
+
+class Expression* switch_temp = new Expression();
 
 %}
 
@@ -47,7 +50,7 @@ int test_count = 0;
 %token<nice> ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 
 %token<nice> TYPEDEF EXTERN STATIC AUTO REGISTER
-%token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
+%token<nice> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID BOOL
 %token<nice> STRUCT UNION ENUM ELLIPSIS
 
 %token<nice> SEMICOLON LEFT_BRACE RIGHT_BRACE COMMA COLON 
@@ -71,6 +74,10 @@ int test_count = 0;
 %type<nice> statement
 %type<nice> statement_list
 %type<nice> all_statements
+
+%type<nice> case_statement
+%type<nice> case_statement_list
+%type<nice> switch_statement
 
 %type<expression> expression
 %type<expression> assignment_expression
@@ -100,6 +107,7 @@ int test_count = 0;
 %type<nice> assignment_operator
 %type<nice> unary_operator
 %type<global_type> declaration_specifiers
+%type<vector_identifiers> empty_init_declarator_list
 %type<vector_identifiers> init_declarator_list
 %type<identifier> init_declarator
 %type<specifiers> storage_class_specifier
@@ -141,40 +149,40 @@ int test_count = 0;
 %%
 
 // /* Handling multiple errors */
-// error_statement_open
-//     : error
-// 	| ERROR 
-//     | error_statement_open primary_expression 
-// 	| error_statement_open type_specifier 
-// 	| error_statement_open unary_operator 
-// 	| error_statement_open storage_class_specifier
-// 	| error_statement_open STRUCT
-// 	| error_statement_open UNION
-// 	| error_statement_open type_qualifier	
-// 	| error_statement_open declarator
-// 	| error_statement_open direct_declarator
-// 	| error_statement_open pointer
-// 	| error_statement_open type_qualifier_list
-//     ;
+error_statement_open
+    : error
+	| ERROR 
+    | error_statement_open primary_expression 
+	| error_statement_open type_specifier 
+	| error_statement_open unary_operator 
+	| error_statement_open storage_class_specifier
+	| error_statement_open STRUCT
+	| error_statement_open UNION
+	| error_statement_open type_qualifier	
+	| error_statement_open declarator
+	| error_statement_open direct_declarator
+	| error_statement_open pointer
+	| error_statement_open type_qualifier_list
+    ;
 
-// error_statement_closed
-//     : error_statement_open SEMICOLON {
-//         fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
-//         yyerrok;
-//     }
-// 	| error_statement_open RIGHT_BRACE {
-// 		fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
-// 		yyerrok;
-// 	}
-//     ;
+error_statement_closed
+    : error_statement_open SEMICOLON {
+        fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
+        yyerrok;
+    }
+	| error_statement_open RIGHT_BRACE {
+		fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
+		yyerrok;
+	}
+    ;
 
 // /* Primary expressions */
 primary_expression
  	: IDENTIFIER							{ $$ = create_expression_simple(IDENTIFIER_ET, std::string($1)); }
  	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
-// 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
+ 	| STRING_LITERAL 						{ $$ = create_expression_simple(STRING_ET, std::string($1)); }
 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
- 	;
+ 	;	
 
 // /* Postfix expressions */
 postfix_expression
@@ -185,8 +193,7 @@ postfix_expression
     | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{
 		$$ = create_postfix_expr_fun (new Identifier($1), $3); 
 	}
- 	// | IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
- 	// | postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
+ 	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, new Identifier($3)); }
  	// | postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
  	;
 
@@ -201,6 +208,7 @@ postfix_expression
 		$$=$1;
 		$$->add_element($3); 
 	}
+	| %empty { $$ = new VectorExpression(); }
  	;
 
 // /* Unary expressions */
@@ -416,7 +424,7 @@ conditional_expression
 	}
  	;
 
-// /* Assignment */
+// /* Assignment */f
 assignment_expression
  	: conditional_expression								{ $$ = $1; }
  	| unary_expression assignment_operator assignment_expression { 
@@ -458,8 +466,8 @@ signed_constant_expression
 		if(is_expr_signed($1)) {
 			$$ = strdup($1->name.c_str());
 		} else {
-			std::cerr << "Error: signed constant expression expected" << std::endl;
-			$$ = NULL;
+			error_msg("signed constant expression expected");
+			$$ = "";
 		}
 		
 	}
@@ -470,40 +478,42 @@ unsigned_constant_expression
 		if(is_expr_unsigned($1)) {
 			$$ = strdup($1->name.c_str());
 		} else {
-			std::cerr << "Error: unsigned constant expression expected" << std::endl;
-			$$ = NULL;
+			warning_msg("unsigned constant expression expected may lead to runtime errors");
+			debug_msg("unsigned constant expression expected" + std::to_string($1->prim_type));
+			$$ = strdup($1->name.c_str());
 		}
 	}
 	;
 
+empty_init_declarator_list
+	: SEMICOLON { std::cerr << "Empty called" ;$$ = new VectorIdentifiers(); }
+	| init_declarator_list SEMICOLON {
+		std::cerr << "Full called";
+		$$ = $1;
+	}
+
+
 // /* Declarations */
 declaration
- 	: { TAC::dump_to_file(); } declaration_specifiers init_declarator_list SEMICOLON {
-		/* Use the variable name from init_declarator */
-		for(auto &element : $3->identifiers) {
-			// if (element.type->type_tag == FUNCTION_TYPE) {
-			// 	if (element.type->function_type->return_type != NULL && element.type->function_type->return_type->type_tag == POINTER_TYPE) {
-			// 		element.type->function_type->return_type->pointer_type->return_type = $2;
-			// 		element.type->function_type->return_type->pointer_type->specifiers = combine_specs(element.type->function_type->return_type->pointer_type->specifiers, $2->getSpecifiers());
-			// 	} else {
-			// 		element.type->function_type->return_type = $2;
-			// 	}
-			// } else if (element.type->type_tag == NONE) {
-			// 	element.type = $2;
-			// } else if (element.type->type_tag == POINTER_TYPE) {
-			// 	element.type->pointer_type->return_type = $2;
-			// 	element.type->pointer_type->specifiers = combine_specs(element.type->pointer_type->specifiers, $2->getSpecifiers());
-			// } else if (element.type->type_tag == ARRAY_TYPE) {
-			// 	element.type->array_type->return_type = $2;
-			// 	element.type->array_type->specifiers = combine_specs(element.type->array_type->specifiers, $2->getSpecifiers());
-			// } else {
-			// 	std::cerr << "Cannot create a type for the following identifier" << std::endl;
-			// }
-			element.type = combine_global_type($2, element.type);
+	: { TAC::dump_to_file(); } declaration_specifiers empty_init_declarator_list {
+
+		bool is_err = false;
+		if ($2->type_tag == STRUCT_TYPE || $2->type_tag == UNION_TYPE || $2->type_tag == ENUM_TYPE ){
+			class GlobalType* temp = SymbolTable::get_global_type($2);
+			if(temp == NULL){
+				is_err = true;
+			}
+			if (!is_err) $2 = temp;
 		}
-		$$=$3;
-		SymbolTable::add_symbols($$);
- 	  }
+
+		if (!is_err) {
+			for(auto &element : $3->identifiers) {
+				element.type = combine_global_type($2, element.type);
+			}
+			$$=$3;
+			SymbolTable::add_symbols($$);
+		}
+	}
 	;
 
 declaration_specifiers
@@ -535,8 +545,34 @@ init_declarator_list
  		$$ = $1;
  	}
  	| declarator ASSIGN assignment_expression {
+		
+		$3 = prim_to_type($3);
+
 		TAC::print_tac($1->name + " = " + $3->name);
  		$$ = $1;
+		if($$->type->type_tag == NONE) {
+			$$->type = $3->exp_type;
+			debug_msg("Type created for identifier " + $$->name + " is " + $3->exp_type->getType());
+		}
+		else if ($$->type->type_tag == FUNCTION_TYPE) {
+			error_msg("Cannot assign a value to a function type");
+		} else if ($$->type->type_tag == POINTER_TYPE) {
+			if ($3->exp_type->type_tag == POINTER_TYPE && ($3->exp_type->pointer_type->ptr_level == $$->type->pointer_type->ptr_level)) {
+				$$->type = $3->exp_type;
+			} else {
+				error_msg("Cannot assign given value to the following identifier");
+			}
+		} else if ($$->type->type_tag == ARRAY_TYPE) {
+			if ($3->exp_type->type_tag == ARRAY_TYPE && ($3->exp_type->array_type->dim == $$->type->array_type->dim)) {
+				$$->type = $3->exp_type;
+			} else if ($3->exp_type->type_tag == POINTER_TYPE && ($3->exp_type->pointer_type->ptr_level == $$->type->array_type->dim)) {
+				$$->type = $3->exp_type;
+			} else {
+				error_msg("Cannot assign given value to the following identifier");
+			}
+		} else {
+			std::cerr << "Cannot create a type for the following identifier" << std::endl;
+		}
  	}
  	;
 
@@ -560,6 +596,9 @@ type_specifier
 	| SIGNED		{ $$ = create_primitive_type(INT_T); }
 	| VOID     		{ $$ = create_primitive_type(VOID_T); }
 	| CHAR     		{ $$ = create_primitive_type(CHAR_T); }
+	| BOOL			{ $$ = create_primitive_type(BOOL_T); }
+	| UNSIGNED INT 	{ $$ = create_primitive_type(U_INT_T); }
+	| SIGNED INT 	{ $$ = create_primitive_type(INT_T); }
 	| SIGNED CHAR     		{ $$ = create_primitive_type(CHAR_T); }
 	| UNSIGNED CHAR     		{ $$ = create_primitive_type(U_CHAR_T); }
 	| SHORT    		{ $$ = create_primitive_type(SHORT_T); }
@@ -603,14 +642,14 @@ type_specifier
 
 // /* Struct and union specifiers */
 struct_specifier
-  	: STRUCT IDENTIFIER { $$ = new Struct(std::string($2)); }
+  	: STRUCT IDENTIFIER { $$ = new Struct(std::string($2)); $$->is_defined = false; }
  	| STRUCT IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct(std::string($2), $4); $$->is_defined = true; }
  	| STRUCT LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Struct($3); $$->is_defined = true; }
 
  	;
 
  union_specifier
-  	: UNION IDENTIFIER { $$ = new Union(std::string($2)); }
+  	: UNION IDENTIFIER { $$ = new Union(std::string($2)); $$->is_defined = false; }
  	| UNION IDENTIFIER LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union(std::string($2), $4); $$->is_defined = true; }
  	| UNION LEFT_BRACE struct_declaration_list RIGHT_BRACE { $$ = new Union($3); $$->is_defined = true; }
  	;
@@ -673,12 +712,15 @@ struct_declaration
  enum_specifier
  	: ENUM LEFT_BRACE enumerator_list RIGHT_BRACE {
  		$$ = new EnumType($3);
+		$$->is_defined = false;
  	}
  	| ENUM IDENTIFIER LEFT_BRACE enumerator_list RIGHT_BRACE{
  		$$ = new EnumType(std::string($2),$4);
+		$$->is_defined = true;
  	}
  	| ENUM IDENTIFIER{
  		$$ = new EnumType(std::string($2));
+		$$->is_defined = true;
  	}
  	;
 
@@ -1013,17 +1055,26 @@ statement
  	| compound_statement
  	| selection_statement
  	| jump_statement
-	| labeled_statement
+	// | switch_statement
 // 	| error_statement_closed
  	;
 
 labeled_statement
-	: CASE signed_constant_expression COLON statement
-	| DEFAULT COLON statement
+	: case_statement_list
+	| case_statement_list DEFAULT {TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C);} COLON statement 
+ 	| DEFAULT {TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C); } COLON statement
 	;
 
-labeled_bracket_statement
-	: LEFT_BRACE labeled_statement RIGHT_BRACE
+case_statement_list
+	: case_statement
+	| case_statement_list case_statement
+
+case_statement
+	: CASE { TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C); } signed_constant_expression  COLON {TAC::print_tac("if " + switch_temp->name + " != " + std::string($3) + " goto " + TAC::get_label(GOTO_C));} statement
+	;
+
+switch_statement
+	: SWITCH {TAC::add_label(BREAK_C); TAC::add_label(GOTO_C);} LEFT_PAREN expression RIGHT_PAREN { switch_temp = $4;} LEFT_BRACE labeled_statement RIGHT_BRACE {TAC::remove_break_label(); TAC::remove_goto_label(); }
 	;
 
 compound_statement
@@ -1052,10 +1103,10 @@ statement_list
 	;
 
 expression_statement
- 	: SEMICOLON {$$ = new Expression(); $$->name="empty";}
+ 	: SEMICOLON {$$ = new Expression(); $$->name="empty"; TAC::get_from_postfix();}
  	| expression SEMICOLON {
 		$$ = $1;
-		std::cout << "Expression statment" << std::endl;
+		TAC::get_from_postfix();
 	}
  	;
 
@@ -1066,8 +1117,8 @@ empty_else
 
 /* Control flow */
 selection_statement
-	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C); } RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
-	// | switch_statement
+	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C);} RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
+	| switch_statement
 	;
 
 // switch_statement
@@ -1085,17 +1136,17 @@ empty_expression
 	;
 
 iteration_statement
-	: WHILE INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN expression { TAC::print_label(CONTINUE_C); TAC::print_goto_conditional($5, BREAK_C); } RIGHT_PAREN statement {
+	: WHILE INC_SCOPE { TAC::create_loop_statement(); TAC::dump_to_file(); TAC::print_label(CONTINUE_C); } LEFT_PAREN expression {  TAC::print_goto_conditional($5, BREAK_C); TAC::transfer_from_postfix(); } RIGHT_PAREN statement {
+		TAC::print_goto(CONTINUE_C, true);
+		TAC::remove_break_label();
+		SymbolTable::exit_scope();
+	}
+	| DO INC_SCOPE {TAC::create_loop_statement(); TAC::print_label(CONTINUE_C); } statement WHILE LEFT_PAREN expression { TAC::transfer_from_postfix(); TAC::print_goto_do_while($7); } RIGHT_PAREN SEMICOLON{
 		TAC::remove_break_label();
 		TAC::remove_continue_label();
 		SymbolTable::exit_scope();
 	}
-	| DO INC_SCOPE {TAC::create_loop_statement(); TAC::print_label(CONTINUE_C); } statement WHILE LEFT_PAREN expression { TAC::print_goto_do_while($7); } RIGHT_PAREN SEMICOLON{
-		TAC::remove_break_label();
-		TAC::remove_continue_label();
-		SymbolTable::exit_scope();
-	}
-	| FOR INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN init_clause {TAC::print_label(CONTINUE_C);} expression_statement { TAC::print_goto_conditional($7, BREAK_C); TAC::dump_to_file(); } empty_expression { TAC::dump_to_temp(); } RIGHT_PAREN statement {
+	| FOR INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN init_clause {TAC::print_label(CONTINUE_C);} expression_statement { TAC::print_goto_conditional($7, BREAK_C); TAC::dump_to_file(); } empty_expression { TAC::transfer_from_postfix(); TAC::dump_to_temp(); } RIGHT_PAREN statement {
 		TAC::get_from_temp();
 		TAC::print_goto(CONTINUE_C, true);
 		TAC::remove_break_label();
@@ -1113,14 +1164,14 @@ iteration_statement
 
  /* Top-level constructs */
  translation_unit
- 	: external_declaration
+ 	: external_declaration 
 	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
  	;
 
  external_declaration
- 	: function_definition
-	| declaration
+	: declaration
+ 	| function_definition
  	;
 
 function_declaration
@@ -1134,13 +1185,13 @@ function_declaration
 				$$->type->function_type->return_type = $1;
 			}
 		} else{
-			std::cerr << "Error: function declaration with non-function type" << std::endl;
+			std::cerr << "function declaration with non-function type" << std::endl;
 		}
 	}
 	;
 
 function_definition
- 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));  TAC::create_function_definition(std::string($1->name)); SymbolTable::add_symbol($1); } compound_statement { 
+ 	: function_declaration { SymbolTable::add_symbol($1); } INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));  TAC::create_function_definition(std::string($1->name)); } compound_statement { 
  		$$ = $1;
 		$$->type->setDefined();
 		SymbolTable::exit_scope();
@@ -1152,5 +1203,5 @@ INC_SCOPE : %empty { SymbolTable::enter_scope(); };
  %%
 
 void yyerror(const char *s) {
- 	fprintf(stderr, "Syntax Error: %s at line %d\n", s, yylineno);
+ 	fprintf(stderr, "Syntax %s at line %d\n", s, yylineno);
 }

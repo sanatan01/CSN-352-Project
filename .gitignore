@@ -8,3 +8,4 @@ src/lex.yy.c
 include/y.tab.h
 output/*
 src/stack.hh
+src/syntax_analyser.dSYM/*
