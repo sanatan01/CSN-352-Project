@@ -20,25 +20,25 @@ int main() {
     arr[3]=5;
     // Basic arithmetic expressions
     int i;
-    // for(i = 0; i < 10; i +=1 ) {
-    //     if(i == 5) {
-    //         i=6;
-    //         break;
-    //     }
-    //     else {
-    //         continue;
-    //     }
-    // }
+    for(i = 0; i < 10; i +=1 ) {
+        if(i == 5) {
+            i=6;
+            break;
+        }
+        else {
+            continue;
+        }
+    }
 
-    // for(i = 0; i < 10; i++ ) {
-    //     if(i == 5) {
-    //         i=6;
-    //         break;
-    //     }
-    //     else {
-    //         continue;
-    //     }
-    // }
+    for(i = 0; i < 10; i++ ) {
+        if(i == 5) {
+            i=6;
+            break;
+        }
+        else {
+            continue;
+        }
+    }
 
     while(i == 0){
         i += 2;
@@ -104,7 +104,7 @@ int main() {
     a=res++;
     int* bf;
     bf= &a;
-    za[0] = 1;
+    // za[0] = 1;
 
     // // Pointer expressions
     // int arr[10];
@@ -142,13 +142,13 @@ int main() {
     int sum = add(a, b);
 
     // Mixed expression with nested assignment and ternary operator
-    // c = (a > 0) ? (a + b) : (b - a);
+    c = (a > 0) ? (a + b) : (b - a);
 
     // Combination of logical and bitwise expressions
     int mix = ((a & b) || (a ^ b)) ? 1 : 0;
 
-    // int lmnop = foo();
-    // int s;
-    // s = foo();
+    foo();
+    int s;
+    s = add(1,2);
 
 }

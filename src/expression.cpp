@@ -973,6 +973,8 @@ Expression* create_cast_expression_typename(OpExpression* oe) {
 }
 
 Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
+    pe = prim_to_type(pe);
+    exp = prim_to_type(exp);
     Expression* P = new Expression();
     // if (pe ) {
     //     P->pe = dynamic_cast<PostfixExpression *>(pe);
@@ -1236,7 +1238,7 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
 // }
 
 Expression* create_postfix_expr_ido(std::string op, Expression* pe) {
-
+    pe = prim_to_type(pe);
     Expression* P = new Expression();
 
     if (pe->prim_type == ERROR_T) {
@@ -1747,6 +1749,7 @@ Expression* create_expression(ExpressionOpType op_type, std::string op, VectorEx
                 TAC::print_tac(temp + " = * " + expr.name.substr(1));
                 expr.name = temp;
             }
+            expr = *prim_to_type(&expr);
         }
     }
     else {
@@ -1757,80 +1760,80 @@ Expression* create_expression(ExpressionOpType op_type, std::string op, VectorEx
         debug_msg("Enum name: MULTIPLICATIVE");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return multiplicative_expression(oe); // Done Done
+        return prim_to_type(multiplicative_expression(oe)); // Done Done
     case ADDITIVE:
         debug_msg("Enum name: ADDITIVE");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return additive_expression(oe); // Done Done
+        return prim_to_type(additive_expression(oe)); // Done Done
     case RELATIONAL:
         debug_msg("Enum name: RELATIONAL");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return relational_expression(oe); // Done Done
+        return prim_to_type(relational_expression(oe)); // Done Done
     case SHIFT:
         debug_msg("Enum name: SHIFT");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return shift_expression(oe); // Done Done
+        return prim_to_type(shift_expression(oe)); // Done Done
     case EQUALITY:
         debug_msg("Enum name: EQUALITY");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return equality_expression(oe); // Done Done
+        return prim_to_type(equality_expression(oe)); // Done Done
     case AND:
         debug_msg("Enum name: AND");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return and_expression(oe); // Done Done
+        return prim_to_type(and_expression(oe)); // Done Done
     case XOR:
         debug_msg("Enum name: XOR");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return xor_expression(oe); // Done Done
+        return prim_to_type(xor_expression(oe)); // Done Done
     case OR:
         debug_msg("Enum name: OR");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return or_expression(oe); // Done Done
+        return prim_to_type(or_expression(oe)); // Done Done
     case LOGICAL_AND:
         debug_msg("Enum name: LOGICAL_AND");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return logical_and_expression(oe); // Done Done
+        return prim_to_type(logical_and_expression(oe)); // Done Done
     case LOGICAL_OR:
         debug_msg("Enum name: LOGICAL_OR");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return logical_or_expression(oe); // Done Done
+        return prim_to_type(logical_or_expression(oe)); // Done Done
     case CONDITIONAL:
         debug_msg("Enum name: CONDITIONAL");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
         oe->op3 = ve->operands[2];
-        return conditional_expression(oe); // Basic done (Please check) (Please check)
+        return prim_to_type(conditional_expression(oe)); // Basic done (Please check) (Please check)
     case CONSTANT:
         debug_msg("Enum name: CONSTANT");
         oe->op1 = ve->operands[0];
-        return constant_expression(oe);
+        return prim_to_type(constant_expression(oe));
     case TOPLEVEL:
         debug_msg("Enum name: TOPLEVEL");
         oe->op1 = ve->operands[0];
-        return toplevel_expression(oe);
+        return prim_to_type(toplevel_expression(oe));
     case ASSIGNMENT:
         debug_msg("Enum name: ASSIGNMENT");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return assignment_expression(oe);
+        return prim_to_type(assignment_expression(oe));
     case UNARY:
         debug_msg("Enum name: UNARY");
         oe->op1 = ve->operands[0];
-        return create_unary_expression(oe);
+        return prim_to_type(create_unary_expression(oe));
     case CAST_TYPE:
         debug_msg("Enum name: CAST_TYPE");
         oe->op1 = ve->operands[0];
         oe->op2 = ve->operands[1];
-        return create_cast_expression_typename(oe);
+        return prim_to_type(create_cast_expression_typename(oe));
     default:
         error_msg("Incorrect expression. Unknown enum type ");
         return nullptr;
