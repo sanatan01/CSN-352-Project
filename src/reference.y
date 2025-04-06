@@ -852,5 +852,5 @@ increment_scope: %empty { SymbolTable::enter_scope(); }
 %%
 
 void yyerror(const char *s) {
-	fprintf(stderr, "Syntax Error: %s at line %d\n", s, yylineno);
+	fprintf(stderr, "Syntax %s at line %d\n", s, yylineno);
 }

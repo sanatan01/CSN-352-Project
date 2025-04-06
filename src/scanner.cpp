@@ -48,6 +48,10 @@ int main(int argc, char** argv) {
     formatSymbolTable(); // Format the symbol table header
 
 
+    #ifdef _DEBUG_MODE
+    std::cerr << "[DEBUG] Debug mode is enabled." << std::endl;
+    #endif
+
     yylineno = 1; // Initialize line number counter
     yyin = input_file;
     yyparse(); // Invoke the parser

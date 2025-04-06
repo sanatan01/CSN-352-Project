@@ -330,5 +330,3 @@ TypeSpecifier* create_type_specifier(TYPE_SPECIFIER type, Identifier* id, Enumer
 
 Node* add_to_global_symbol_table(Declaration* declaration);
 
-void error_msg(std::string str, unsigned int line_num, unsigned int column = 0);
-void warning_msg(std::string str, unsigned int line_num, unsigned int column = 0);

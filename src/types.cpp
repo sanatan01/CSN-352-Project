@@ -73,7 +73,7 @@ Specifiers::Specifiers() : is_typedef(0), is_extern(0), is_static(0), is_registe
 bool combine_flag(bool a, bool b, std::string err)
 {
     if (a && b)
-        std::cerr << err << std::endl;
+        error_msg(err);
     return a || b;
 }
 
@@ -99,18 +99,18 @@ Specifiers *combine_specs(Specifiers *spec1, Specifiers *spec2)
 
     Specifiers *combined = new Specifiers();
 
-    combined->is_typedef = combine_flag(spec1->is_typedef, spec2->is_typedef, "Error: 'typedef' keyword is used more than once.");
-    combined->is_extern = combine_flag(spec1->is_extern, spec2->is_extern, "Error: 'extern' keyword is used more than once.");
-    combined->is_static = combine_flag(spec1->is_static, spec2->is_static, "Error: 'static' keyword is used more than once.");
-    combined->is_register = combine_flag(spec1->is_register, spec2->is_register, "Error: 'register' keyword is used more than once.");
-    combined->is_const = combine_flag(spec1->is_const, spec2->is_const, "Error: 'const' keyword is used more than once.");
-    combined->is_volatile = combine_flag(spec1->is_volatile, spec2->is_volatile, "Error: 'volatile' keyword is used more than once.");
-    std::cerr << "Typedef: " << combined->is_typedef << std::endl;
-    std::cerr << "Extern: " << combined->is_extern << std::endl;
-    std::cerr << "Static: " << combined->is_static << std::endl;
-    std::cerr << "Register: " << combined->is_register << std::endl;
-    std::cerr << "Const: " << combined->is_const << std::endl;
-    std::cerr << "Volatile: " << combined->is_volatile << std::endl;
+    combined->is_typedef = combine_flag(spec1->is_typedef, spec2->is_typedef, "'typedef' keyword is used more than once.");
+    combined->is_extern = combine_flag(spec1->is_extern, spec2->is_extern, "'extern' keyword is used more than once.");
+    combined->is_static = combine_flag(spec1->is_static, spec2->is_static, "'static' keyword is used more than once.");
+    combined->is_register = combine_flag(spec1->is_register, spec2->is_register, "'register' keyword is used more than once.");
+    combined->is_const = combine_flag(spec1->is_const, spec2->is_const, "'const' keyword is used more than once.");
+    combined->is_volatile = combine_flag(spec1->is_volatile, spec2->is_volatile, "'volatile' keyword is used more than once.");
+    debug_msg("Typedef: " + std::to_string(combined->is_typedef));
+    debug_msg("Extern: " + std::to_string(combined->is_extern));
+    debug_msg("Static: " + std::to_string(combined->is_static));
+    debug_msg("Register: " + std::to_string(combined->is_register));
+    debug_msg("Const: " + std::to_string(combined->is_const));
+    debug_msg("Volatile: " + std::to_string(combined->is_volatile));
     return combined;
 }
 
@@ -463,7 +463,7 @@ void GlobalType::setSpecifiers(Specifiers *specifiers)
     {
         if (specifiers->is_register)
         {
-            std::cerr << "Error: Pointer cannot be defined with register keywords" << std::endl;
+            error_msg("Pointer cannot be defined with register keywords");
         }
         standard_type->specifiers = specifiers;
         break;
@@ -472,7 +472,7 @@ void GlobalType::setSpecifiers(Specifiers *specifiers)
     {
         if (specifiers->is_register)
         {
-            std::cerr << "Error: Struct cannot be defined with register keywords" << std::endl;
+            error_msg("Struct cannot be defined with register keywords");
         }
         struct_type->specifiers = specifiers;
         break;
@@ -481,7 +481,7 @@ void GlobalType::setSpecifiers(Specifiers *specifiers)
     {
         if (specifiers->is_extern || specifiers->is_static || specifiers->is_register)
         {
-            std::cerr << "Error: Union cannot be defined with extern, static, volatile keywords" << std::endl;
+            error_msg("Union cannot be defined with extern, static, volatile keywords");
         }
         union_type->specifiers = specifiers;
         break;
@@ -490,7 +490,7 @@ void GlobalType::setSpecifiers(Specifiers *specifiers)
     {
         if (specifiers->is_register)
         {
-            std::cerr << "Error: Pointer cannot be defined with register keywords" << std::endl;
+            error_msg("Pointer cannot be defined with register keywords");
         }
         array_type->specifiers = specifiers;
         break;
@@ -499,7 +499,7 @@ void GlobalType::setSpecifiers(Specifiers *specifiers)
     {
         if (specifiers->is_typedef || specifiers->is_register || specifiers->is_volatile)
         {
-            std::cerr << "Error: Function cannot be defined with typedef, register, volatile keywords" << std::endl;
+            error_msg("Function cannot be defined with typedef, register, volatile keywords");
         }
         function_type->specifiers = specifiers;
         break;
@@ -508,7 +508,7 @@ void GlobalType::setSpecifiers(Specifiers *specifiers)
     {
         if (specifiers->is_register)
         {
-            std::cerr << "Error: Pointer cannot be defined with register, keywords" << std::endl;
+            error_msg("Pointer cannot be defined with register, keywords");
         }
         pointer_type->specifiers = specifiers;
         break;
@@ -517,7 +517,7 @@ void GlobalType::setSpecifiers(Specifiers *specifiers)
     {
         if (specifiers->is_const || specifiers->is_volatile || specifiers->is_extern || specifiers->is_static || specifiers->is_register)
         {
-            std::cerr << "Error: Enum cannot be defined with const, volatile, extern, static, register keywords" << std::endl;
+            error_msg("Enum cannot be defined with const, volatile, extern, static, register keywords");
         }
         enum_type->specifiers = specifiers;
         break;
@@ -703,7 +703,7 @@ class GlobalType *add_dimension_array(class GlobalType *array_type, int dimensio
 {
     if (array_type->type_tag != ARRAY_TYPE)
     {
-        std::cerr << "Add dimension called to invalid type\n";
+        error_msg("Add dimension called to invalid type");
         return nullptr;
     }
 
@@ -726,7 +726,7 @@ unsigned int convert_to_unsigned(std::string input)
     // Ensure the input is not empty and contains only digits
     if (input.empty() || input.find_first_not_of("0123456789") != std::string::npos)
     {
-        std::cerr << "Error: Invalid input, not a valid unsigned integer (" << input << ")" << std::endl;
+        error_msg("Invalid input, not a valid unsigned integer (" + input + ")");
         return 0;
     }
 
@@ -737,7 +737,7 @@ unsigned int convert_to_unsigned(std::string input)
     // Ensure full conversion and range check
     if (pos != input.size() || val > std::numeric_limits<unsigned int>::max())
     {
-        std::cerr << "Error: Number out of range (" << input << ")" << std::endl;
+        error_msg("Number out of range (" + input + ")");
         return 0;
     }
 
@@ -751,7 +751,7 @@ int convert_to_signed(std::string input)
         (input[0] != '-' && input.find_first_not_of("0123456789") != std::string::npos) ||
         (input[0] == '-' && (input.size() == 1 || input.find_first_not_of("0123456789", 1) != std::string::npos)))
     {
-        std::cerr << "Error: Invalid input, not a valid signed integer (" << input << ")" << std::endl;
+        error_msg("Invalid input, not a valid signed integer (" + input + ")");
         return 0;
     }
 
@@ -762,7 +762,7 @@ int convert_to_signed(std::string input)
     // Ensure full conversion and range check
     if (pos != input.size() || val < std::numeric_limits<int>::min() || val > std::numeric_limits<int>::max())
     {
-        std::cerr << "Error: Number out of range (" << input << ")" << std::endl;
+        error_msg("Number out of range (" + input + ")");
         return 0;
     }
 
@@ -775,20 +775,20 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
     // Return if either type is null
     if (right == nullptr)
     {
-        std::cerr << "Right type is null\n";
+        error_msg("Rvalue is null");
         if (left == nullptr)
         {
             TAC::clear_stream();
             return new GlobalType();
         }
-        
+
         TAC::clear_stream();
         return left;
     }
     if (left == nullptr)
     {
         TAC::clear_stream();
-        std::cerr << "Left type is null\n";
+        error_msg("Left type is null");
         return right;
     }
 
@@ -819,12 +819,12 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
         // TODO: check compatibility based on members of struct
         if (left->type_tag == STRUCT_TYPE && (right->struct_type->struct_name == left->struct_type->struct_name))
         {
-            // 
+            //
         }
         else
         {
             TAC::clear_stream();
-            std::cerr << "Cannot combine struct with non-struct type\n";
+            error_msg("Cannot combine struct with non-struct type");
         }
         break;
     }
@@ -832,19 +832,18 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
     {
         if (left->type_tag == STANDARD_TYPE && isCompatible(left, right))
         {
-            
         }
         else
         {
             TAC::clear_stream();
-            std::cerr << "Cannot combine standard type with non-standard type\n";
+            error_msg("Cannot combine standard type with non-standard type");
         }
         break;
     }
     default:
     {
         TAC::clear_stream();
-        std::cerr << "Cannot combine these two types\n";
+        error_msg("Cannot combine these two types");
         break;
     }
     }

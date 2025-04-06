@@ -11,10 +11,17 @@ BISON_HDR := $(INCLUDE_DIR)/y.tab.h
 BISON_HDR_TMP := $(SRC_DIR)/y.tab.h
 FLEX_OUT := $(SRC_DIR)/lex.yy.c
 EXECUTABLE := $(SRC_DIR)/syntax_analyser
+EXECUTABLE_DIR := $(SRC_DIR)/syntax_analyser.dSYM
 HEADERS := $(wildcard $(INCLUDE_DIR)/*.h)
 
 # Additional source files for parsing phase
 PARSING_SRCS := $(SRC_DIR)/symtab.cpp $(SRC_DIR)/types.cpp  $(SRC_DIR)/expression.cpp $(SRC_DIR)/tac.cpp
+
+ifeq ($(DEBUG),1)
+    CXXFLAGS := -D_DEBUG_MODE -g
+else
+    CXXFLAGS :=
+endif
 
 all:  clear clean build run
 
@@ -25,11 +32,12 @@ clean:
 	rm -rf $(OUTPUT_DIR)
 	rm -rf $(EXECUTABLE)
 	rm -f $(BISON_OUT) $(BISON_HDR) $(FLEX_OUT)
+	rm -rf -r $(EXECUTABLE_DIR)
 	mkdir -p $(OUTPUT_DIR)
 
 build: $(BISON_OUT) $(FLEX_OUT)
 	@echo "Compiling the generated C files with g++..."
-	g++ -o $(EXECUTABLE) --std=c++17 -w $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
+	g++ -o $(EXECUTABLE) --std=c++17 -w $(CXXFLAGS) $(SCANNER_SRC) $(FLEX_OUT) $(BISON_OUT) $(PARSING_SRCS) -I$(INCLUDE_DIR)
 
 $(BISON_OUT) $(BISON_HDR_TMP): $(BISON_SRC)
 	@echo "Compiling $(BISON_SRC) with bison..."

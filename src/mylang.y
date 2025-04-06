@@ -458,7 +458,7 @@ signed_constant_expression
 		if(is_expr_signed($1)) {
 			$$ = strdup($1->name.c_str());
 		} else {
-			std::cerr << "Error: signed constant expression expected" << std::endl;
+			std::cerr << "signed constant expression expected" << std::endl;
 			$$ = NULL;
 		}
 		
@@ -470,7 +470,7 @@ unsigned_constant_expression
 		if(is_expr_unsigned($1)) {
 			$$ = strdup($1->name.c_str());
 		} else {
-			std::cerr << "Error: unsigned constant expression expected" << std::endl;
+			std::cerr << "unsigned constant expression expected" << std::endl;
 			$$ = NULL;
 		}
 	}
@@ -1134,7 +1134,7 @@ function_declaration
 				$$->type->function_type->return_type = $1;
 			}
 		} else{
-			std::cerr << "Error: function declaration with non-function type" << std::endl;
+			std::cerr << "function declaration with non-function type" << std::endl;
 		}
 	}
 	;
@@ -1152,5 +1152,5 @@ INC_SCOPE : %empty { SymbolTable::enter_scope(); };
  %%
 
 void yyerror(const char *s) {
- 	fprintf(stderr, "Syntax Error: %s at line %d\n", s, yylineno);
+ 	fprintf(stderr, "Syntax %s at line %d\n", s, yylineno);
 }
