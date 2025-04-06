@@ -12,6 +12,8 @@ extern int yycolumn;
 extern FILE *yyin;
 int test_count = 0;
 
+class Expression* switch_temp = new Expression();
+
 %}
 
 %define parse.error verbose
@@ -72,6 +74,10 @@ int test_count = 0;
 %type<nice> statement
 %type<nice> statement_list
 %type<nice> all_statements
+
+%type<nice> case_statement
+%type<nice> case_statement_list
+%type<nice> switch_statement
 
 %type<expression> expression
 %type<expression> assignment_expression
@@ -186,7 +192,7 @@ postfix_expression
     | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{
 		$$ = create_postfix_expr_fun (new Identifier($1), $3); 
 	}
- 	// | postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
+ 	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, new Identifier($3)); }
  	// | postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
  	;
 
@@ -417,7 +423,7 @@ conditional_expression
 	}
  	;
 
-// /* Assignment */
+// /* Assignment */f
 assignment_expression
  	: conditional_expression								{ $$ = $1; }
  	| unary_expression assignment_operator assignment_expression { 
@@ -459,7 +465,7 @@ signed_constant_expression
 		if(is_expr_signed($1)) {
 			$$ = strdup($1->name.c_str());
 		} else {
-			std::cerr << "signed constant expression expected" << std::endl;
+			error_msg("signed constant expression expected");
 			$$ = "";
 		}
 		
@@ -1044,17 +1050,26 @@ statement
  	| compound_statement
  	| selection_statement
  	| jump_statement
-	| labeled_statement
+	// | switch_statement
 // 	| error_statement_closed
  	;
 
 labeled_statement
-	: CASE signed_constant_expression COLON statement
-	| DEFAULT COLON statement
+	: case_statement_list
+	| case_statement_list DEFAULT {TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C);} COLON statement 
+ 	| DEFAULT {TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C); } COLON statement
 	;
 
-labeled_bracket_statement
-	: LEFT_BRACE labeled_statement RIGHT_BRACE
+case_statement_list
+	: case_statement
+	| case_statement_list case_statement
+
+case_statement
+	: CASE { TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C); } signed_constant_expression  COLON {TAC::print_tac("if " + switch_temp->name + " != " + std::string($3) + " goto " + TAC::get_label(GOTO_C));} statement
+	;
+
+switch_statement
+	: SWITCH {TAC::add_label(BREAK_C); TAC::add_label(GOTO_C);} LEFT_PAREN expression RIGHT_PAREN { switch_temp = $4;} LEFT_BRACE labeled_statement RIGHT_BRACE {TAC::remove_break_label(); TAC::remove_goto_label(); }
 	;
 
 compound_statement
@@ -1098,7 +1113,7 @@ empty_else
 /* Control flow */
 selection_statement
 	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C);} RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
-	// | switch_statement
+	| switch_statement
 	;
 
 // switch_statement
@@ -1150,8 +1165,8 @@ iteration_statement
  	;
 
  external_declaration
- 	: function_definition
-	| declaration
+	: declaration
+ 	| function_definition
  	;
 
 function_declaration

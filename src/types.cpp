@@ -201,6 +201,31 @@ Struct::Struct(VectorStructElement *members1) : StandardType("struct", 0), struc
     }
 }
 
+int Struct::get_offset(std::string member_name)
+{
+    int offset = 0;
+    for (auto &member : members.elements)
+    {
+        if (member.id->name == member_name)
+        {
+            return offset;
+        }
+        offset += member.size;
+    }
+    return -1;
+}
+
+
+GlobalType* Struct::get_member_type(std::string member_name){
+    
+    for(auto &member: members.elements ){
+        if (member.id->name == member_name)
+        {
+            return member.id->type;
+        }
+    }
+    return new GlobalType();
+}
 // --------------------------- Union Class Methods ---------------------------
 
 Union::Union(std::string name) : StandardType("union", 0), union_name(name), members(VectorStructElement()) {}

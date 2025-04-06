@@ -12,7 +12,13 @@ int add(int a, int b){
 
 void foo(){
      return foo();
+
+     int **a;
+
+     int *c = *a;
 }
+
+
 
 int main() {
     int arr[5];
@@ -151,4 +157,20 @@ int main() {
     int s;
     s = add(1,2);
 
+
 }
+
+   
+
+
+// int main(){
+//     // struct S{
+//     //     int a;
+//     //     int b;
+//     // } ;
+//     struct S;
+
+//     // struct S z;
+// //  z.a = 1;
+// //  z.b = 2;
+// }
