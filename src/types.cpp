@@ -830,7 +830,7 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
     }
     case STANDARD_TYPE:
     {
-        if (left->type_tag == STANDARD_TYPE && isCompatible(left, right))
+        if (left->type_tag == STANDARD_TYPE && isCompatiblePrim(getPrimitiveType(left->standard_type->name), getPrimitiveType(right->standard_type->name)))
         {
         }
         else

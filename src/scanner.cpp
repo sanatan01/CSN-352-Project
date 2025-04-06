@@ -7,6 +7,7 @@
 extern int yyparse();
 extern FILE* yyin;
 extern int yylineno;
+extern int yycolumn;
 std::fstream symbol_table_file;
 std::ofstream tac_file;
 
@@ -52,7 +53,7 @@ int main(int argc, char** argv) {
     std::cerr << "[DEBUG] Debug mode is enabled." << std::endl;
     #endif
 
-    yylineno = 1; // Initialize line number counter
+    yylineno = 1; // Initialize line number
     yyin = input_file;
     yyparse(); // Invoke the parser
 

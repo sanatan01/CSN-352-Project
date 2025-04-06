@@ -8,6 +8,7 @@
 void yyerror(const char *s);
 extern int yylex();
 extern int yylineno;
+extern int yycolumn;
 extern FILE *yyin;
 int test_count = 0;
 
@@ -174,7 +175,7 @@ primary_expression
  	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
 // 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
- 	;
+ 	;	
 
 // /* Postfix expressions */
 postfix_expression
@@ -185,7 +186,6 @@ postfix_expression
     | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{
 		$$ = create_postfix_expr_fun (new Identifier($1), $3); 
 	}
- 	// | IDENTIFIER LEFT_PAREN RIGHT_PAREN 							{ $$ = create_postfix_expr_voidfun($1); }
  	// | postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, $3); }
  	// | postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
  	;
@@ -201,6 +201,7 @@ postfix_expression
 		$$=$1;
 		$$->add_element($3); 
 	}
+	| %empty { $$ = new VectorExpression(); }
  	;
 
 // /* Unary expressions */
@@ -535,8 +536,31 @@ init_declarator_list
  		$$ = $1;
  	}
  	| declarator ASSIGN assignment_expression {
+		$3 = prim_to_type($3);
 		TAC::print_tac($1->name + " = " + $3->name);
  		$$ = $1;
+		if($$->type->type_tag == NONE) {
+			$$->type = $3->exp_type;
+		}
+		else if ($$->type->type_tag == FUNCTION_TYPE) {
+			error_msg("Cannot assign a value to a function type");
+		} else if ($$->type->type_tag == POINTER_TYPE) {
+			if ($3->exp_type->type_tag == POINTER_TYPE && ($3->exp_type->pointer_type->ptr_level == $$->type->pointer_type->ptr_level)) {
+				$$->type = $3->exp_type;
+			} else {
+				error_msg("Cannot assign given value to the following identifier");
+			}
+		} else if ($$->type->type_tag == ARRAY_TYPE) {
+			if ($3->exp_type->type_tag == ARRAY_TYPE && ($3->exp_type->array_type->dim == $$->type->array_type->dim)) {
+				$$->type = $3->exp_type;
+			} else if ($3->exp_type->type_tag == POINTER_TYPE && ($3->exp_type->pointer_type->ptr_level == $$->type->array_type->dim)) {
+				$$->type = $3->exp_type;
+			} else {
+				error_msg("Cannot assign given value to the following identifier");
+			}
+		} else {
+			std::cerr << "Cannot create a type for the following identifier" << std::endl;
+		}
  	}
  	;
 
@@ -1139,7 +1163,7 @@ function_declaration
 	;
 
 function_definition
- 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));  TAC::create_function_definition(std::string($1->name)); SymbolTable::add_symbol($1); } compound_statement { 
+ 	: function_declaration { SymbolTable::add_symbol($1); } INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));  TAC::create_function_definition(std::string($1->name)); } compound_statement { 
  		$$ = $1;
 		$$->type->setDefined();
 		SymbolTable::exit_scope();

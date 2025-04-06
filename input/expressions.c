@@ -10,8 +10,8 @@ int add(int a, int b){
     int i;
 }
 
-int foo(){
-    return 0;
+void foo(){
+     return foo();
 }
 
 int main() {
@@ -131,6 +131,11 @@ int main() {
     // int mix;
     // mix = ((a & b) || (a ^ b)) ? 1 : 0;
 
+    int lmnop = foo();
+
+
+    int s;
+    s = foo();
 
 
 }

@@ -5,27 +5,24 @@
 
 int line_num = 0, column = 0;
 
+extern int yylineno, yycolumn;
+
 void error_msg(std::string msg, int line_num, int column)
 {
-    std::cerr << "[  ERROR  ] " << msg << " at line " << line_num << ", column " << column << std::endl;
+    std::cerr << "[  ERROR  ] " << msg << " at line " << yylineno << ", column " << yycolumn << std::endl;
 }
 
 void warning_msg(std::string msg, int line_num, int column)
 {
-    std::cerr << "[ WARNING ] " << msg << " at line " << line_num << ", column " << column << std::endl;
+    std::cerr << "[ WARNING ] " << msg << " at line " << yylineno<< ", column " << yycolumn << std::endl;
 }
 
 void debug_msg(std::string msg, int line_num, int column)
 {
 #ifdef _DEBUG_MODE
-    if (line_num == 0 && column == 0)
-    {
-        std::cerr << "[  DEBUG  ] " << msg << std::endl;
-    }
-    else
-    {
-        std::cerr << "[  DEBUG  ] " << msg << " at line " << line_num << ", column " << column << std::endl;
-    }
+    
+    std::cerr << "[  DEBUG  ] " << msg << " at line " << yylineno << ", column " << yycolumn << std::endl;
+
 #endif
 }
 
@@ -236,34 +233,6 @@ bool isInvalid(std::initializer_list<PrimitiveTypes> ops)
     }
     return result;
 }
-
-// PrimaryExpression::PrimaryExpression(): Expression(PrimitiveTypes(ERROR_T), 0) {}
-
-// Expression* create_primary_expression(ExpressionType* typ) {
-//     PrimaryExpression* pe = new PrimaryExpression();
-//     pe->prim_type = *typ;
-//     return pe;
-// }
-
-// ArgumentExprList::ArgumentExprList(): Expression() {}
-
-// // TODO: Implement this
-// ArgumentExprList* create_argument_expr_assignement(Expression* ase) {
-//     ArgumentExprList* ae_list = new ArgumentExprList();
-//     ae_list->args.push_back(ase);
-//     // ArgumentExprList does not have any type as it is a composite entity
-//     // ae_list->name = "arguments";
-//     // ae_list->add_children({ase});
-//     return ae_list;
-// }
-
-// ArgumentExprList* create_argument_expr_list(ArgumentExprList* ae_list, Expression* ase) {
-//     ae_list->args.push_back(ase);
-//     // ArgumentExprList does not have any type as it is a composite entity
-//     // ae_list->name = "arguments";
-//     // ae_list->add_children({ase});
-//     return ae_list;
-// }
 
 Expression *multiplicative_expression(OpExpression *oe)
 {
@@ -2103,4 +2072,22 @@ bool is_expr_unsigned(class Expression *expr)
         return true;
     }
     return false;
+}
+
+class Expression* prim_to_type(class Expression *expr)
+{
+    if (expr == NULL)
+    {
+        error_msg("Expression is NULL");
+        return new Expression();
+    }
+
+    if (expr->prim_type != ERROR_T) {
+        PrimitiveTypes temp = PrimitiveTypes(expr->prim_type);
+        if (expr->exp_type == NULL) {
+            expr->exp_type = create_primitive_type(temp);
+        }
+    }
+
+    return expr;
 }
