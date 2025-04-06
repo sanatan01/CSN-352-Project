@@ -106,25 +106,13 @@ int main() {
 
     int za;
     int zb;
-    // zb=10;
-    // za = *&zb;
-    // -zb=5;
-
     int res;
     res=add(za,zb);
 
     a=res++;
     int* bf;
     bf= &a;
-    // za[0] = 1;
 
-    // // Pointer expressions
-    // int arr[10];
-    // int *p;
-    // p = arr;
-    // p = p + 3;
-    // int ptr_diff;
-    // ptr_diff = p - arr;
 
     // Unary expressions
     int pre_inc, post_dec;

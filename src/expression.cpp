@@ -994,7 +994,7 @@ Expression* create_cast_expression_typename(OpExpression* oe) {
         return oe;
     }
     // 3AC or AST
-    // P->name = "cast_expression";
+    oe->name = oe->op2.name;
     // P->add_children({tn, ce});
     return oe;
 }

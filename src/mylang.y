@@ -167,11 +167,11 @@ error_statement_open
 
 error_statement_closed
     : error_statement_open SEMICOLON {
-        fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
+        error_msg("Syntax error recovered at line %d\n"+ std::to_string(yylineno));
         yyerrok;
     }
 	| error_statement_open RIGHT_BRACE {
-		fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
+		error_msg("Syntax error recovered at line %d\n"+ std::to_string(yylineno));
 		yyerrok;
 	}
     ;
@@ -486,9 +486,8 @@ unsigned_constant_expression
 	;
 
 empty_init_declarator_list
-	: SEMICOLON { std::cerr << "Empty called" ;$$ = new VectorIdentifiers(); }
+	: SEMICOLON { $$ = new VectorIdentifiers(); }
 	| init_declarator_list SEMICOLON {
-		std::cerr << "Full called";
 		$$ = $1;
 	}
 
@@ -703,7 +702,7 @@ struct_declaration
 		$$ = new StructElement(value);
 	}
 	| declarator COLON unsigned_constant_expression {
-		unsigned int value = convert_to_unsigned(std::string($2));
+		unsigned int value = convert_to_unsigned(std::string($3));
 		$$ = new StructElement($1, value);
 	}
 	;
@@ -1055,8 +1054,7 @@ statement
  	| compound_statement
  	| selection_statement
  	| jump_statement
-	// | switch_statement
-// 	| error_statement_closed
+ 	| error_statement_closed
  	;
 
 labeled_statement
@@ -1166,7 +1164,7 @@ iteration_statement
  translation_unit
  	: external_declaration 
 	| translation_unit external_declaration
-// 	| translation_unit error_statement_closed
+ 	| translation_unit error_statement_closed
  	;
 
  external_declaration
