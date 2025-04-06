@@ -1148,6 +1148,8 @@ Expression *create_cast_expression_typename(OpExpression *oe)
 
 Expression *create_postfix_expr_arr(Expression *pe, Expression *exp)
 {
+    pe = prim_to_type(pe);
+    exp = prim_to_type(exp);
     Expression *P = new Expression();
     // if (pe ) {
     //     P->pe = dynamic_cast<PostfixExpression *>(pe);
@@ -1964,6 +1966,7 @@ Expression *create_expression(ExpressionOpType op_type, std::string op, VectorEx
                 TAC::print_tac(temp + " = * " + expr.name.substr(1));
                 expr.name = temp;
             }
+            expr = *prim_to_type(&expr);
         }
     }
     else

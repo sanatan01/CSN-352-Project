@@ -460,7 +460,7 @@ signed_constant_expression
 			$$ = strdup($1->name.c_str());
 		} else {
 			std::cerr << "signed constant expression expected" << std::endl;
-			$$ = NULL;
+			$$ = "";
 		}
 		
 	}
@@ -471,8 +471,9 @@ unsigned_constant_expression
 		if(is_expr_unsigned($1)) {
 			$$ = strdup($1->name.c_str());
 		} else {
-			std::cerr << "unsigned constant expression expected" << std::endl;
-			$$ = NULL;
+			warning_msg("unsigned constant expression expected may lead to runtime errors");
+			debug_msg("unsigned constant expression expected" + std::to_string($1->prim_type));
+			$$ = strdup($1->name.c_str());
 		}
 	}
 	;

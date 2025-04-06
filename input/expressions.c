@@ -15,6 +15,9 @@ void foo(){
 }
 
 int main() {
+    int arr[5];
+
+    arr[3]=4;
     // Basic arithmetic expressions
     int i;
     for(i = 0; i < 10; i +=1 ) {
