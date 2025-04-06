@@ -18,11 +18,17 @@ if (cond) {
 
 }
 
-if !cond goto falseLabel
+if !cond goto nextLabel
 
 
-goto trueLabel
-falselabel;
+
+Nextlabel;
+if !cond goto NextLable1
+
+
+
+NextLabel1:
+
 
 
 trueLabel

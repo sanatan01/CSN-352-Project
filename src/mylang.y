@@ -1012,16 +1012,19 @@ statement
  	| iteration_statement
  	| compound_statement
  	| selection_statement
- 	// | labeled_statement
- 	// | jump_statement
+ 	| jump_statement
+	| labeled_statement
 // 	| error_statement_closed
  	;
 
-// labeled_statement
-// 	: IDENTIFIER COLON statement
-// 	| CASE CONSTANT_LITERAL COLON statement
-// 	| DEFAULT COLON statement
-// 	;
+labeled_statement
+	: CASE CONSTANT_LITERAL COLON statement
+	| DEFAULT COLON statement
+	;
+
+labeled_bracket_statement
+	: LEFT_BRACE labeled_statement RIGHT_BRACE
+	;
 
 compound_statement
  	: INC_SCOPE LEFT_BRACE RIGHT_BRACE { SymbolTable::exit_scope(); }
@@ -1064,9 +1067,11 @@ empty_else
 /* Control flow */
 selection_statement
 	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C); } RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
-//	| SWITCH LEFT_PAREN expression RIGHT_PAREN statement
+	// | switch_statement
 	;
 
+// switch_statement
+	// : SWITCH INC_SCOPE { TAC::create_switch_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C); } RIGHT_PAREN labeled_bracket_statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
 
 init_clause
 	: SEMICOLON
@@ -1098,13 +1103,13 @@ iteration_statement
 	}
 	;
 
-// jump_statement
+ jump_statement
+ 	: CONTINUE SEMICOLON { TAC::print_goto(CONTINUE_C, false); }
+ 	| BREAK SEMICOLON { TAC::print_goto(BREAK_C, false); }
+ 	| RETURN SEMICOLON {TAC::print_tac("return ");}
+ 	| RETURN expression SEMICOLON {TAC::print_tac("return "+ $2->name);}
 // 	: GOTO IDENTIFIER SEMICOLON
-// 	| CONTINUE SEMICOLON
-// 	| BREAK SEMICOLON
-// 	| RETURN SEMICOLON
-// 	| RETURN expression SEMICOLON
-// 	;
+ 	;
 
  /* Top-level constructs */
  translation_unit
@@ -1122,8 +1127,8 @@ function_declaration
 	: declaration_specifiers declarator {
 		$$ = $2;
 		if ($$->type->type_tag == FUNCTION_TYPE) {
-			if ($$->type->function_type->return_type != NULL && $$->type->function_type->return_type->type_tag == POINTER_TYPE) {
-				$$->type->function_type->return_type->pointer_type->return_type = $1;;
+			if (($$->type->function_type->return_type != NULL) && ($$->type->function_type->return_type->type_tag == POINTER_TYPE)) {
+				$$->type->function_type->return_type->pointer_type->return_type = $1;
 				$$->type->function_type->return_type->pointer_type->specifiers = combine_specs($$->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
 			} else {
 				$$->type->function_type->return_type = $1;
@@ -1135,7 +1140,7 @@ function_declaration
 	;
 
 function_definition
- 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args)); SymbolTable::add_symbol($1); TAC::create_function_definition(std::string($1->name)); } compound_statement { 
+ 	: function_declaration INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));  TAC::create_function_definition(std::string($1->name)); SymbolTable::add_symbol($1); } compound_statement { 
  		$$ = $1;
 		$$->type->setDefined();
 		SymbolTable::exit_scope();
@@ -1143,7 +1148,7 @@ function_definition
  	}
 	; 
 
-INC_SCOPE : { SymbolTable::enter_scope(); };
+INC_SCOPE : %empty { SymbolTable::enter_scope(); };
  %%
 
 void yyerror(const char *s) {

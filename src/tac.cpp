@@ -19,11 +19,16 @@ std::ostringstream tac_stream;
 std::ostringstream tac_temp_stream;
 
 void TAC::print_tac(std::string str) {
-    tac_stream << str << std::endl;
+    if(str[0]=='L'){
+        tac_stream << str << std::endl;
+    }
+    else{
+        tac_stream << "\t" << str << std::endl;
+    }
 }
 
 void TAC::print_tac(std::string result, std::string op1, std::string op, std::string op2) {
-    tac_stream << result << " = " << op1 << " " << op << " " << op2 << std::endl;
+    tac_stream << '\t' << result << " = " << op1 << " " << op << " " << op2 << std::endl;
 }
 
 void TAC::dump_to_file() {
@@ -81,20 +86,44 @@ std::string TAC::get_label(Case caseLabel) {
     switch (caseLabel)
     {
     case BREAK_C:
+        if (breakCase.empty()) {
+            std::cerr << "Error: No break label found" << std::endl;
+            return "ERROR";
+        }
         return "L" + std::to_string(breakCase.back());
     case CONTINUE_C:
+        if (continueCase.empty()) {
+            std::cerr << "Error: No continue label found" << std::endl;
+            return "ERROR";
+        }
         return "L" + std::to_string(continueCase.back());
     case RETURN_C:
+        if (returnCase.empty()) {
+            std::cerr << "Error: No return label found" << std::endl;
+            return "ERROR";
+        }
         return "L" + std::to_string(returnCase.back());
     case GOTO_C:
+        if (gotoCase.empty()) {
+            std::cerr << "Error: No goto label found" << std::endl;
+            return "ERROR";
+        }
         return "L" + std::to_string(gotoCase.back());
     case TRUE_C:
+        if (trueCase.empty()) {
+            std::cerr << "Error: No true label found" << std::endl;
+            return "ERROR";
+        }
         return "L" + std::to_string(trueCase.back());
     case FALSE_C:
+        if (falseCase.empty()) {
+            std::cerr << "Error: No false label found" << std::endl;
+            return "ERROR";
+        }
         return "L" + std::to_string(falseCase.back());
     default:
         std::cerr << "Error: Invalid label case" << std::endl;
-        return "";
+        return "ERROR";
     }
 }
 

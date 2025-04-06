@@ -1182,7 +1182,7 @@ Expression *create_postfix_expr_fun( Identifier *fi, VectorExpression *ae )
                 return P;
             }
 
-            TAC::print_tac("param " + itr.name);
+            TAC::print_tac("param " + ae->operands[i].name);
             i++;
         }
     }

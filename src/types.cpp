@@ -66,7 +66,7 @@ std::string typeName(int type) {
 
 // -------------------------- Standard Methods ----------------------------
 
-Specifiers::Specifiers(): is_typedef(false), is_extern(false), is_static(false), is_register(false), is_const(false), is_volatile(false) {}
+Specifiers::Specifiers(): is_typedef(0), is_extern(0), is_static(0), is_register(0), is_const(0), is_volatile(0) {}
 
 bool combine_flag(bool a, bool b, std::string err) {
     if (a && b)
@@ -98,6 +98,12 @@ Specifiers* combine_specs(Specifiers* spec1, Specifiers* spec2) {
     combined->is_register = combine_flag(spec1->is_register, spec2->is_register, "Error: 'register' keyword is used more than once.");
     combined->is_const = combine_flag(spec1->is_const, spec2->is_const, "Error: 'const' keyword is used more than once.");
     combined->is_volatile = combine_flag(spec1->is_volatile, spec2->is_volatile, "Error: 'volatile' keyword is used more than once.");
+    std::cerr<<"Typedef: "<<combined->is_typedef<<std::endl;
+    std::cerr<<"Extern: "<<combined->is_extern<<std::endl;
+    std::cerr<<"Static: "<<combined->is_static<<std::endl;
+    std::cerr<<"Register: "<<combined->is_register<<std::endl;  
+    std::cerr<<"Const: "<<combined->is_const<<std::endl;
+    std::cerr<<"Volatile: "<<combined->is_volatile<<std::endl;
     return combined;
 }
 
@@ -563,6 +569,9 @@ class GlobalType* create_primitive_type(PrimitiveTypes type, Specifiers* specifi
     typ->standard_type = new StandardType(orig->name, orig->size);
     if (specifiers != nullptr) {
         typ->standard_type->specifiers = specifiers;
+    }
+    else{
+        typ->standard_type->specifiers = new Specifiers();
     }
     return typ;
 }

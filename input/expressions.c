@@ -6,10 +6,30 @@ int add(int a, int b){
         // Not teri maa kaaa
     }
     add(a+1,b);
+    add(a*b,a/b);
+    int i;
+}
+
+int foo(){
+    return 0;
 }
 
 int main() {
     // Basic arithmetic expressions
+    int i;
+    for(i = 0; i < 10; i +=1 ) {
+        if(i == 5) {
+            i=6;
+            break;
+        }
+        else {
+            continue;
+        }
+    }
+
+    
+
+    return i;
 
     int a,b,c,d,e,f,g;
 

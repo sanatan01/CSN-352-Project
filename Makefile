@@ -33,7 +33,7 @@ build: $(BISON_OUT) $(FLEX_OUT)
 
 $(BISON_OUT) $(BISON_HDR_TMP): $(BISON_SRC)
 	@echo "Compiling $(BISON_SRC) with bison..."
-	bison -d -o $(BISON_OUT) $(BISON_SRC) --warnings=none
+	bison -d -o $(BISON_OUT) $(BISON_SRC) 
 	@mv $(BISON_HDR_TMP) $(BISON_HDR)
 
 $(FLEX_OUT): $(FLEX_SRC)
