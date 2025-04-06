@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <map>
 #include <expression.h>
 
 extern int label_count;
@@ -18,6 +19,7 @@ extern std::vector<int> returnCase;
 extern std::vector<int> gotoCase;
 extern std::vector<int> trueCase;
 extern std::vector<int> falseCase;
+extern std::map<std::string, bool> labels;
 
 enum Case {
     BREAK_C,
@@ -61,8 +63,12 @@ public:
     static void create_function_definition(std::string function_name);
     static void create_loop_statement();
 
+    static void add_jump_label(std::string name);
+
     static void create_if_statement();
     static void print_goto_conditional(class Expression* expr, int _case);
     static void print_goto_do_while(class Expression* expr);
     static void print_goto(int _case, bool remove);
+    static void print_goto_label(std::string name);
+    static void check_labels();
 };

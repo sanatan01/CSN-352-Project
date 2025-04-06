@@ -13,7 +13,7 @@ extern FILE *yyin;
 int test_count = 0;
 
 class Expression* switch_temp = new Expression();
-
+std::vector<class Expression*> switch_temps = std::vector<class Expression*>();
 %}
 
 %define parse.error verbose
@@ -103,6 +103,7 @@ class Expression* switch_temp = new Expression();
 
 %type<nice> empty_expression
 %type<nice> init_clause
+%type<vector_identifiers> empty_compound_statement
 
 %type<nice> assignment_operator
 %type<nice> unary_operator
@@ -186,15 +187,15 @@ primary_expression
 
 // /* Postfix expressions */
 postfix_expression
- 	: primary_expression 											{ $$ = $1; }
+ 	: primary_expression 											{ $$ = $1;}
     | postfix_expression INC_OP 									{ $$ = create_postfix_expr_ido( "++", $1); } 
  	| postfix_expression DEC_OP 									{ $$ = create_postfix_expr_ido( "--", $1); } 
  	| postfix_expression LEFT_BRACKET expression RIGHT_BRACKET 		{ $$ = create_postfix_expr_arr($1, $3); }
     | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{
 		$$ = create_postfix_expr_fun (new Identifier($1), $3); 
 	}
- 	| postfix_expression DOT IDENTIFIER 							{ $$ = create_postfix_expr_struct(".", $1, new Identifier($3)); }
- 	// | postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, $3); }
+ 	| postfix_expression DOT IDENTIFIER 							{  debug_msg("Halal");  $$ = create_postfix_expr_struct(".", $1, new Identifier($3)); }
+ 	| postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, new Identifier($3)); }
  	;
 
 // /* Argument expression list for function calls */
@@ -486,28 +487,40 @@ unsigned_constant_expression
 	;
 
 empty_init_declarator_list
-	: SEMICOLON { $$ = new VectorIdentifiers(); }
-	| init_declarator_list SEMICOLON {
+	: init_declarator_list SEMICOLON {
 		$$ = $1;
 	}
+	| SEMICOLON { $$ = new VectorIdentifiers(); }
+	;
 
 
 // /* Declarations */
 declaration
-	: { TAC::dump_to_file(); } declaration_specifiers empty_init_declarator_list {
+	: declaration_specifiers DUMP_FILE empty_init_declarator_list {
 
 		bool is_err = false;
-		if ($2->type_tag == STRUCT_TYPE || $2->type_tag == UNION_TYPE || $2->type_tag == ENUM_TYPE ){
-			class GlobalType* temp = SymbolTable::get_global_type($2);
+		if ($1->type_tag == STRUCT_TYPE || $1->type_tag == UNION_TYPE || $1->type_tag == ENUM_TYPE ){
+			class GlobalType* temp = SymbolTable::get_global_type($1);
 			if(temp == NULL){
 				is_err = true;
 			}
-			if (!is_err) $2 = temp;
+			if (!is_err) $1 = temp;
+		}
+		if($1->type_tag == POINTER_TYPE){
+			if($1->pointer_type->return_type->type_tag == STRUCT_TYPE || $1->pointer_type->return_type->type_tag == ENUM_TYPE || $1->pointer_type->return_type->type_tag == UNION_TYPE){
+				class GlobalType* temp = SymbolTable::get_global_type($1->pointer_type->return_type);
+				if(temp == NULL){
+					is_err = true;
+				}
+				if (!is_err) $1->pointer_type->return_type = temp;
+			}
 		}
 
 		if (!is_err) {
 			for(auto &element : $3->identifiers) {
-				element.type = combine_global_type($2, element.type);
+				debug_msg("Name of element before : " + element.type->getType());
+				element.type = combine_global_type($1, element.type);
+				debug_msg("Name of element after : " + element.type->getType());
 			}
 			$$=$3;
 			SymbolTable::add_symbols($$);
@@ -570,7 +583,7 @@ init_declarator_list
 				error_msg("Cannot assign given value to the following identifier");
 			}
 		} else {
-			std::cerr << "Cannot create a type for the following identifier" << std::endl;
+			error_msg("Cannot create a type for the following identifier");
 		}
  	}
  	;
@@ -664,9 +677,46 @@ struct_declaration_list
 struct_declaration
  	: specifier_qualifier_list struct_declarator_list SEMICOLON {
  		$$ = new VectorStructElement();
- 		for (auto &declarator : $2->elements) {
- 			declarator.id->type = $1;
- 		}
+
+
+
+		bool is_err = false;
+		if ($1->type_tag == STRUCT_TYPE || $1->type_tag == UNION_TYPE || $1->type_tag == ENUM_TYPE ){
+			class GlobalType* temp = SymbolTable::get_global_type($1);
+			if(temp == NULL){
+				is_err = true;
+			}
+			if (!is_err) $1 = temp;
+		}
+		else if($1->type_tag == POINTER_TYPE){
+			if($1->pointer_type->return_type->type_tag == STRUCT_TYPE || $1->pointer_type->return_type->type_tag == ENUM_TYPE || $1->pointer_type->return_type->type_tag == UNION_TYPE){
+				class GlobalType* temp = SymbolTable::get_global_type($1->pointer_type->return_type);
+				if(temp == NULL){
+					is_err = true;
+				}
+				if (!is_err) $1->pointer_type->return_type = temp;
+			}
+		}
+		else if($1->type_tag == ARRAY_TYPE){
+			if($1->array_type->return_type->type_tag == STRUCT_TYPE || $1->array_type->return_type->type_tag == ENUM_TYPE || $1->array_type->return_type->type_tag == UNION_TYPE){
+				class GlobalType* temp = SymbolTable::get_global_type($1->array_type->return_type);
+				if(temp == NULL){
+					is_err = true;
+				}
+				if (!is_err) $1->array_type->return_type = temp;
+			}
+		}
+
+
+		if(!is_err){
+			for (auto &declarator : $2->elements) {
+				declarator.id->type = combine_global_type($1, declarator.id->type);
+				if(declarator.size == 0) {
+					declarator.size = declarator.id->type->getSize();
+				}
+				
+			}
+		}
 		$$->add_elements($2);
  	}
  	;
@@ -763,7 +813,7 @@ declarator
 			$$->type->pointer_type->ptr_level += $1->ptr_level;
 			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->specifiers);
  		} else {
- 			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+ 			error_msg( "Cannot create a pointer type for the following identifier" );
  		}
  	}
 
@@ -775,14 +825,13 @@ declarator
 	| direct_declarator LEFT_BRACKET RIGHT_BRACKET { 
  		$$ = $1;
 		if ( $$->type->type_tag == NONE) {
-			std::cerr << "Array type" << std::endl;
 			$$->type = create_array_type($1->type);
 			$$->type = add_dimension_array($$->type);
 		}
  		else if ( $$->type->type_tag == ARRAY_TYPE ) {
 			$$->type = add_dimension_array($1->type);
 		} else {
-			std::cerr << "Cannot create an array type for the following identifier" << std::endl;
+			error_msg( "Cannot create an array type for the following identifier" );
 		}
  	}
 	| direct_declarator LEFT_PAREN RIGHT_PAREN { 
@@ -790,7 +839,7 @@ declarator
 		if ($$->type->type_tag == NONE) {
 			$$->type = create_function_type($$->type);
 		} else {
-			std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+			error_msg( "Cannot create a function type for the following identifier" );
 		}
 	}
 	| direct_declarator LEFT_PAREN parameter_type_list RIGHT_PAREN { 
@@ -798,7 +847,7 @@ declarator
 		if ($$->type->type_tag == NONE) {
 			$$->type = create_function_type($$->type, $3);
 		} else {
-			std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+			error_msg( "Cannot create a function type for the following identifier" );
 		}
 	}
 	| direct_declarator LEFT_BRACKET unsigned_constant_expression RIGHT_BRACKET {
@@ -812,7 +861,7 @@ declarator
 			$$->type = add_dimension_array($1->type, constant);
 
 		} else {
-			std::cerr << "Cannot create an array type for the following identifier" << std::endl;
+			error_msg( "Cannot create an array type for the following identifier" );
 		}
 
 	}
@@ -829,7 +878,7 @@ declarator
 	// 		}
 
 	// 	} else {
-	// 		std::cerr << "Cannot create a function type for the following identifier" << std::endl;
+	// 		error_msg( "Cannot create a function type for the following identifier" );
 	// 	}
 	// } 
 	;
@@ -904,7 +953,7 @@ parameter_list
 			$$->type->pointer_type->return_type = $1;
 			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->getSpecifiers());
 		} else {
-			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+			error_msg( "Cannot create a pointer type for the following identifier" );
 			$$->type = create_invalid_type("Cannot create a pointer type for the following identifier");
 		}
  	}
@@ -930,7 +979,7 @@ parameter_list
 			$$->type->pointer_type->return_type = $1;
 			$$->type->pointer_type->specifiers = combine_specs($$->type->pointer_type->specifiers, $1->getSpecifiers());
 		} else {
-			std::cerr << "Cannot create a pointer type for the following identifier" << std::endl;
+			error_msg( "Cannot create a pointer type for the following identifier" );
 			$$->type = create_invalid_type("Cannot create a pointer type for the following identifier");
 		}
 	}
@@ -963,7 +1012,7 @@ type_name
 		} else if ($$->type_tag == POINTER_TYPE) {
 			$$->pointer_type->return_type = $1;
 		} else {
-			std::cerr << "Cannot create a type name for the following abstract declarator" << std::endl;
+			error_msg( "Cannot create a type name for the following abstract declarator" );
 		}
  	}
  	;
@@ -985,7 +1034,7 @@ abstract_declarator
 			$$->pointer_type->ptr_level += $1->ptr_level;
 			$$->pointer_type->specifiers = combine_specs($$->pointer_type->specifiers, $1->specifiers);
 		} else {
-			std::cerr << "Cannot create a pointer type for the following abstract declarator" << std::endl;
+			error_msg( "Cannot create a pointer type for the following abstract declarator" );
  		}
 	}
  	;
@@ -1010,7 +1059,7 @@ direct_abstract_declarator
  		else if ( $$->type_tag == ARRAY_TYPE ) {
 			$$ = add_dimension_array($1);
 		} else {
-			std::cerr << "Cannot create an array type for the following abstract declarator" << std::endl;
+			error_msg( "Cannot create an array type for the following abstract declarator" );
 		}
 	}
 	| direct_abstract_declarator LEFT_BRACKET unsigned_constant_expression RIGHT_BRACKET {
@@ -1024,7 +1073,7 @@ direct_abstract_declarator
 			$$ = add_dimension_array($1, constant);
 
 		} else {
-			std::cerr << "Cannot create an array type for the following abstract declarator" << std::endl;
+			error_msg( "Cannot create an array type for the following abstract declarator" );
 		}
 	}
  	| LEFT_PAREN RIGHT_PAREN {
@@ -1055,6 +1104,7 @@ statement
  	| selection_statement
  	| jump_statement
  	| error_statement_closed
+	| IDENTIFIER COLON { TAC::add_jump_label(std::string($1)); }
  	;
 
 labeled_statement
@@ -1068,11 +1118,11 @@ case_statement_list
 	| case_statement_list case_statement
 
 case_statement
-	: CASE { TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C); } signed_constant_expression  COLON {TAC::print_tac("if " + switch_temp->name + " != " + std::string($3) + " goto " + TAC::get_label(GOTO_C));} statement
+	: CASE { TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C); } signed_constant_expression  COLON {TAC::print_tac("if " + switch_temps.back()->name + " != " + std::string($3) + " goto " + TAC::get_label(GOTO_C));} statement
 	;
 
 switch_statement
-	: SWITCH {TAC::add_label(BREAK_C); TAC::add_label(GOTO_C);} LEFT_PAREN expression RIGHT_PAREN { switch_temp = $4;} LEFT_BRACE labeled_statement RIGHT_BRACE {TAC::remove_break_label(); TAC::remove_goto_label(); }
+	: SWITCH {SymbolTable::enter_scope(); TAC::add_label(BREAK_C); TAC::add_label(GOTO_C);} LEFT_PAREN expression RIGHT_PAREN { switch_temps.push_back($4);} LEFT_BRACE labeled_statement RIGHT_BRACE {TAC::remove_break_label(); TAC::remove_goto_label(); switch_temps.pop_back(); SymbolTable::exit_scope();}
 	;
 
 compound_statement
@@ -1124,8 +1174,8 @@ selection_statement
 
 init_clause
 	: SEMICOLON
+	| declaration
 	| expression SEMICOLON
-	| declaration SEMICOLON
 	;
 
 empty_expression
@@ -1157,7 +1207,7 @@ iteration_statement
  	| BREAK SEMICOLON { TAC::print_goto(BREAK_C, false); }
  	| RETURN SEMICOLON {TAC::print_tac("return ");}
  	| RETURN expression SEMICOLON {TAC::print_tac("return "+ $2->name);}
-// 	: GOTO IDENTIFIER SEMICOLON
+ 	| GOTO IDENTIFIER SEMICOLON { TAC::print_goto_label(std::string($2)); }
  	;
 
  /* Top-level constructs */
@@ -1168,13 +1218,38 @@ iteration_statement
  	;
 
  external_declaration
-	: declaration
- 	| function_definition
+	: function_definition
+	| declaration
+	// : DUMP_FILE declaration_specifiers empty_compound_statement {
+	// 	bool is_err = false;
+	// 	if ($2->type_tag == STRUCT_TYPE || $2->type_tag == UNION_TYPE || $2->type_tag == ENUM_TYPE ){
+	// 		class GlobalType* temp = SymbolTable::get_global_type($2);
+	// 		if(temp == NULL){
+	// 			is_err = true;
+	// 		}
+	// 		if (!is_err) $2 = temp;
+	// 	}
+
+	// 	if (!is_err) {
+	// 		for(auto &element : $3->identifiers) {
+	// 			element.type = combine_global_type($2, element.type);
+	// 		}
+	// 		SymbolTable::add_symbols($3);
+	// 	}
+	// }
  	;
 
+empty_compound_statement 
+	: empty_init_declarator_list { $$ = $1; }
+	| declarator INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));  TAC::create_function_definition(std::string($1->name)); } compound_statement {
+		$$ = new VectorIdentifiers();
+		$1->type->setDefined();
+		$$->add_identifier($1);
+		SymbolTable::exit_scope();
+	}
+
 function_declaration
-	: declaration_specifiers declarator {
-		$$ = $2;
+	: declaration_specifiers declarator {$$ = $2;
 		if ($$->type->type_tag == FUNCTION_TYPE) {
 			if (($$->type->function_type->return_type != NULL) && ($$->type->function_type->return_type->type_tag == POINTER_TYPE)) {
 				$$->type->function_type->return_type->pointer_type->return_type = $1;
@@ -1183,21 +1258,35 @@ function_declaration
 				$$->type->function_type->return_type = $1;
 			}
 		} else{
-			std::cerr << "function declaration with non-function type" << std::endl;
+			error_msg( "function declaration with non-function type" );
 		}
-	}
+	 } 
 	;
 
 function_definition
- 	: function_declaration { SymbolTable::add_symbol($1); } INC_SCOPE { SymbolTable::add_symbols(&($1->type->function_type->args));  TAC::create_function_definition(std::string($1->name)); } compound_statement { 
- 		$$ = $1;
+ 	: declaration_specifiers DUMP_FILE declarator { 
+		if ($3->type->type_tag == FUNCTION_TYPE) {
+			if (($3->type->function_type->return_type != NULL) && ($3->type->function_type->return_type->type_tag == POINTER_TYPE)) {
+				$3->type->function_type->return_type->pointer_type->return_type = $1;
+				$3->type->function_type->return_type->pointer_type->specifiers = combine_specs($3->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+			} else {
+				$3->type->function_type->return_type = $1;
+			}
+		} else{
+			error_msg( "function declaration with non-function type" );
+		}
+
+		SymbolTable::add_symbol($3); 
+		} INC_SCOPE { SymbolTable::add_symbols(&($3->type->function_type->args));  TAC::create_function_definition(std::string($3->name)); } compound_statement { 
+ 		$$ = $3;
 		$$->type->setDefined();
 		SymbolTable::exit_scope();
 
  	}
 	; 
 
-INC_SCOPE : %empty { SymbolTable::enter_scope(); };
+DUMP_FILE : %empty { TAC::dump_to_file(); }
+INC_SCOPE : %empty { SymbolTable::enter_scope(); }
  %%
 
 void yyerror(const char *s) {

@@ -1,17 +1,14 @@
 int add(int a, int b){
     if(a==0){
-        // Teri maa kaaa
+        // Good
     }
     else{
-        // Not teri maa kaaa
+        // Not good
     }
-    add(a+1,b);
-    add(a*b,a/b);
     int i;
 }
 
 void foo(){
-     return foo();
 
      int **a;
 

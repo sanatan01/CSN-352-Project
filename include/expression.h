@@ -143,7 +143,6 @@ public:
 
 // Grammar for PostfixExpression
 Expression* create_postfix_expr_arr(Expression* pe, Expression* exp);
-Expression* create_postfix_expr_voidfun(Identifier* fi);
 Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae);
 Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Identifier* id);
 Expression* create_postfix_expr_ido(std::string  op, Expression* pe);

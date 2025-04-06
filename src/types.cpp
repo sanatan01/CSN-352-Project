@@ -111,6 +111,11 @@ Identifier::Identifier(std::string name, unsigned int _line_num, unsigned int _c
 
 Identifier::Identifier(class GlobalType* type): type(type) { this->name = ""; }
 
+Identifier::Identifier(const Identifier& other) {
+    name = other.name;
+    type = other.type ? new GlobalType(*other.type) : nullptr;
+}
+
 std::unordered_map<PrimitiveTypes, StandardType*> type_specifiers = createStandardTypes();
 
 StandardType::StandardType(): name(""), size(0), specifiers(new Specifiers()) {}
@@ -149,8 +154,15 @@ std::string StandardType::getSpecifierName() const {
 
 StructElement::StructElement(Identifier* id, size_t size): id(id), size(size) {}
 StructElement::StructElement(size_t size): id(new Identifier(new GlobalType())), size(size) {}
+StructElement::StructElement(const StructElement& other) {
+    size = other.size;
+    id = other.id ? new Identifier(*other.id) : nullptr;
+}
 
 VectorStructElement::VectorStructElement(): elements(std::vector<StructElement>()) {}
+VectorStructElement::VectorStructElement(const VectorStructElement& other) {
+    elements = other.elements;  // Will use StructElement's copy constructor
+}
 
 void VectorStructElement::add_element(StructElement* element) {
     this->elements.push_back(*element);
@@ -169,6 +181,7 @@ Struct::Struct(std::string name): StandardType("struct", 0), struct_name(name), 
 Struct::Struct(std::string name, VectorStructElement* members1): StandardType("struct", 0), struct_name(name), members(*(members1)) {
     this->size = 0;
     for (auto& member : members1->elements) {
+        debug_msg("Halo" + std::to_string(member.size));
         this->size += member.size;
     }
     debug_msg("Struct initialised with name: " + struct_name);
@@ -177,17 +190,25 @@ Struct::Struct(std::string name, VectorStructElement* members1): StandardType("s
 Struct::Struct(VectorStructElement* members1): StandardType("struct", 0), struct_name("Default"), members(*(members1)) {
     this->size = 0;
     for (auto& member : members1->elements) {
+        debug_msg("Halo" + std::to_string(member.size));
         this->size += member.size;
     }
 }
 
-int Struct::get_offset(std::string member_name)
-{
+Struct::Struct(const Struct& other): StandardType(other) {
+    // Deep copy members
+    members = VectorStructElement();
+    for (const auto& element : other.members.elements) {
+        StructElement new_element(element);
+        members.elements.push_back(new_element);
+    }
+    struct_name = other.struct_name;
+}
+
+int Struct::get_offset(std::string member_name) {
     int offset = 0;
-    for (auto &member : members.elements)
-    {
-        if (member.id->name == member_name)
-        {
+    for (auto& member : members.elements) {
+        if (member.id->name == member_name) {
             return offset;
         }
         offset += member.size;
@@ -195,12 +216,21 @@ int Struct::get_offset(std::string member_name)
     return -1;
 }
 
+size_t Struct::set_size() {
+    this->size = 0;
+    for (auto& member : members.elements) {
+        if(member.size == 0){
+            member.size = member.id->type->getSize();
+        }
+        this->size += member.size;
+    }
+    return this->size;
+}
 
-GlobalType* Struct::get_member_type(std::string member_name){
-    
-    for(auto &member: members.elements ){
-        if (member.id->name == member_name)
-        {
+GlobalType* Struct::get_member_type(std::string member_name) {
+
+    for (auto& member : members.elements) {
+        if (member.id->name == member_name) {
             return member.id->type;
         }
     }
@@ -228,23 +258,63 @@ Union::Union(std::string name, VectorStructElement* members1): StandardType("uni
     }
 }
 
+Union::Union(const Union& other): StandardType(other) {
+    members = other.members;
+    union_name = other.union_name;
+}
+
+
+size_t Union::set_size() {
+    this->size = 0;
+    for (auto& member : members.elements) {
+        if (this->size < member.size) {
+            this->size = member.size;
+        };
+    }
+    return this->size;
+}
+
+GlobalType* Union::get_member_type(std::string member_name) {
+
+    for (auto& member : members.elements) {
+        if (member.id->name == member_name) {
+            return member.id->type;
+        }
+    }
+    return new GlobalType();
+}
 // --------------------------- Array Class Methods ---------------------------
 
 ArrayType::ArrayType(unsigned int dim, class GlobalType* type, std::vector<unsigned int> dims, std::string name): dim(dim), return_type(type), dims(dims) {
     this->name = name;
     int cnt = 1;
-    for (auto& d : dims) {
-        cnt *= d;
+    for (auto i : dims) {
+        cnt *= i;
     }
     this->size = cnt * type->getSize();
 }
 
 ArrayType::ArrayType(): dim(0), return_type(nullptr), dims(std::vector<unsigned int>()) {};
 
+ArrayType::ArrayType(const ArrayType& other): dim(other.dim), dims(other.dims), return_type(other.return_type ? new GlobalType(*other.return_type) : nullptr) {}
+
+size_t ArrayType::set_size() {
+    int cnt = 1;
+    for (auto& d : dims) {
+        cnt *= d;
+    }
+    this->size = cnt * return_type->getSize();
+    return this->size;
+}
+
 // -------------------------- Function Class Methods --------------------------
 
 VectorIdentifiers::VectorIdentifiers() {
     this->identifiers = std::vector<Identifier>();
+}
+
+VectorIdentifiers::VectorIdentifiers(const VectorIdentifiers& other) {
+    identifiers = other.identifiers;  // Will use Identifier's copy constructor
 }
 
 void VectorIdentifiers::add_identifier(Identifier* id) {
@@ -257,7 +327,9 @@ void VectorIdentifiers::add_identifiers(VectorIdentifiers* other) {
     }
 }
 
-FunctionType::FunctionType(class GlobalType* return_type, class VectorIdentifiers* args): return_type(return_type), args(*(args)) {}
+FunctionType::FunctionType(class GlobalType* return_type, class VectorIdentifiers* args): return_type(new GlobalType(*return_type)), args(*(args)) {}
+
+FunctionType::FunctionType(const FunctionType& other): return_type(other.return_type ? new GlobalType(*other.return_type) : nullptr), args(other.args) {}
 
 size_t FunctionType::get_num_args() const {
     return args.identifiers.size();
@@ -267,12 +339,16 @@ size_t FunctionType::get_num_args() const {
 
 PointerType::PointerType() {
     this->ptr_level = 1;
+    this->size = sizeof(void*);
 }
 
 PointerType::PointerType(class GlobalType* return_type) {
     this->ptr_level = 1;
-    this->return_type = return_type;
+    this->return_type = return_type ? new GlobalType(*return_type) : nullptr;
+    this->size = sizeof(void*);
 }
+
+PointerType::PointerType(const PointerType& other): ptr_level(other.ptr_level), return_type(other.return_type ? new GlobalType(*other.return_type) : nullptr) {}
 
 // -------------------------------- Enum Class Methods --------------------------
 
@@ -280,7 +356,17 @@ EnumElement::EnumElement(std::string name, int value): name(name), value(value),
 
 EnumElement::EnumElement(std::string name): name(name), value(0), is_defined(0) {}
 
+EnumElement::EnumElement(const EnumElement& other) {
+    name = other.name;
+    value = other.value;
+    is_defined = other.is_defined;
+}
+
 VectorEnumElement::VectorEnumElement(): elements(std::vector<EnumElement>()) {}
+
+VectorEnumElement::VectorEnumElement(const VectorEnumElement& other) {
+    elements = other.elements;  // Will use EnumElement's copy constructor
+}
 
 void VectorEnumElement::add_element(EnumElement* id) {
     this->elements.push_back(*id);
@@ -298,14 +384,51 @@ EnumType::EnumType(VectorEnumElement* enum_values): StandardType("enum", sizeof(
 
 EnumType::EnumType(std::string name): StandardType("enum", sizeof(int)), enum_name(name), enum_values(VectorEnumElement()) {}
 
+EnumType::EnumType(const EnumType& other): StandardType(other) {
+    enum_values = other.enum_values;
+    enum_name = other.enum_name;
+}
+
+void EnumType::calculate_values() {
+    int cnt = 0;
+    for (auto& id : enum_values.elements) {
+        if (id.is_defined) {
+            cnt = id.value;
+        }
+        else {
+            id.value = cnt;
+            id.is_defined = true;
+        }
+        cnt++;
+    }
+}
+
 // -------------------------- InvalidType Class Methods -------------------------
 
 InvalidType::InvalidType(std::string _err_message, int _line_num, int _column): line_num(_line_num), column(_column), err_message(_err_message) {}
+
+InvalidType::InvalidType(const InvalidType& other) {
+    err_message = other.err_message;
+    line_num = other.line_num;
+    column = other.column;
+}
 
 // -------------------------- GlobalType Class Methods -------------------------
 
 GlobalType::GlobalType(): standard_type(nullptr), struct_type(nullptr), union_type(nullptr), array_type(nullptr), function_type(nullptr), pointer_type(nullptr), enum_type(nullptr), invalid_type(nullptr), type_tag(NONE) {};
 
+GlobalType::GlobalType(const GlobalType& other) {
+    type_tag = other.type_tag;
+
+    standard_type = other.standard_type ? new StandardType(*other.standard_type) : nullptr;
+    struct_type = other.struct_type ? new Struct(*other.struct_type) : nullptr;
+    union_type = other.union_type ? new Union(*other.union_type) : nullptr;
+    array_type = other.array_type ? new ArrayType(*other.array_type) : nullptr;
+    function_type = other.function_type ? new FunctionType(*other.function_type) : nullptr;
+    pointer_type = other.pointer_type ? new PointerType(*other.pointer_type) : nullptr;
+    enum_type = other.enum_type ? new EnumType(*other.enum_type) : nullptr;
+    invalid_type = other.invalid_type ? new InvalidType(*other.invalid_type) : nullptr;
+}
 
 std::string GlobalType::getType() const {
     switch (type_tag) {
@@ -354,7 +477,7 @@ size_t GlobalType::getSize() const {
     case STANDARD_TYPE:
         return standard_type ? standard_type->size : 0;
     case STRUCT_TYPE:
-        return struct_type ? struct_type->size : 0;
+        return struct_type ? struct_type->set_size() : 0;
     case UNION_TYPE:
         return union_type ? union_type->size : 0;
     case ARRAY_TYPE:
@@ -618,7 +741,7 @@ class GlobalType* create_array_type(class GlobalType* return_type) {
     class GlobalType* array = new GlobalType();
     array->array_type = new ArrayType();
     array->type_tag = ARRAY_TYPE;
-    array->array_type->return_type = return_type;
+    array->array_type->return_type = return_type ? new GlobalType(*return_type) : nullptr;
     return array;
 }
 
@@ -709,6 +832,7 @@ class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* 
     switch (right->type_tag) {
     case NONE:
     {
+        debug_msg("Returned type: " + left->getType());
         return left;
     }
     case FUNCTION_TYPE:
@@ -718,6 +842,36 @@ class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* 
     }
     case ARRAY_TYPE:
     {
+        if (left->type_tag == ARRAY_TYPE) {
+            if (left->array_type->dim != right->array_type->dim) {
+                TAC::clear_stream();
+                error_msg("Pointer level mismatch");
+            }
+            else {
+                if (!(isCompatible(left->array_type->return_type, right->array_type->return_type))) {
+                    TAC::clear_stream();
+                    error_msg("Pointer type mismatch");
+                }
+                return right;
+            }
+        }
+        else if (left->type_tag == POINTER_TYPE) {
+            if (left->pointer_type->ptr_level != right->array_type->dim) {
+                TAC::clear_stream();
+                error_msg("Pointer level mismatch");
+            }
+            else {
+                if (!(isCompatible(left->pointer_type->return_type, right->array_type->return_type))) {
+                    TAC::clear_stream();
+                    error_msg("Pointer type mismatch");
+                }
+                return left;
+            }
+        }
+
+        TAC::clear_stream();
+        //     error_msg("Cannot combine pointer with non-pointer type");
+        // }
         right->array_type->return_type = combine_global_type(left, right->array_type->return_type);
         break;
     }
@@ -736,11 +890,36 @@ class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* 
                 return right;
             }
         }
+        else if (left->type_tag == ARRAY_TYPE) {
+            if (left->array_type->dim != right->pointer_type->ptr_level) {
+                TAC::clear_stream();
+                error_msg("Pointer level mismatch");
+            }
+            else {
+                if (!(isCompatible(left->array_type->return_type, right->pointer_type->return_type))) {
+                    TAC::clear_stream();
+                    error_msg("Pointer type mismatch");
+                }
+                return left;
+            }
+        }
         else {
             TAC::clear_stream();
             error_msg("Cannot combine pointer with non-pointer type");
         }
         right->pointer_type->return_type = combine_global_type(left, right->pointer_type->return_type);
+        break;
+    }
+    case UNION_TYPE:
+    {
+        // TODO: check compatibility based on members of struct
+        if (left->type_tag == UNION_TYPE && (right->union_type->union_name == left->union_type->union_name)) {
+            //
+        }
+        else {
+            TAC::clear_stream();
+            error_msg("Cannot combine union with non-union type");
+        }
         break;
     }
     case STRUCT_TYPE:
@@ -760,6 +939,9 @@ class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* 
         debug_msg("Combining standard types of right operand is:  " + right->standard_type->name);
         if (left->type_tag == STANDARD_TYPE) {
             debug_msg("Combining standard types" + left->standard_type->name + " and " + right->standard_type->name);
+        }
+        else if (left->type_tag == ENUM_TYPE) {
+            warning_msg("Converting enum type to int");
         }
         else {
             TAC::clear_stream();

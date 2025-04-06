@@ -1,4 +1,5 @@
 #include <symtab.h>
+#include <tac.h>
 
 // Initialize static members
 std::unordered_map<std::string, std::vector<Symbol> > SymbolTable::symbol_map;
@@ -35,6 +36,23 @@ void SymbolTable::exit_scope() {
 void SymbolTable::add_symbol(Identifier* id, int line, int column) {
     // Check if identifier is a struct
 
+    // Print TAC
+
+    switch (id->type->type_tag) {
+    case STRUCT_TYPE: {
+        TAC::print_tac(id->name + " = alloc " + std::to_string(id->type->struct_type->set_size()));
+        break;
+    }
+    case UNION_TYPE: {
+        TAC::print_tac(id->name + " = alloc " + std::to_string(id->type->union_type->set_size()));
+        break;
+    }
+    case ARRAY_TYPE: {
+        TAC::print_tac(id->name + " = alloc " + std::to_string(id->type->array_type->set_size()));
+        break;
+    }
+    }
+
     Symbol symbol(*id, current_scope_level, id->type->isDefined(), line, column);
     std::string name = symbol.identifier.name;
     symbol_map[name].push_back(symbol);
@@ -43,6 +61,7 @@ void SymbolTable::add_symbol(Identifier* id, int line, int column) {
 
 void SymbolTable::add_symbols(VectorIdentifiers* ids, int line, int column) {
     for (auto& id : ids->identifiers) {
+        debug_msg("Adding symbol of type " + id.type->getType());
         add_symbol(&id, line, column);
     }
 }
@@ -60,9 +79,11 @@ bool SymbolTable::lookup_symbols(VectorIdentifiers* ids) {
     return true;
 }
 
+
+
 Symbol* SymbolTable::get_symbol(const std::string& identifier) {
     if (symbol_map.find(identifier) != symbol_map.end() && !symbol_map[identifier].empty()) {
-        return &symbol_map[identifier].back();
+        return new Symbol(symbol_map[identifier].back());
     }
     return nullptr;
 }
@@ -117,34 +138,31 @@ UserDefinedType::UserDefinedType(class Struct* struct_type, int scope_level) {
     type_name = struct_type->struct_name;
     current_scope = scope_level;
     type = GlobalType();
-    type.type_tag = STRUCT_TYPE;
     type.struct_type = struct_type;
-    if (struct_type->is_defined) {
-        is_defined = true;
-    }
+    type.type_tag = STRUCT_TYPE;
 }
 
 UserDefinedType::UserDefinedType(class Union* union_type, int scope_level) {
     type_name = union_type->union_name;
     current_scope = scope_level;
     type = GlobalType();
-    type.type_tag = UNION_TYPE;
     type.union_type = union_type;
-    if (union_type->is_defined) {
-        is_defined = true;
-    }
+    type.type_tag = UNION_TYPE;
 }
 
 UserDefinedType::UserDefinedType(class EnumType* enum_type, int scope_level) {
     type_name = enum_type->enum_name;
     current_scope = scope_level;
     type = GlobalType();
-    type.type_tag = ENUM_TYPE;
     type.enum_type = enum_type;
-    if (enum_type->is_defined) {
-        is_defined = true;
-    }
+    type.type_tag = ENUM_TYPE;
 }
+
+UserDefinedType::UserDefinedType(const UserDefinedType& other)
+    : type(other.type),  // This will use GlobalType's copy constructor
+    type_name(other.type_name),
+    current_scope(other.current_scope),
+    is_defined(other.is_defined) {}
 
 void SymbolTable::add_udt(class GlobalType* global_type) {
     switch (global_type->type_tag) {
@@ -158,6 +176,17 @@ void SymbolTable::add_udt(class GlobalType* global_type) {
     }
     case ENUM_TYPE: {
         udt.push_back(UserDefinedType(global_type->enum_type, current_scope_level));
+        global_type->enum_type->calculate_values(); 
+        for(auto &pq : global_type->enum_type->enum_values.elements){
+            Identifier* id = new Identifier(pq.name);
+            id->type = create_primitive_type(INT_T, global_type->getSpecifiers());
+            id->type->setDefined();
+            Symbol symbol(*id, current_scope_level, id->type->isDefined());
+            std::string name = pq.name;
+            symbol_map[name].push_back(symbol);
+            SymbolTable::print_symbol(symbol);
+            TAC::print_tac(pq.name + " = " + std::to_string(pq.value));  
+        }
         break;
     }
     case ARRAY_TYPE: {
@@ -192,18 +221,20 @@ class GlobalType* SymbolTable::get_global_type(class GlobalType* global_type) {
     case STRUCT_TYPE: {
         for (auto& typ : udt) {
             if (typ.type.type_tag == STRUCT_TYPE) {
+
                 if (typ.type_name == global_type->struct_type->struct_name) {
                     // if it is defined just return it
                     if (typ.is_defined && !global_type->struct_type->is_defined) {
                         debug_msg("Declaration of previously defined struct");
-                        return &(typ.type);
+
                     }
                     else if (!typ.is_defined && global_type->struct_type->is_defined) {
                         debug_msg("Definition of previously declared struct");
                         typ.type = *(global_type);
-                        return global_type;
+
                     }
-                    return global_type;
+
+                    return &(typ.type);
 
                 }
             }
@@ -212,20 +243,21 @@ class GlobalType* SymbolTable::get_global_type(class GlobalType* global_type) {
         return global_type;
     }
     case UNION_TYPE: {
+
         for (auto& typ : udt) {
             if (typ.type.type_tag == UNION_TYPE) {
                 if (typ.type_name == global_type->union_type->union_name) {
                     // if it is defined just return it
                     if (typ.is_defined && !(global_type->union_type->is_defined)) {
                         debug_msg("Declaration of previously defined union");
-                        return &(typ.type);
+
                     }
                     else if (!(typ.is_defined) && global_type->union_type->is_defined) {
                         debug_msg("Definition of previously declared union");
                         typ.type = *(global_type);
-                        return global_type;
+
                     }
-                    return global_type;
+                    return &(typ.type);
 
                 }
             }
@@ -276,4 +308,3 @@ void SymbolTable::print_udt() {
     // Print all structs
     symbol_table_file << udt.size();
 }
-

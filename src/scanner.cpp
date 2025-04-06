@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     SymbolTable::initialize_built_ins();
 
     #ifdef _DEBUG_MODE
-    std::cerr << "[DEBUG] Debug mode is enabled." << std::endl;
+    std::cerr << "[  DEBUG  ] Debug mode is enabled." << std::endl;
     #endif
 
     yylineno = 1; // Initialize line number
@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
     yyparse(); // Invoke the parser
 
     TAC::dump_to_file(); // Initialize TAC file
+    TAC::check_labels();
 
     fclose(input_file);
     symbol_table_file.close();

@@ -13,8 +13,7 @@
 #include <cmath>
 
 // --------------------------------------PRIMITVE TYPES----------------------------------------
-enum PrimitiveTypes
-{
+enum PrimitiveTypes {
 	ERROR_T = -1,
 	U_CHAR_T = 0,
 	CHAR_T = 1,
@@ -35,8 +34,7 @@ enum PrimitiveTypes
 
 std::string typeName(int type);
 
-class Specifiers
-{
+class Specifiers {
 public:
 	bool is_typedef;
 	bool is_extern;
@@ -46,183 +44,203 @@ public:
 	bool is_volatile;
 
 	Specifiers();
+	Specifiers(const Specifiers& other) = default;
+
+	class Specifiers* copy_type() const { return new Specifiers(*this); }
 };
 
-Specifiers *combine_specs(Specifiers *spec1, Specifiers *spec2);
+Specifiers* combine_specs(Specifiers* spec1, Specifiers* spec2);
 
 // -------------------------------------IDENTIFIER----------------------------------------
 
-class Identifier
-{
+class Identifier {
 public:
-	class GlobalType *type;
+	class GlobalType* type;
 	std::string name;
 	Identifier(std::string name, unsigned int _line_num = 0, unsigned int _column = 0);
-	Identifier(class GlobalType *type);
+	Identifier(class GlobalType* type);
+	Identifier(const Identifier& other);  // Declaration only
 };
 
 // -------------------------------------STANDARD TYPE----------------------------------------
 
-class StandardType
-{
+class StandardType {
 public:
 	std::string name;
 	size_t size;
-	Specifiers *specifiers;
+	Specifiers* specifiers;
 	StandardType();
 	StandardType(std::string name, size_t size);
+	StandardType(const StandardType& other) {
+		name = other.name;
+		size = other.size;
+		is_defined = other.is_defined;
+		specifiers = other.specifiers ? other.specifiers->copy_type() : nullptr;
+	}
 
 	bool is_defined;
 
 	// Important: Always use references when creating the objects to prevent object slicing
-	virtual bool isEqual(const StandardType &obj) const;
-	bool operator==(const StandardType &obj) const { return isEqual(obj); };
-	bool operator!=(const StandardType &obj) const { return !(*this == obj); };
+	virtual bool isEqual(const StandardType& obj) const;
+	bool operator==(const StandardType& obj) const { return isEqual(obj); };
+	bool operator!=(const StandardType& obj) const { return !(*this == obj); };
 
 	std::string getSpecifierName() const;
+
+	class StandardType* copy_type() const {
+		StandardType* type = new StandardType(*this);
+		type->specifiers = specifiers->copy_type();
+		return type;
+	}
 };
 
-extern std::unordered_map<PrimitiveTypes, StandardType *> type_specifiers;
+extern std::unordered_map<PrimitiveTypes, StandardType*> type_specifiers;
 
 // -------------------------------------STRUCT----------------------------------------
 
-class StructElement
-{
+class StructElement {
 public:
-	Identifier *id;
+	Identifier* id;
 	size_t size;
-	StructElement(Identifier *id, size_t size);
-	StructElement(size_t size); // Add implementation if the identifier pointer is NULL
+	StructElement(Identifier* id, size_t size);
+	StructElement(size_t size);
+	StructElement(const StructElement& other);  // Declaration only
 };
 
-class VectorStructElement
-{
+class VectorStructElement {
 public:
 	std::vector<StructElement> elements;
 
 	VectorStructElement();
-	void add_element(StructElement *id);
-	void add_elements(VectorStructElement *other);
+	void add_element(StructElement* id);
+	void add_elements(VectorStructElement* other);
+	VectorStructElement(const VectorStructElement& other);  // Declaration only
 };
 
-class Struct : public StandardType
-{
+class Struct: public StandardType {
 public:
 	VectorStructElement members;
 	std::string struct_name;
 
-	Struct(std::string name, VectorStructElement *members);
+	Struct(std::string name, VectorStructElement* members);
 	Struct(std::string name);
-	Struct(VectorStructElement *members);
+	Struct(VectorStructElement* members);
+	Struct(const Struct& other);  // Declaration only
 
 	int get_offset(std::string member_name);
 	GlobalType* get_member_type(std::string member_name);
+
+	size_t set_size();
 };
 
 // -------------------------------------UNION----------------------------------------
 
-class Union : public StandardType
-{
+class Union: public StandardType {
 public:
 	VectorStructElement members;
 	std::string union_name;
-	Union(std::string name, VectorStructElement *members);
+	Union(std::string name, VectorStructElement* members);
 	Union(std::string name);
-	Union(VectorStructElement *members);
+	Union(VectorStructElement* members);
+	Union(const Union& other);
+	GlobalType* get_member_type(std::string member_name);
+	size_t set_size();
 };
 
 // -------------------------------------COMPLEX TYPES----------------------------------------
 
-class ArrayType : public StandardType
-{
+class ArrayType: public StandardType {
 public:
-	class GlobalType *return_type;
+	class GlobalType* return_type;
 	unsigned int dim;
 	std::vector<unsigned int> dims;
-	ArrayType(unsigned int dim, class GlobalType *type, std::vector<unsigned int> dims, std::string name);
+	ArrayType(unsigned int dim, class GlobalType* type, std::vector<unsigned int> dims, std::string name);
 	ArrayType();
+	ArrayType(const ArrayType& other);
+	size_t set_size();
 };
 
 // -------------------------------------FUNCTION----------------------------------------
 
-class VectorIdentifiers
-{
+class VectorIdentifiers {
 public:
 	std::vector<Identifier> identifiers;
 
 	VectorIdentifiers();
-	void add_identifier(Identifier *id);
-	void add_identifiers(VectorIdentifiers *other);
+	void add_identifier(Identifier* id);
+	void add_identifiers(VectorIdentifiers* other);
+	VectorIdentifiers(const VectorIdentifiers& other);  // Declaration only
 };
 
-class FunctionType : public StandardType
-{
+class FunctionType: public StandardType {
 public:
 	class VectorIdentifiers args;
-	class GlobalType *return_type;
+	class GlobalType* return_type;
 
-	FunctionType(class GlobalType *return_type, class VectorIdentifiers *args);
+	FunctionType(class GlobalType* return_type, class VectorIdentifiers* args);
+	FunctionType(const FunctionType& other);
 	size_t get_num_args() const;
 };
 
 // -------------------------------------POINTER----------------------------------------
 
-class PointerType : public StandardType
-{
+class PointerType: public StandardType {
 public:
-	class GlobalType *return_type;
+	class GlobalType* return_type;
 	int ptr_level;
 	PointerType();
-	PointerType(class GlobalType *return_type);
+	PointerType(class GlobalType* return_type);
+	PointerType(const PointerType& other);
 };
 
 // -------------------------------------ENUM----------------------------------------
-class EnumElement
-{
+class EnumElement {
 public:
 	std::string name;
 	int value;
 	bool is_defined;
 	EnumElement(std::string name, int value);
 	EnumElement(std::string name);
+	EnumElement(const EnumElement& other);  // Declaration only
 };
 
-class VectorEnumElement
-{
+class VectorEnumElement {
 public:
 	std::vector<EnumElement> elements;
 	VectorEnumElement();
-	void add_element(EnumElement *id);
-	void add_elements(VectorEnumElement *other);
+	void add_element(EnumElement* id);
+	void add_elements(VectorEnumElement* other);
+	VectorEnumElement(const VectorEnumElement& other);  // Declaration only
 };
 
-class EnumType : public StandardType
-{
+class EnumType: public StandardType {
 public:
 	VectorEnumElement enum_values;
 	std::string enum_name;
-	EnumType(std::string name, VectorEnumElement *enum_values);
-	EnumType(VectorEnumElement *enum_values);
+	EnumType(std::string name, VectorEnumElement* enum_values);
+	EnumType(VectorEnumElement* enum_values);
 	EnumType(std::string name);
+	EnumType(const EnumType& other);
+
+	void calculate_values();
 };
 
 // -------------------------------------INVALID TYPE----------------------------------------
 
 // Important : Not an extension of StandardType
-class InvalidType
-{
+class InvalidType {
 public:
 	std::string err_message;
 	int line_num;
 	int column;
 	InvalidType(std::string _err_message, int _line_num = 0, int _column = 0);
 	InvalidType();
+	InvalidType(const InvalidType& other);  // Declaration only
 };
 
 // -------------------------------------GLOBAL TYPES----------------------------------------
 
-enum GlobalTypeTag
-{
+enum GlobalTypeTag {
 	STANDARD_TYPE,
 	STRUCT_TYPE,
 	UNION_TYPE,
@@ -234,51 +252,51 @@ enum GlobalTypeTag
 	NONE,
 };
 
-class GlobalType
-{
+class GlobalType {
 public:
-	StandardType *standard_type;
-	Struct *struct_type;
-	Union *union_type;
-	ArrayType *array_type;
-	FunctionType *function_type;
-	PointerType *pointer_type;
-	EnumType *enum_type;
-	InvalidType *invalid_type;
+	StandardType* standard_type;
+	Struct* struct_type;
+	Union* union_type;
+	ArrayType* array_type;
+	FunctionType* function_type;
+	PointerType* pointer_type;
+	EnumType* enum_type;
+	InvalidType* invalid_type;
 	enum GlobalTypeTag type_tag;
 
 	GlobalType();
+	GlobalType(const GlobalType& other);  // Declaration only
 
 	std::string getType() const;
 	size_t getSize() const;
-	bool isEqual(const class GlobalType &obj) const;
-	Specifiers *getSpecifiers() const;
-	void setSpecifiers(Specifiers *specifiers);
+	bool isEqual(const class GlobalType& obj) const;
+	Specifiers* getSpecifiers() const;
+	void setSpecifiers(Specifiers* specifiers);
 	bool isDefined() const;
 	void setDefined();
 };
 
-class GlobalType *create_enum_type(EnumType *_enum, Specifiers *specifiers = nullptr);
+class GlobalType* create_enum_type(EnumType* _enum, Specifiers* specifiers = nullptr);
 
-class GlobalType *create_union_type(Union *_union, Specifiers * = nullptr);
+class GlobalType* create_union_type(Union* _union, Specifiers* = nullptr);
 
-class GlobalType *create_struct_type(Struct *_struct, Specifiers *specifiers = nullptr);
+class GlobalType* create_struct_type(Struct* _struct, Specifiers* specifiers = nullptr);
 
-class GlobalType *create_primitive_type(PrimitiveTypes type, Specifiers *specifiers = nullptr);
+class GlobalType* create_primitive_type(PrimitiveTypes type, Specifiers* specifiers = nullptr);
 
-class GlobalType *create_function_type(class GlobalType *return_type, class VectorIdentifiers *args = nullptr, Specifiers *specifiers = nullptr);
+class GlobalType* create_function_type(class GlobalType* return_type, class VectorIdentifiers* args = nullptr, Specifiers* specifiers = nullptr);
 
-class GlobalType *create_pointer_type(class GlobalType *return_type, int ptr_level = 1, Specifiers *specifiers = nullptr);
+class GlobalType* create_pointer_type(class GlobalType* return_type, int ptr_level = 1, Specifiers* specifiers = nullptr);
 
-class GlobalType *create_default_pointer_type();
+class GlobalType* create_default_pointer_type();
 
-class GlobalType *create_array_type(class GlobalType *return_type);
+class GlobalType* create_array_type(class GlobalType* return_type);
 
-class GlobalType *add_dimension_array(class GlobalType* array_type, int dimension = 0);
+class GlobalType* add_dimension_array(class GlobalType* array_type, int dimension = 0);
 
-class GlobalType *create_invalid_type(std::string err_message, int line_num = 0, int column = 0);
+class GlobalType* create_invalid_type(std::string err_message, int line_num = 0, int column = 0);
 
-class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *right);
+class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* right);
 
 unsigned int convert_to_unsigned(std::string input);
 

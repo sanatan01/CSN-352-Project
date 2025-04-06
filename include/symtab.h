@@ -24,8 +24,17 @@ public:
 	Symbol(Identifier& id, int level, bool is_defined, int line = 0, int column = 0)
 		: identifier(id), is_defined(is_defined), line_number(line), column_number(column), current_level(level) {}
 
+	Symbol(const Symbol& other)
+		: identifier(other.identifier),
+		line_number(other.line_number),
+		column_number(other.column_number),
+		current_level(other.current_level),
+		is_defined(other.is_defined) {}
+
 	// Missing getter that was referenced in the code
 	Identifier get_identifier() const { return identifier; }
+
+	class Symbol* copy_symbol() const { return new Symbol(*this); }
 };
 
 class UserDefinedType {
@@ -38,6 +47,8 @@ public:
 	UserDefinedType(class Struct* struct_type, int scope_level);
 	UserDefinedType(class Union* union_Type, int scope_level);
 	UserDefinedType(class EnumType* enum_type, int scope_level);
+	UserDefinedType(const UserDefinedType& other);
+
 };
 
 // A static symbol table to store and manage symbols

@@ -14,6 +14,7 @@ std::vector<int> returnCase;
 std::vector<int> gotoCase;
 std::vector<int> trueCase;
 std::vector<int> falseCase;
+std::map<std::string, bool> labels;
 
 std::ostringstream tac_stream;
 std::ostringstream tac_temp_stream;
@@ -326,4 +327,28 @@ void TAC::print_goto(int _case, bool remove) {
         error_msg("Invalid case for goto");
         break;
     }
+}
+
+void TAC::add_jump_label(std::string name) {
+    if(labels[name] == true) {
+        error_msg("Same label defined twice");
+    }
+    labels[name] = true;
+    TAC::print_tac("L_" + name + ":");
+}
+
+void TAC::print_goto_label(std::string name) {
+    if(labels.count(name) == 0) {
+        labels[name] = 0;
+    }
+    TAC::print_tac("goto L_" + name);
+}
+
+void TAC::check_labels() {
+    for(auto it : labels) {
+        if(it.second == false) {
+            error_msg("Label " + it.first + "was not found");
+        }
+    }
+    labels.clear();
 }

@@ -17,13 +17,13 @@ int main() {
         char : 5;
     };
 
-    int fuck = 10;
+    int duck = 10;
 
     int c;
     int z;
     struct  nice {
         int a;
-        int fuck;
+        int duck;
     };
     struct s;
 
@@ -32,8 +32,8 @@ int main() {
     };
 
     enum fuck {
-        FUCKALL,
-        FUCKYOU
+        NICE,
+        NOTNICE
     };
 
     enum gay;
