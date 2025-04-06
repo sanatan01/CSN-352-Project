@@ -47,11 +47,6 @@ Expression::Expression(class GlobalType *type) : prim_type(static_cast<int>(ERRO
     }
 };
 
-void Expression::printExpression()
-{
-    std::cout << "Expression: " << name << ", Type: " << typeName(prim_type) << ", Num Operands: " << num_operands << std::endl;
-}
-
 bool isInt(PrimitiveTypes op)
 {
     return ((op > -1 && op < 10) || op == 14);

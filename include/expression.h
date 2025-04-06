@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ast.h>
 #include <deque>
 #include <map>
 #include <string>
@@ -65,7 +64,6 @@ public:
   Expression(PrimitiveTypes type, int num_operands);
   Expression();
   Expression(class GlobalType* type);
-  void printExpression();
 };
 
 class VectorExpression: public Expression {
@@ -134,9 +132,6 @@ public:
   }
 };
 
-// Grammar warppers for UnaryExpression
-Expression* create_unary_expression(Terminal* op, Expression* ue); // INC_OP, DEC_OP, SIZEOF
-Expression* create_unary_expression_cast(Node* n_op, Expression* ce);
 // Expression* create_unary_expression(Terminal* op, TypeName* t_name);
 
 // --------------------------------------------------------------------------------------------
@@ -200,8 +195,6 @@ Expression* create_postfix_expr_ido(std::string  op, Expression* pe);
 // };
 
 //Constant* create_constant(const char* name, const char* value, unsigned int line_num, unsigned int column);
-
-Expression *create_assignment_expression(OpExpression *oe, Node *n_op);
 bool isCompatible(class GlobalType *left, class GlobalType *right);
 
 bool is_expr_signed(class Expression* expr);

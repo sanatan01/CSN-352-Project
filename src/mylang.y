@@ -1055,7 +1055,6 @@ expression_statement
  	: SEMICOLON {$$ = new Expression(); $$->name="empty";}
  	| expression SEMICOLON {
 		$$ = $1;
-		std::cout << "Expression statment" << std::endl;
 	}
  	;
 
