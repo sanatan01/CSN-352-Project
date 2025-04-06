@@ -82,6 +82,21 @@ void SymbolTable::print_symbol(Symbol symbol) {
 
 }
 
+void SymbolTable::initialize_built_ins() {
+    // Create printf function
+    Identifier *printf_id = new Identifier("printf");
+    GlobalType* return_type = create_primitive_type(INT_T);
+    printf_id->type = create_function_type(return_type);
+    
+    // Create scanf function
+    Identifier *scanf_id = new Identifier("scanf");
+    printf_id->type = create_function_type(return_type);
+    
+    // Add to symbol table
+    SymbolTable::add_symbol(printf_id);
+    SymbolTable::add_symbol(scanf_id);
+}
+
 
 
 

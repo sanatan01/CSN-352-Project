@@ -48,6 +48,8 @@ int main(int argc, char** argv) {
 
     formatSymbolTable(); // Format the symbol table header
 
+    // Initialize built-in functions
+    SymbolTable::initialize_built_ins();
 
     #ifdef _DEBUG_MODE
     std::cerr << "[DEBUG] Debug mode is enabled." << std::endl;

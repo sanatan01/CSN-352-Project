@@ -17,6 +17,8 @@ void foo(){
 int main() {
     int arr[5];
 
+    char * c = "hello";
+
     arr[3]=5;
     // Basic arithmetic expressions
     int i;

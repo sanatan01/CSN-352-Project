@@ -105,7 +105,7 @@ L?'(\\.|[^\\'])+\'               { displayLexer(CONSTANT_LITERAL, yytext); yylva
 }
 
 
-L?\"(\\.|[^\\"])*\"              { displayLexer(STRING_LITERAL, yytext); yylval.nice = strdup(getTokenName(STRING_LITERAL)); yycolumn += yyleng; return STRING_LITERAL; }
+L?\"(\\.|[^\\"])*\"              { displayLexer(STRING_LITERAL, yytext); yylval.nice = strdup(yytext); yycolumn += yyleng; return STRING_LITERAL; }
 
 
 {UNTERMINATED_STRING} {

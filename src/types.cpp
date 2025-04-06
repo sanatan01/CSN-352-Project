@@ -793,6 +793,9 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
         return right;
     }
 
+
+    debug_msg("Combining types: " + left->getType() + " and " + right->getType());
+
     // Now combine them
     switch (right->type_tag)
     {
@@ -812,6 +815,26 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
     }
     case POINTER_TYPE:
     {
+        if (left->type_tag == POINTER_TYPE)
+        {
+            if (left->pointer_type->ptr_level != right->pointer_type->ptr_level)
+            {
+                TAC::clear_stream();
+                error_msg("Pointer level mismatch");
+            } else {
+                if (!( isCompatible(left->pointer_type->return_type, right->pointer_type->return_type) ))
+                {
+                    TAC::clear_stream();
+                    error_msg("Pointer type mismatch");
+                }
+                return right;
+            }
+        }
+        else
+        {
+            TAC::clear_stream();
+            error_msg("Cannot combine pointer with non-pointer type");
+        }
         right->pointer_type->return_type = combine_global_type(left, right->pointer_type->return_type);
         break;
     }
@@ -831,6 +854,7 @@ class GlobalType *combine_global_type(class GlobalType *left, class GlobalType *
     }
     case STANDARD_TYPE:
     {
+        debug_msg("Combining standard types of right operand is:  " + right->standard_type->name);
         if (left->type_tag == STANDARD_TYPE )
         {
             debug_msg("Combining standard types"+ left->standard_type->name + " and " + right->standard_type->name);

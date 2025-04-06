@@ -142,38 +142,38 @@ int test_count = 0;
 %%
 
 // /* Handling multiple errors */
-// error_statement_open
-//     : error
-// 	| ERROR 
-//     | error_statement_open primary_expression 
-// 	| error_statement_open type_specifier 
-// 	| error_statement_open unary_operator 
-// 	| error_statement_open storage_class_specifier
-// 	| error_statement_open STRUCT
-// 	| error_statement_open UNION
-// 	| error_statement_open type_qualifier	
-// 	| error_statement_open declarator
-// 	| error_statement_open direct_declarator
-// 	| error_statement_open pointer
-// 	| error_statement_open type_qualifier_list
-//     ;
+error_statement_open
+    : error
+	| ERROR 
+    | error_statement_open primary_expression 
+	| error_statement_open type_specifier 
+	| error_statement_open unary_operator 
+	| error_statement_open storage_class_specifier
+	| error_statement_open STRUCT
+	| error_statement_open UNION
+	| error_statement_open type_qualifier	
+	| error_statement_open declarator
+	| error_statement_open direct_declarator
+	| error_statement_open pointer
+	| error_statement_open type_qualifier_list
+    ;
 
-// error_statement_closed
-//     : error_statement_open SEMICOLON {
-//         fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
-//         yyerrok;
-//     }
-// 	| error_statement_open RIGHT_BRACE {
-// 		fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
-// 		yyerrok;
-// 	}
-//     ;
+error_statement_closed
+    : error_statement_open SEMICOLON {
+        fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
+        yyerrok;
+    }
+	| error_statement_open RIGHT_BRACE {
+		fprintf(stderr, "Syntax error recovered at line %d\n", yylineno);
+		yyerrok;
+	}
+    ;
 
 // /* Primary expressions */
 primary_expression
  	: IDENTIFIER							{ $$ = create_expression_simple(IDENTIFIER_ET, std::string($1)); }
  	| CONSTANT_LITERAL 						{ $$ = create_expression_simple(CONSTANT_ET, std::string($1)); }
-// 	| STRING_LITERAL 						{ $$ = create_primary_expression(&(ExpressionType){ .string_literal = $1 }); }
+ 	| STRING_LITERAL 						{ $$ = create_expression_simple(STRING_ET, std::string($1)); }
 	| LEFT_PAREN expression RIGHT_PAREN 	{ $$ = $2; }
  	;	
 
@@ -538,10 +538,7 @@ init_declarator_list
  	}
  	| declarator ASSIGN assignment_expression {
 		
-		if ($3->prim_type != ERROR_T) {
-			PrimitiveTypes temp = PrimitiveTypes($3->prim_type);
-			$3->exp_type = create_primitive_type(temp);
-		}
+		$3 = prim_to_type($3);
 
 		TAC::print_tac($1->name + " = " + $3->name);
  		$$ = $1;
@@ -1144,7 +1141,7 @@ iteration_statement
 
  /* Top-level constructs */
  translation_unit
- 	: external_declaration
+ 	: external_declaration 
 	| translation_unit external_declaration
 // 	| translation_unit error_statement_closed
  	;

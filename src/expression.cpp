@@ -78,6 +78,33 @@ PrimitiveTypes deduceType(const std::string& input) {
 
     PrimitiveTypes ret_type = ERROR_T;
 
+
+    if (input.size() == 3) {
+        if (input[0] == '\'' && input[2] == '\'' && input[1] != '\\') {
+            ret_type = CHAR_T;
+            return ret_type;
+        }
+    }
+
+    if (input.size() == 4) {
+        if (input[0] == '\'' && input[3] == '\'' && input[1] == '\\') {
+            if ((input[1] == '\\' && input[2] == 'n') ||
+                (input[1] == '\\' && input[2] == 't') ||
+                (input[1] == '\\' && input[2] == 'r') ||
+                (input[1] == '\\' && input[2] == 'b') ||
+                (input[1] == '\\' && input[2] == 'f') ||
+                (input[1] == '\\' && input[2] == 'v') ||
+                (input[1] == '\\' && input[2] == 'a') ||
+                (input[1] == '\\' && input[2] == '\\') ||
+                (input[1] == '\\' && input[2] == '\'') ||
+                (input[1] == '\\' && input[2] == '\"') ||
+                (input[1] == '\\' && input[2] == '0')) {
+                ret_type = CHAR_T;
+                return ret_type;
+            }
+        }
+    }
+
     if (input.find('.') != std::string::npos || input.find('e') != std::string::npos || input.find('E') != std::string::npos) {
         try {
             long double val = std::stold(input);
@@ -1103,6 +1130,97 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
         P->prim_type = ERROR_T;
         return P;
     }
+    else if (ste->identifier.name == "printf") {
+        // printf and scanf are special cases
+        Expression* arg = &(ae->operands[0]);
+        if (arg->exp_type->type_tag != POINTER_TYPE) {
+            error_msg("Invalid argument type for printf or scanf");
+            P->prim_type = ERROR_T;
+            return P;
+        }
+        if ((arg->exp_type->pointer_type->ptr_level != 1) || arg->exp_type->pointer_type->return_type->type_tag != STANDARD_TYPE) {
+            error_msg("Invalid argument type for printf or scanf");
+            P->prim_type = ERROR_T;
+            return P;
+        }
+        if (arg->exp_type->pointer_type->return_type->standard_type->name != "char") {
+            error_msg("Invalid argument type for printf or scanf");
+            P->prim_type = ERROR_T;
+            return P;
+        }
+        int t=0;
+        for(auto& itr : ae->operands) {
+            if(t==0){
+                t++;
+                continue;
+            }
+            PrimitiveTypes temp_type = PrimitiveTypes(itr.prim_type);
+            if(!isInt(temp_type) && !isFloat(temp_type)) {
+                error_msg("Invalid argument type for printf or scanf");
+                P->prim_type = ERROR_T;
+                return P;
+            }
+        }
+        int j=0;
+        for(auto& itr : ae->operands) {
+            TAC::print_tac("param " + ae->operands[j].name);
+            j++;   
+        }
+
+        P->prim_type = INT_T;
+        std::string new_temp = TAC::get_temp();
+        TAC::print_tac(new_temp + " = call " + fi->name + " , " + std::to_string(j));
+        P->name = new_temp;
+        return P;
+    }
+    else if(ste->identifier.name == "scanf"){
+        // printf and scanf are special cases
+        Expression* arg = &(ae->operands[0]);
+        if (arg->exp_type->type_tag != POINTER_TYPE) {
+            error_msg("Invalid argument type for printf or scanf");
+            P->prim_type = ERROR_T;
+            return P;
+        }
+        if ((arg->exp_type->pointer_type->ptr_level != 1) || arg->exp_type->pointer_type->return_type->type_tag != STANDARD_TYPE) {
+            error_msg("Invalid argument type for printf or scanf");
+            P->prim_type = ERROR_T;
+            return P;
+        }
+        if (arg->exp_type->pointer_type->return_type->standard_type->name != "char") {
+            error_msg("Invalid argument type for printf or scanf");
+            P->prim_type = ERROR_T;
+            return P;
+        }
+        int t=0;
+        for(auto& itr : ae->operands) {
+            if(t==0){
+                t++;
+                continue;
+            }
+            if((itr.exp_type->type_tag != POINTER_TYPE) || (itr.exp_type->pointer_type->ptr_level != 1) || (itr.exp_type->pointer_type->return_type->type_tag != STANDARD_TYPE)) {
+                error_msg("Invalid argument type for printf or scanf");
+                P->prim_type = ERROR_T;
+                return P;
+            }
+        }
+        int j=0;
+        for(auto& itr : ae->operands) {
+            TAC::print_tac("param " + ae->operands[j].name);
+            j++;   
+        }
+
+        P->prim_type = INT_T;
+        std::string new_temp = TAC::get_temp();
+        TAC::print_tac(new_temp + " = call " + fi->name + " , " + std::to_string(j));
+        P->name = new_temp;
+        return P;
+    }
+    else if (ste->identifier.type == NULL) {
+        // Error
+        error_msg("Called object '" + fi->name + "' is not a function");
+        P->prim_type = ERROR_T;
+        return P;
+    }
     else if (ste->identifier.type->type_tag != FUNCTION_TYPE) {
         // Error
         error_msg("Called object '" + fi->name + "' is not a function");
@@ -1153,9 +1271,11 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
                 P->prim_type = ERROR_T;
                 return P;
             }
-
-            TAC::print_tac("param " + ae->operands[i].name);
-            i++;
+        }
+        int j = 0;
+        for (auto& itr : ste->identifier.type->function_type->args.identifiers) {
+            TAC::print_tac("param " + ae->operands[j].name);
+            j++;
         }
     }
 
@@ -1725,6 +1845,22 @@ Expression* create_expression_simple(ExpressionType exp_type, std::string token)
         e->prim_type = type;
 
         e->name = token;
+        e->is_assignable = false;
+        return e;
+        break;
+    }
+    case STRING_ET:
+    {
+        e->exp_type = create_pointer_type(create_primitive_type(CHAR_T), 1);
+        e->prim_type = ERROR_T;
+        debug_msg("String: " + token);
+        std::string new_temp = TAC::get_temp();
+        TAC::print_tac(new_temp + " = alloc " + std::to_string(sizeof(char) * (token.length() - 1)));
+        std::string str_temp = TAC::get_temp();
+        TAC::print_tac(str_temp + " = " + token);
+        TAC::print_tac("copy " + str_temp + ", " + new_temp);
+        e->name = new_temp;
+        e->is_assignable = false;
         return e;
         break;
     }

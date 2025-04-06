@@ -31,7 +31,8 @@ enum ExpressionOpType {
 enum ExpressionType {
   IDENTIFIER_ET,
   CONSTANT_ET,
-  EXPRESSION_ET
+  EXPRESSION_ET,
+  STRING_ET,
 };
 
 extern std::unordered_map<std::string, PrimitiveTypes> type_map;

@@ -46,4 +46,5 @@ public:
   static bool lookup_symbols(VectorIdentifiers* ids);
   static Symbol* get_symbol(const std::string& identifier);
   static void print_symbol(Symbol symbol);
+  static void initialize_built_ins();
 };
