@@ -17,55 +17,64 @@ std::vector<int> falseCase;
 
 std::ostringstream tac_stream;
 std::ostringstream tac_temp_stream;
+std::ostringstream tac_postfix_temp;
 
-void TAC::print_tac(std::string str)
-{
-    if (str[0] == 'L')
-    {
-        tac_stream << str << std::endl;
-    }
-    else
-    {
-        tac_stream << "\t" << str << std::endl;
-    }
+void TAC::dump_to_postfix() {
+    tac_postfix_temp << tac_stream.str();
+    tac_stream.str(""); // Clear the stream
+    tac_stream.clear(); // Reset the stream state
 }
 
-void TAC::print_tac(std::string result, std::string op1, std::string op, std::string op2)
-{
-    tac_stream << '\t' << result << " = " << op1 << " " << op << " " << op2 << std::endl;
+void TAC::get_from_postfix() {
+    tac_stream << tac_postfix_temp.str(); // Append entire content
+    tac_postfix_temp.str("");             // Clear the buffer
+    tac_postfix_temp.clear();
 }
 
-void TAC::dump_to_file()
-{
+void TAC::transfer_from_postfix() {
+    tac_stream << tac_postfix_temp.str();
+    tac_postfix_temp.str(""); // Clear the buffer
+    tac_postfix_temp.clear();
+}
+
+void TAC::dump_to_file() {
     tac_file << tac_stream.str();
     tac_stream.str(""); // Clear the stream
     tac_stream.clear(); // Reset the stream state
 }
 
-void TAC::dump_to_temp()
-{
+void TAC::dump_to_temp() {
     tac_temp_stream << tac_stream.str();
     tac_stream.str(""); // Clear the stream
     tac_stream.clear(); // Reset the stream state
 }
 
-void TAC::get_from_temp()
-{
+void TAC::get_from_temp() {
     tac_stream << tac_temp_stream.str(); // Append entire content
     tac_temp_stream.str("");             // Clear the buffer
     tac_temp_stream.clear();
 }
 
-void TAC::clear_stream()
-{
+void TAC::clear_stream() {
     tac_stream.str(""); // Clear the stream
     tac_stream.clear(); // Reset the stream state
 }
 
-void TAC::add_label(Case labelCase)
-{
-    switch (labelCase)
-    {
+void TAC::print_tac(std::string str) {
+    if (str[0] == 'L') {
+        tac_stream << str << std::endl;
+    }
+    else {
+        tac_stream << "\t" << str << std::endl;
+    }
+}
+
+void TAC::print_tac(std::string result, std::string op1, std::string op, std::string op2) {
+    tac_stream << '\t' << result << " = " << op1 << " " << op << " " << op2 << std::endl;
+}
+
+void TAC::add_label(Case labelCase) {
+    switch (labelCase) {
     case BREAK_C:
         breakCase.push_back(label_count++);
         debug_msg("Break labels count: " + std::to_string(breakCase.size()));
@@ -96,48 +105,40 @@ void TAC::add_label(Case labelCase)
     }
 }
 
-std::string TAC::get_label(Case caseLabel)
-{
-    switch (caseLabel)
-    {
+std::string TAC::get_label(Case caseLabel) {
+    switch (caseLabel) {
     case BREAK_C:
-        if (breakCase.empty())
-        {
+        if (breakCase.empty()) {
             error_msg("No break label found");
             return "ERROR";
         }
         return "L" + std::to_string(breakCase.back());
     case CONTINUE_C:
-        if (continueCase.empty())
-        {
+        if (continueCase.empty()) {
             error_msg("No continue label found");
             return "ERROR";
         }
         return "L" + std::to_string(continueCase.back());
     case RETURN_C:
-        if (returnCase.empty())
-        {
+        if (returnCase.empty()) {
             error_msg("No return label found");
             return "ERROR";
         }
         return "L" + std::to_string(returnCase.back());
     case GOTO_C:
-        if (gotoCase.empty())
-        {
+        if (gotoCase.empty()) {
             error_msg("No goto label found");
             return "ERROR";
         }
         return "L" + std::to_string(gotoCase.back());
     case TRUE_C:
-        if (trueCase.empty())
-        {
+        if (trueCase.empty()) {
             error_msg("No true label found");
             return "ERROR";
         }
         return "L" + std::to_string(trueCase.back());
     case FALSE_C:
-        if (falseCase.empty())
-        {
+        if (falseCase.empty()) {
             error_msg("No false label found");
             return "ERROR";
         }
@@ -148,15 +149,12 @@ std::string TAC::get_label(Case caseLabel)
     }
 }
 
-std::string TAC::get_temp()
-{
+std::string TAC::get_temp() {
     return "t" + std::to_string(temp_count++);
 }
 
-void TAC::print_label(Case labelCase)
-{
-    switch (labelCase)
-    {
+void TAC::print_label(Case labelCase) {
+    switch (labelCase) {
     case BREAK_C:
         TAC::print_tac("L" + std::to_string(breakCase.back()) + ":");
         break;
@@ -180,110 +178,86 @@ void TAC::print_label(Case labelCase)
     }
 }
 
-void TAC::remove_break_label()
-{
-    if (breakCase.size() == 0)
-    {
+void TAC::remove_break_label() {
+    if (breakCase.size() == 0) {
         error_msg("No break label found");
     }
-    else
-    {
+    else {
         TAC::print_tac("L" + std::to_string(breakCase.back()) + ":");
         breakCase.pop_back();
     }
 }
 
-void TAC::remove_continue_label()
-{
-    if (continueCase.size() == 0)
-    {
+void TAC::remove_continue_label() {
+    if (continueCase.size() == 0) {
         error_msg("No continue label found");
     }
-    else
-    {
+    else {
         continueCase.pop_back();
     }
 }
 
-void TAC::remove_return_label()
-{
-    if (returnCase.size() == 0)
-    {
+void TAC::remove_return_label() {
+    if (returnCase.size() == 0) {
         error_msg("No return label found");
     }
-    else
-    {
+    else {
         returnCase.pop_back();
     }
 }
 
-void TAC::remove_goto_label()
-{
-    if (gotoCase.size() == 0)
-    {
+void TAC::remove_goto_label() {
+    if (gotoCase.size() == 0) {
         error_msg("No goto label found");
     }
-    else
-    {
+    else {
         gotoCase.pop_back();
     }
 }
 
-void TAC::remove_true_label()
-{
-    if (trueCase.size() == 0)
-    {
+void TAC::remove_true_label() {
+    if (trueCase.size() == 0) {
         error_msg("No true label found");
     }
-    else
-    {
+    else {
         TAC::print_tac("L" + std::to_string(trueCase.back()) + ":");
         trueCase.pop_back();
     }
 }
 
-void TAC::remove_false_label()
-{
-    if (falseCase.size() == 0)
-    {
+void TAC::remove_false_label() {
+    if (falseCase.size() == 0) {
         error_msg("No false label found");
     }
-    else
-    {
+    else {
         TAC::print_tac("L" + std::to_string(falseCase.back()) + ":");
         falseCase.pop_back();
     }
 }
 
-void TAC::create_function_definition(std::string function_name)
-{
+void TAC::create_function_definition(std::string function_name) {
     print_tac("L_" + function_name + ":");
     ;
 }
 
-void TAC::create_loop_statement()
-{
+void TAC::create_loop_statement() {
     add_label(CONTINUE_C);
     add_label(BREAK_C);
 }
 
-void TAC::create_if_statement()
-{
+void TAC::create_if_statement() {
     add_label(FALSE_C);
     add_label(TRUE_C);
 }
 
-void TAC::print_goto_conditional(class Expression *expr, int _case)
-{
+void TAC::print_goto_conditional(class Expression* expr, int _case) {
 
-    if (expr == nullptr)
-    {
+    if (expr == nullptr) {
         error_msg("Expression is null");
         return;
     }
 
-    switch (_case)
-    {
+    switch (_case) {
     case BREAK_C:
         TAC::print_tac("if " + expr->name + " == 0 goto " + TAC::get_label(BREAK_C));
         break;
@@ -307,53 +281,44 @@ void TAC::print_goto_conditional(class Expression *expr, int _case)
         break;
     }
 }
-void TAC::print_goto_do_while(class Expression *expr)
-{
+void TAC::print_goto_do_while(class Expression* expr) {
     TAC::print_tac("if " + expr->name + " != 0 goto " + TAC::get_label(CONTINUE_C));
 }
-void TAC::print_goto(int _case, bool remove)
-{
-    switch (_case)
-    {
+void TAC::print_goto(int _case, bool remove) {
+    switch (_case) {
     case BREAK_C:
         TAC::print_tac("goto " + TAC::get_label(BREAK_C));
-        if (remove)
-        {
+        if (remove) {
             TAC::remove_break_label();
         }
         break;
     case CONTINUE_C:
         TAC::print_tac("goto " + TAC::get_label(CONTINUE_C));
-        if (remove)
-        {
+        if (remove) {
             TAC::remove_continue_label();
         }
         break;
     case RETURN_C:
         TAC::print_tac("goto " + TAC::get_label(RETURN_C));
-        if (remove)
-        {
+        if (remove) {
             TAC::remove_return_label();
         }
         break;
     case GOTO_C:
         TAC::print_tac("goto " + TAC::get_label(GOTO_C));
-        if (remove)
-        {
+        if (remove) {
             TAC::remove_goto_label();
         }
         break;
     case TRUE_C:
         TAC::print_tac("goto " + TAC::get_label(TRUE_C));
-        if (remove)
-        {
+        if (remove) {
             TAC::remove_true_label();
         }
         break;
     case FALSE_C:
         TAC::print_tac("goto " + TAC::get_label(FALSE_C));
-        if (remove)
-        {
+        if (remove) {
             TAC::remove_false_label();
         }
         break;

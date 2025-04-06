@@ -22,6 +22,7 @@ std::unordered_map<PrimitiveTypes, StandardType *> createStandardTypes()
         {DOUBLE_T, new StandardType("double", sizeof(double))},
         {LONG_DOUBLE_T, new StandardType("long double", sizeof(long double))},
         {VOID_T, new StandardType("void", 0)},
+        {BOOL_T, new StandardType("bool", sizeof(bool))},
         {ERROR_T, new StandardType("error", 0)}};
 
     return type_specifiers;

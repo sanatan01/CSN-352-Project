@@ -1,153 +1,154 @@
-// int add(int a, int b){
-//     if(a==0){
-//         // Teri maa kaaa
-//     }
-//     else{
-//         // Not teri maa kaaa
-//     }
-//     add(a+1,b);
-//     add(a*b,a/b);
-//     int i;
-// }
+int add(int a, int b){
+    if(a==0){
+        // Teri maa kaaa
+    }
+    else{
+        // Not teri maa kaaa
+    }
+    add(a+1,b);
+    add(a*b,a/b);
+    int i;
+}
 
-// void foo(){
-//      return foo();
-// }
+void foo(){
+     return foo();
+}
 
-// int main() {
-//     int arr[5];
+int main() {
+    int arr[5];
 
-//     arr[3]=4;
-//     // Basic arithmetic expressions
-//     int i;
-//     for(i = 0; i < 10; i +=1 ) {
-//         if(i == 5) {
-//             i=6;
-//             break;
-//         }
-//         else {
-//             continue;
-//         }
-//     }
+    arr[3]=5;
+    // Basic arithmetic expressions
+    int i;
+    // for(i = 0; i < 10; i +=1 ) {
+    //     if(i == 5) {
+    //         i=6;
+    //         break;
+    //     }
+    //     else {
+    //         continue;
+    //     }
+    // }
 
+    // for(i = 0; i < 10; i++ ) {
+    //     if(i == 5) {
+    //         i=6;
+    //         break;
+    //     }
+    //     else {
+    //         continue;
+    //     }
+    // }
+
+    while(i == 0){
+        i += 2;
+    }
+
+
+    return i;
+
+    int a,b,c,d,e,f,g;
+
+    a = 5;
+    b = 3;
+    c = a + b;
+    d = a - b;
+    e = a * b;
+    f = a / b;
+    g = a % b;
+    g = a + b * c - d / e;
     
+    // Bitwise expressions
+    int bw_and = a & b;    // bitwise AND
+    int bw_or = a | b;    // bitwise OR
+    int bw_xor = a ^ b;    // bitwise XOR
+    // bw_not = ~a;       // bitwise NOT
+    int shift_left = a << 2;
+    int shift_right = a >> 1;
 
-//     return i;
+    // Logical expressions
+    int logic_and = (a > b) && (b > 0);
+    int logic_or = (a < b) || (b < 0);
+    int logic_not = (a == b);
 
-//     int a,b,c,d,e,f,g;
+    // Relational expressions
+    int eq = (a == b);
+    int neq = (a != b);
+    int lt = (a < b);
+    int gt = (a > b);
+    int le = (a <= b);
+    int ge = (a >= b);
 
-//     a = 5;
-//     b = 3;
-//     c = a + b;
-//     d = a - b;
-//     e = a * b;
-//     f = a / b;
-//     g = a % b;
-//     g = a + b * c - d / e;
-    
-//     // Bitwise expressions
-//     int bw_and = a & b;    // bitwise AND
-//     int bw_or = a | b;    // bitwise OR
-//     int bw_xor = a ^ b;    // bitwise XOR
-//     // bw_not = ~a;       // bitwise NOT
-//     int shift_left = a << 2;
-//     int shift_right = a >> 1;
+    // // Assignment expressions and compound assignments
+    long long x;
+    x = a;
+    x += b;
+    x -= b;
+    x *= a;
+    x /= 2;
 
-//     // Logical expressions
-//     int logic_and = (a > b) && (b > 0);
-//     int logic_or = (a < b) || (b < 0);
-//     int logic_not = (a == b);
+//    Conditional (ternary) operator
+    int cond;
+    cond = (a > b) ? a : b;
+    cond = (a > b) ? a : x;
 
-//     // Relational expressions
-//     int eq = (a == b);
-//     int neq = (a != b);
-//     int lt = (a < b);
-//     int gt = (a > b);
-//     int le = (a <= b);
-//     int ge = (a >= b);
+    int za;
+    int zb;
+    // zb=10;
+    // za = *&zb;
+    // -zb=5;
 
-//     // // Assignment expressions and compound assignments
-//     long long x;
-//     x = a;
-//     x += b;
-//     x -= b;
-//     x *= a;
-//     x /= 2;
+    int res;
+    res=add(za,zb);
 
-//     // Conditional (ternary) operator
-//     // int cond;
-//     // cond = (a > b) ? a : b;
-//     // cond = (a > b) ? a : x;
+    a=res++;
+    int* bf;
+    bf= &a;
+    za[0] = 1;
 
-//     int za;
-//     int zb;
-//     // zb=10;
-//     // za = *&zb;
-//     // -zb=5;
+    // // Pointer expressions
+    // int arr[10];
+    // int *p;
+    // p = arr;
+    // p = p + 3;
+    // int ptr_diff;
+    // ptr_diff = p - arr;
 
-//     int res;
-//     res=add(za,zb);
+    // Unary expressions
+    int pre_inc, post_dec;
+    pre_inc = ++a;
+    post_dec = b--;
 
-//     // a=res++;
-//     // int* bf;
-//     // bf= &a;
-//     // za[0] = 1;
+    // Cast expression
+    double cast_expr;
+    cast_expr = (double)a;
 
-//     // // Pointer expressions
-//     // int arr[10];
-//     // int *p;
-//     // p = arr;
-//     // p = p + 3;
-//     // int ptr_diff;
-//     // ptr_diff = p - arr;
+    // sizeof operator
+    int size;
+    size = sizeof(a);
 
-//     // // Unary expressions
-//     // int pre_inc, post_dec;
-//     // pre_inc = ++a;
-//     // post_dec = b--;
+    char *ptr1;
 
-//     // // Cast expression
-//     // double cast_expr;
-//     // cast_expr = (double)a;
+    int za,zb;
 
-//     // // sizeof operator
-//     // int size;
-//     // size = sizeof(a);
+    za = ptr1[3];
 
-//     // char *ptr1;
+    int arr1[];
+    zb = arr1[10];
+    // Comma operator
+    // int comma_expr = (a = 1, b = 2, a + b);
 
-//     // int za,zb;
+    // Function call expression (side-effect)
+    int sum = add(a, b);
 
-//     // za = ptr1[3];
+    // Mixed expression with nested assignment and ternary operator
+    // c = (a > 0) ? (a + b) : (b - a);
 
-//     // int arr1[];
-//     // zb = arr1[10];
-//     // Comma operator
-//     // int comma_expr = (a = 1, b = 2, a + b);
+    // Combination of logical and bitwise expressions
+    int mix = ((a & b) || (a ^ b)) ? 1 : 0;
 
-//     // // Function call expression (side-effect)
-//     // int sum = add(a, b);
+    // int lmnop = foo();
+    // int s;
+    // s = foo();
 
-//     // // Mixed expression with nested assignment and ternary operator
-//     // c = (a > 0) ? (a = 10, a + b) : (b = 20, a + b);
-
-//     // // Combination of logical and bitwise expressions
-//     // int mix;
-//     // mix = ((a & b) || (a ^ b)) ? 1 : 0;
-
-//     // int lmnop = foo();
-
-
-//     // int s;
-//     // s = foo();
-
-
-// }
-
-int main(){
-    int a,b,c;
-
-    a = b=c;
-
-    int d =5*a;
 }

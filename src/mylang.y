@@ -537,11 +537,17 @@ init_declarator_list
  		$$ = $1;
  	}
  	| declarator ASSIGN assignment_expression {
-		$3 = prim_to_type($3);
+		
+		if ($3->prim_type != ERROR_T) {
+			PrimitiveTypes temp = PrimitiveTypes($3->prim_type);
+			$3->exp_type = create_primitive_type(temp);
+		}
+
 		TAC::print_tac($1->name + " = " + $3->name);
  		$$ = $1;
 		if($$->type->type_tag == NONE) {
 			$$->type = $3->exp_type;
+			debug_msg("Type created for identifier " + $$->name + " is " + $3->exp_type->getType());
 		}
 		else if ($$->type->type_tag == FUNCTION_TYPE) {
 			error_msg("Cannot assign a value to a function type");
@@ -1077,9 +1083,10 @@ statement_list
 	;
 
 expression_statement
- 	: SEMICOLON {$$ = new Expression(); $$->name="empty";}
+ 	: SEMICOLON {$$ = new Expression(); $$->name="empty"; TAC::get_from_postfix();}
  	| expression SEMICOLON {
 		$$ = $1;
+		TAC::get_from_postfix();
 	}
  	;
 
@@ -1090,7 +1097,7 @@ empty_else
 
 /* Control flow */
 selection_statement
-	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C); } RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
+	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C);} RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
 	// | switch_statement
 	;
 
@@ -1109,7 +1116,7 @@ empty_expression
 	;
 
 iteration_statement
-	: WHILE INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN expression { TAC::print_label(CONTINUE_C); TAC::print_goto_conditional($5, BREAK_C); } RIGHT_PAREN statement {
+	: WHILE INC_SCOPE { TAC::create_loop_statement(); TAC::dump_to_file(); } LEFT_PAREN expression { TAC::print_label(CONTINUE_C); TAC::print_goto_conditional($5, BREAK_C); } RIGHT_PAREN statement {
 		TAC::remove_break_label();
 		TAC::remove_continue_label();
 		SymbolTable::exit_scope();
@@ -1119,7 +1126,7 @@ iteration_statement
 		TAC::remove_continue_label();
 		SymbolTable::exit_scope();
 	}
-	| FOR INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN init_clause {TAC::print_label(CONTINUE_C);} expression_statement { TAC::print_goto_conditional($7, BREAK_C); TAC::dump_to_file(); } empty_expression { TAC::dump_to_temp(); } RIGHT_PAREN statement {
+	| FOR INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN init_clause {TAC::print_label(CONTINUE_C);} expression_statement { TAC::print_goto_conditional($7, BREAK_C); TAC::dump_to_file(); } empty_expression { TAC::transfer_from_postfix(); TAC::dump_to_temp(); } RIGHT_PAREN statement {
 		TAC::get_from_temp();
 		TAC::print_goto(CONTINUE_C, true);
 		TAC::remove_break_label();

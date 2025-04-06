@@ -31,6 +31,10 @@ enum Case {
 class TAC {
 public:
     TAC() = delete;
+    static void dump_to_postfix();
+    static void get_from_postfix();
+    static void transfer_to_file();
+    static void transfer_from_postfix();
     static void dump_to_file();
     static void dump_to_temp();
     static void get_from_temp();
