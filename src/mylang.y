@@ -517,9 +517,7 @@ declaration
 
 		if (!is_err) {
 			for(auto &element : $3->identifiers) {
-				debug_msg("Name of element before : " + element.type->getType());
 				element.type = combine_global_type($2, element.type);
-				debug_msg("Name of element after : " + element.type->getType());
 			}
 			$$=$3;
 			SymbolTable::add_symbols($$);
@@ -584,6 +582,9 @@ init_declarator_list
 		} else {
 			error_msg("Cannot create a type for the following identifier");
 		}
+
+		// Set is_defined to true
+		$1->type->setDefined();
  	}
  	;
 

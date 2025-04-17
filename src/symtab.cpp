@@ -45,10 +45,17 @@ void SymbolTable::exit_scope() {
 void SymbolTable::add_symbol(Identifier* id, int line, int column) {
 
     // Print TAC
-    if(id->type->getSpecifiers()->is_static) {
-        TAC::print_tac(".static " + id->name + " " + std::to_string(id->type->getSize()));
-    } else if(id->type->type_tag != FUNCTION_TYPE )  {
-        TAC::print_tac(".push " + id->name + " " + std::to_string(id->type->getSize()));
+    if(id->type->type_tag != FUNCTION_TYPE ) {
+
+        if(current_scope_level == 0 && !id->type->isDefined()){
+            TAC::print_tac(id->name + " = 0");
+        }
+
+        if(id->type->getSpecifiers()->is_static) {
+            TAC::print_tac(".static " + id->name + " " + std::to_string(id->type->getSize()));
+        } else {
+            TAC::print_tac(".push " + id->name + " " + std::to_string(id->type->getSize()));
+        }
     }
 
     Symbol symbol(*id, current_scope_level, id->type->isDefined(), line, column);

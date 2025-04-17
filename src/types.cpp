@@ -428,6 +428,8 @@ GlobalType::GlobalType(const GlobalType& other) {
     pointer_type = other.pointer_type ? new PointerType(*other.pointer_type) : nullptr;
     enum_type = other.enum_type ? new EnumType(*other.enum_type) : nullptr;
     invalid_type = other.invalid_type ? new InvalidType(*other.invalid_type) : nullptr;
+
+    temp_is_defined = other.temp_is_defined;
 }
 
 std::string GlobalType::getType() const {
@@ -617,7 +619,7 @@ bool GlobalType::isDefined() const {
     case ENUM_TYPE:
         return enum_type ? enum_type->is_defined : false;
     default:
-        return false;
+        return temp_is_defined;
     }
 }
 
@@ -659,6 +661,7 @@ void GlobalType::setDefined() {
         }
         break;
     default:
+        temp_is_defined = true;
         break;
     }
 }
@@ -833,6 +836,9 @@ class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* 
     case NONE:
     {
         debug_msg("Returned type: " + left->getType());
+        if (right->isDefined()) {
+            left->setDefined();
+        }
         return left;
     }
     case FUNCTION_TYPE:

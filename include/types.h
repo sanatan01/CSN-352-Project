@@ -69,6 +69,8 @@ public:
 	std::string name;
 	size_t size;
 	Specifiers* specifiers;
+	bool is_defined;
+
 	StandardType();
 	StandardType(std::string name, size_t size);
 	StandardType(const StandardType& other) {
@@ -77,8 +79,6 @@ public:
 		is_defined = other.is_defined;
 		specifiers = other.specifiers ? other.specifiers->copy_type() : nullptr;
 	}
-
-	bool is_defined;
 
 	// Important: Always use references when creating the objects to prevent object slicing
 	virtual bool isEqual(const StandardType& obj) const;
@@ -263,6 +263,8 @@ public:
 	EnumType* enum_type;
 	InvalidType* invalid_type;
 	enum GlobalTypeTag type_tag;
+
+	bool temp_is_defined;
 
 	GlobalType();
 	GlobalType(const GlobalType& other);  // Declaration only
