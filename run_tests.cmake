@@ -1,3 +1,7 @@
+# First clear the output directory to ensure fresh test results
+file(REMOVE_RECURSE "${OUTPUT_DIR}")
+file(MAKE_DIRECTORY "${OUTPUT_DIR}")
+
 file(GLOB INPUT_FILES "${INPUT_DIR}/*")
 
 foreach(input_file IN LISTS INPUT_FILES)

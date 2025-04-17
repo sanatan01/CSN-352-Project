@@ -62,11 +62,14 @@ void TAC::clear_stream() {
 }
 
 void TAC::print_tac(std::string str) {
-    if (str[0] == 'L') {
-        tac_stream << str << std::endl;
+    if (str[0] == 'f' && str[1] == 'u' && str[2] == 'n' && str[3] == 'c') {
+        tac_stream << "\n\n" << str << std::endl;
+    }
+    else if (str[0] == 'L') {
+        tac_stream << "\t" << str << std::endl;
     }
     else {
-        tac_stream << "\t" << str << std::endl;
+        tac_stream << "\t\t" << str << std::endl;
     }
 }
 
@@ -237,8 +240,7 @@ void TAC::remove_false_label() {
 }
 
 void TAC::create_function_definition(std::string function_name) {
-    print_tac("L_" + function_name + ":");
-    ;
+    print_tac("func " + function_name + ":");
 }
 
 void TAC::create_loop_statement() {

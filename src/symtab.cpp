@@ -21,7 +21,10 @@ void SymbolTable::exit_scope() {
     for (auto it = symbol_map.begin(); it != symbol_map.end();) {
         auto& [name, symbols] = *it;
         while (!symbols.empty() && symbols.back().current_level == current_scope_level) {
-            total_size += symbols.back().identifier.type->getSize();
+            if(!(symbols.back().identifier.type->getSpecifiers()->is_static)) {
+                total_size += symbols.back().identifier.type->getSize();
+            }
+
             symbols.pop_back();
         }
         // Remove empty entries
@@ -33,7 +36,7 @@ void SymbolTable::exit_scope() {
         }
     }
 
-    TAC::print_tac("pop " + std::to_string(total_size));
+    TAC::print_tac(".pop " + std::to_string(total_size));
 
     decrement_scope();
     current_scope_level--;
@@ -42,7 +45,11 @@ void SymbolTable::exit_scope() {
 void SymbolTable::add_symbol(Identifier* id, int line, int column) {
 
     // Print TAC
-    TAC::print_tac(id->name + " = push " + std::to_string(id->type->getSize()));
+    if(id->type->getSpecifiers()->is_static) {
+        TAC::print_tac(".static " + id->name + " " + std::to_string(id->type->getSize()));
+    } else if(id->type->type_tag != FUNCTION_TYPE )  {
+        TAC::print_tac(".push " + id->name + " " + std::to_string(id->type->getSize()));
+    }
 
     Symbol symbol(*id, current_scope_level, id->type->isDefined(), line, column);
     std::string name = symbol.identifier.name;
