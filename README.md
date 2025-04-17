@@ -23,9 +23,11 @@ This lexer identifies correctly the following in a C++ code file
 
 ## Steps to run
 
--  Add your test programs in `input/input_{number}.c`
+-  Add your test programs in `input/{filename}.c`
+- Execute the following commands:
 
-- Run the lexer using the command: 
-```bash
-$ make run-tests
+```
+mkdir -p build
+cmake -B build -G Ninja 
+ninja -C build run_tests
 ```
