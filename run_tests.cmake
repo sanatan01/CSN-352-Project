@@ -1,0 +1,24 @@
+file(GLOB INPUT_FILES "${INPUT_DIR}/*")
+
+foreach(input_file IN LISTS INPUT_FILES)
+    get_filename_component(filename ${input_file} NAME)
+    string(REPLACE "." ";" parts ${filename})
+    list(GET parts 0 filename_no_ext)
+
+    # Print the name of the file being processed
+    message(STATUS "Running test case from ${filename}")
+
+    set(test_dir "${OUTPUT_DIR}/${filename_no_ext}")
+    file(MAKE_DIRECTORY ${test_dir})
+
+    set(output_file "${test_dir}/output.txt")
+    set(error_file "${test_dir}/error.txt")
+    set(symtab_file "${test_dir}/symtab.txt")
+    set(tac_file "${test_dir}/tac.txt")
+
+    execute_process(
+        COMMAND ${EXECUTABLE} ${input_file} ${symtab_file} ${tac_file}
+        OUTPUT_FILE ${output_file}
+        ERROR_FILE ${error_file}
+    )
+endforeach()

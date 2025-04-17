@@ -9,3 +9,4 @@ include/y.tab.h
 output/*
 src/stack.hh
 src/syntax_analyser.dSYM/*
+build/*

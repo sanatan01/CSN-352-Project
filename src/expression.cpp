@@ -1815,7 +1815,7 @@ Expression* create_unary_expression(OpExpression* oe) {
             oe->prim_type = temp;
 
             new_temp = TAC::get_temp();
-            TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+            TAC::print_tac(new_temp + " = - " + oe->op1.name);
             // TAC::print_tac(oe->op1.name + " = " + new_temp);
             oe->name = new_temp;
             oe->is_assignable = false;
@@ -1835,7 +1835,7 @@ Expression* create_unary_expression(OpExpression* oe) {
             // 3AC
             oe->prim_type = op1Type;
             new_temp = TAC::get_temp();
-            TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+            TAC::print_tac(new_temp + " = + " + oe->op1.name);
             // TAC::print_tac(oe->op1.name + " = " + new_temp);
             oe->name = new_temp;
             oe->is_assignable = false;
@@ -1854,7 +1854,7 @@ Expression* create_unary_expression(OpExpression* oe) {
         if (isInt(op1Type)) {
             // 3AC
             oe->prim_type = BOOL_T;
-            TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+            TAC::print_tac(new_temp + " = ! " + oe->op1.name);
             // TAC::print_tac(oe->op1.name + " = " + new_temp);
             oe->name = new_temp;
             oe->is_assignable = false;
@@ -1877,7 +1877,7 @@ Expression* create_unary_expression(OpExpression* oe) {
             make_signed(temp);
             oe->prim_type = temp;
             std::string new_temp = TAC::get_temp();
-            TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+            TAC::print_tac(new_temp + " = ~ " + oe->op1.name);
             // TAC::print_tac(oe->op1.name + " = " + new_temp);
             oe->name = new_temp;
             oe->is_assignable = false;

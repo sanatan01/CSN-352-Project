@@ -23,7 +23,6 @@ std::vector<class Expression*> switch_temps = std::vector<class Expression*>();
  	class Expression* expression;
 	class VectorExpression* argument_expression_list;
  	class Identifier* identifier;
-// 	StringLiteral* string_literal;
  	class GlobalType* global_type;
  	class PointerType* pointer_type;
  	class Struct* struct_type;
@@ -496,30 +495,30 @@ empty_init_declarator_list
 
 // /* Declarations */
 declaration
-	: declaration_specifiers DUMP_FILE empty_init_declarator_list {
+	: DUMP_FILE declaration_specifiers empty_init_declarator_list {
 
 		bool is_err = false;
-		if ($1->type_tag == STRUCT_TYPE || $1->type_tag == UNION_TYPE || $1->type_tag == ENUM_TYPE ){
-			class GlobalType* temp = SymbolTable::get_global_type($1);
+		if ($2->type_tag == STRUCT_TYPE || $2->type_tag == UNION_TYPE || $2->type_tag == ENUM_TYPE ){
+			class GlobalType* temp = SymbolTable::get_global_type($2);
 			if(temp == NULL){
 				is_err = true;
 			}
-			if (!is_err) $1 = temp;
+			if (!is_err) $2 = temp;
 		}
-		if($1->type_tag == POINTER_TYPE){
-			if($1->pointer_type->return_type->type_tag == STRUCT_TYPE || $1->pointer_type->return_type->type_tag == ENUM_TYPE || $1->pointer_type->return_type->type_tag == UNION_TYPE){
-				class GlobalType* temp = SymbolTable::get_global_type($1->pointer_type->return_type);
+		if($2->type_tag == POINTER_TYPE){
+			if($2->pointer_type->return_type->type_tag == STRUCT_TYPE || $2->pointer_type->return_type->type_tag == ENUM_TYPE || $2->pointer_type->return_type->type_tag == UNION_TYPE){
+				class GlobalType* temp = SymbolTable::get_global_type($2->pointer_type->return_type);
 				if(temp == NULL){
 					is_err = true;
 				}
-				if (!is_err) $1->pointer_type->return_type = temp;
+				if (!is_err) $2->pointer_type->return_type = temp;
 			}
 		}
 
 		if (!is_err) {
 			for(auto &element : $3->identifiers) {
 				debug_msg("Name of element before : " + element.type->getType());
-				element.type = combine_global_type($1, element.type);
+				element.type = combine_global_type($2, element.type);
 				debug_msg("Name of element after : " + element.type->getType());
 			}
 			$$=$3;
@@ -1220,23 +1219,6 @@ iteration_statement
  external_declaration
 	: function_definition
 	| declaration
-	// : DUMP_FILE declaration_specifiers empty_compound_statement {
-	// 	bool is_err = false;
-	// 	if ($2->type_tag == STRUCT_TYPE || $2->type_tag == UNION_TYPE || $2->type_tag == ENUM_TYPE ){
-	// 		class GlobalType* temp = SymbolTable::get_global_type($2);
-	// 		if(temp == NULL){
-	// 			is_err = true;
-	// 		}
-	// 		if (!is_err) $2 = temp;
-	// 	}
-
-	// 	if (!is_err) {
-	// 		for(auto &element : $3->identifiers) {
-	// 			element.type = combine_global_type($2, element.type);
-	// 		}
-	// 		SymbolTable::add_symbols($3);
-	// 	}
-	// }
  	;
 
 empty_compound_statement 
@@ -1264,13 +1246,13 @@ function_declaration
 	;
 
 function_definition
- 	: declaration_specifiers DUMP_FILE declarator { 
+ 	: DUMP_FILE declaration_specifiers declarator { 
 		if ($3->type->type_tag == FUNCTION_TYPE) {
 			if (($3->type->function_type->return_type != NULL) && ($3->type->function_type->return_type->type_tag == POINTER_TYPE)) {
-				$3->type->function_type->return_type->pointer_type->return_type = $1;
-				$3->type->function_type->return_type->pointer_type->specifiers = combine_specs($3->type->function_type->return_type->pointer_type->specifiers, $1->getSpecifiers());
+				$3->type->function_type->return_type->pointer_type->return_type = $2;
+				$3->type->function_type->return_type->pointer_type->specifiers = combine_specs($3->type->function_type->return_type->pointer_type->specifiers, $2->getSpecifiers());
 			} else {
-				$3->type->function_type->return_type = $1;
+				$3->type->function_type->return_type = $2;
 			}
 		} else{
 			error_msg( "function declaration with non-function type" );

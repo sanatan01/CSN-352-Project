@@ -148,20 +148,5 @@ int main() {
     int s;
     s = add(1,2);
 
-
+    int a = -100, b(int a), c=10;
 }
-
-   
-
-
-// int main(){
-//     // struct S{
-//     //     int a;
-//     //     int b;
-//     // } ;
-//     struct S;
-
-//     // struct S z;
-// //  z.a = 1;
-// //  z.b = 2;
-// }

@@ -15,10 +15,13 @@ int SymbolTable::current_scope() {
 }
 
 void SymbolTable::exit_scope() {
+
+    size_t total_size = 0;
     // Remove all symbols at the current scope level
     for (auto it = symbol_map.begin(); it != symbol_map.end();) {
         auto& [name, symbols] = *it;
         while (!symbols.empty() && symbols.back().current_level == current_scope_level) {
+            total_size += symbols.back().identifier.type->getSize();
             symbols.pop_back();
         }
         // Remove empty entries
@@ -29,29 +32,17 @@ void SymbolTable::exit_scope() {
             ++it;
         }
     }
+
+    TAC::print_tac("pop " + std::to_string(total_size));
+
     decrement_scope();
     current_scope_level--;
 }
 
 void SymbolTable::add_symbol(Identifier* id, int line, int column) {
-    // Check if identifier is a struct
 
     // Print TAC
-
-    switch (id->type->type_tag) {
-    case STRUCT_TYPE: {
-        TAC::print_tac(id->name + " = alloc " + std::to_string(id->type->struct_type->set_size()));
-        break;
-    }
-    case UNION_TYPE: {
-        TAC::print_tac(id->name + " = alloc " + std::to_string(id->type->union_type->set_size()));
-        break;
-    }
-    case ARRAY_TYPE: {
-        TAC::print_tac(id->name + " = alloc " + std::to_string(id->type->array_type->set_size()));
-        break;
-    }
-    }
+    TAC::print_tac(id->name + " = push " + std::to_string(id->type->getSize()));
 
     Symbol symbol(*id, current_scope_level, id->type->isDefined(), line, column);
     std::string name = symbol.identifier.name;
