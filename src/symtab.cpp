@@ -36,7 +36,7 @@ void SymbolTable::exit_scope() {
         }
     }
 
-    TAC::print_tac(".pop " + std::to_string(total_size));
+    if(total_size != 0) TAC::print_tac(".pop " + std::to_string(total_size));
 
     decrement_scope();
     current_scope_level--;

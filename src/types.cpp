@@ -479,9 +479,9 @@ size_t GlobalType::getSize() const {
     case STRUCT_TYPE:
         return struct_type ? struct_type->set_size() : 0;
     case UNION_TYPE:
-        return union_type ? union_type->size : 0;
+        return union_type ? union_type->set_size() : 0;
     case ARRAY_TYPE:
-        return array_type ? array_type->size : 0;
+        return array_type ? array_type->set_size() : 0;
     case FUNCTION_TYPE:
         return 0;
     case POINTER_TYPE:

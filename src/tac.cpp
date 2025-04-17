@@ -66,7 +66,7 @@ void TAC::print_tac(std::string str) {
         tac_stream << "\n\n" << str << std::endl;
     }
     else if (str[0] == 'L') {
-        tac_stream << "\t" << str << std::endl;
+        tac_stream << "\n\t" << str << std::endl;
     }
     else {
         tac_stream << "\t\t" << str << std::endl;
@@ -74,7 +74,7 @@ void TAC::print_tac(std::string str) {
 }
 
 void TAC::print_tac(std::string result, std::string op1, std::string op, std::string op2) {
-    tac_stream << '\t' << result << " = " << op1 << " " << op << " " << op2 << std::endl;
+    print_tac(result + " = " + op1 + " " + op + " " + op2);
 }
 
 void TAC::add_label(Case labelCase) {
@@ -336,14 +336,14 @@ void TAC::add_jump_label(std::string name) {
         error_msg("Same label defined twice");
     }
     labels[name] = true;
-    TAC::print_tac("L_" + name + ":");
+    TAC::print_tac(name + ":");
 }
 
 void TAC::print_goto_label(std::string name) {
     if(labels.count(name) == 0) {
         labels[name] = 0;
     }
-    TAC::print_tac("goto L_" + name);
+    TAC::print_tac("goto " + name);
 }
 
 void TAC::check_labels() {

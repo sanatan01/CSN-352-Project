@@ -1259,7 +1259,7 @@ function_definition
 		}
 
 		SymbolTable::add_symbol($3); 
-		} INC_SCOPE { SymbolTable::add_symbols(&($3->type->function_type->args));  TAC::create_function_definition(std::string($3->name)); } compound_statement { 
+		} INC_SCOPE { TAC::create_function_definition(std::string($3->name)); SymbolTable::add_symbols(&($3->type->function_type->args));} compound_statement { 
  		$$ = $3;
 		$$->type->setDefined();
 		SymbolTable::exit_scope();
