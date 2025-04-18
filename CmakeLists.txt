@@ -15,6 +15,7 @@ set(OUTPUT_DIR output)
 # Source files
 set(BISON_SRC ${SRC_DIR}/mylang.y)
 set(FLEX_SRC ${SRC_DIR}/lexer.l)
+set(TAC_FLEX_SRC ${SRC_DIR}/tac.l)  # Added TAC lexer source
 set(SCANNER_SRC ${SRC_DIR}/scanner.cpp)
 set(PARSING_SRCS 
     ${SRC_DIR}/symtab.cpp 
@@ -27,6 +28,7 @@ set(PARSING_SRCS
 set(BISON_OUTPUT_SRC ${SRC_DIR}/y.tab.c)
 set(BISON_OUTPUT_HDR ${INCLUDE_DIR}/y.tab.h)
 set(FLEX_OUTPUT_SRC ${SRC_DIR}/lex.yy.c)
+set(TAC_FLEX_OUTPUT_SRC ${SRC_DIR}/lex.tac.c)  # Added TAC lexer output
 
 # Optional debug flags
 option(DEBUG "Enable debugging flags" OFF)
@@ -48,8 +50,9 @@ BISON_TARGET(MyParser ${BISON_SRC} ${BISON_OUTPUT_SRC}
     DEFINES_FILE ${BISON_OUTPUT_HDR}
     COMPILE_FLAGS "-Wnone")
 
-# Flex target
+# Flex targets
 FLEX_TARGET(MyScanner ${FLEX_SRC} ${FLEX_OUTPUT_SRC})
+FLEX_TARGET(TacScanner ${TAC_FLEX_SRC} ${TAC_FLEX_OUTPUT_SRC})  # Added TAC lexer target
 
 # Add custom command to move Bison header to include dir
 add_custom_command(
@@ -66,6 +69,7 @@ ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 add_executable(syntax_analyser
     ${SCANNER_SRC}
     ${FLEX_MyScanner_OUTPUTS}
+    ${FLEX_TacScanner_OUTPUTS}  # Added TAC lexer output
     ${BISON_MyParser_OUTPUT_SOURCE}
     ${PARSING_SRCS}
 )
@@ -84,6 +88,7 @@ add_custom_target(run_tests
 set_source_files_properties(
     ${BISON_MyParser_OUTPUT_SOURCE}
     ${FLEX_MyScanner_OUTPUTS}
+    ${FLEX_TacScanner_OUTPUTS}  # Added TAC lexer output
     PROPERTIES LANGUAGE CXX
 )
 
@@ -93,4 +98,5 @@ set_target_properties(syntax_analyser PROPERTIES
 )
 
 message(STATUS "Flex outputs: ${FLEX_MyScanner_OUTPUTS}")
+message(STATUS "TAC Flex outputs: ${FLEX_TacScanner_OUTPUTS}")  # Added debug info
 message(STATUS "Bison outputs: ${BISON_MyParser_OUTPUT_SOURCE}")

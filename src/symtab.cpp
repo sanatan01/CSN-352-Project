@@ -8,6 +8,7 @@ std::vector<UserDefinedType> SymbolTable::udt;
 
 void SymbolTable::enter_scope() {
     current_scope_level++;
+    TAC::enter_scope();
 }
 
 int SymbolTable::current_scope() {
@@ -40,6 +41,7 @@ void SymbolTable::exit_scope() {
 
     decrement_scope();
     current_scope_level--;
+    TAC::exit_scope();
 }
 
 void SymbolTable::add_symbol(Identifier* id, int line, int column) {

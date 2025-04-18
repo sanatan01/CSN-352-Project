@@ -48,6 +48,8 @@ public:
     static void add_label(Case labelCase);
 
     static std::string get_temp();
+    static void enter_scope();
+    static void exit_scope();
 
     static std::string get_label(Case labelCase);
 

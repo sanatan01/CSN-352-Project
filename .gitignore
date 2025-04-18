@@ -10,3 +10,4 @@ output/*
 src/stack.hh
 src/syntax_analyser.dSYM/*
 build/*
+src/lex.tac.c

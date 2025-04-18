@@ -163,35 +163,6 @@ PrimitiveTypes deduceType(const std::string& input) {
     return ret_type;
 }
 
-// void castTypes(PrimitiveTypes& op1, PrimitiveTypes& op2) {
-//     if (op1 != op2) {
-//         if (op1 == VOID_T || op2 == VOID_T || op1 == ERROR_T || op2 == ERROR_T) {
-//             error_msg("Invalid types for operation", line_num, column);
-//             op1 = ERROR_T;
-//             op2 = ERROR_T;
-//             return;
-//         }
-//         if (op1 == BOOL_T) {
-//             op1 = op2;
-//             return;
-//         }
-//         if (op2 == BOOL_T) {
-//             op2 = op1;
-//             return;
-//         }
-//         // Cast to the larger type based on enum order
-//         // The enum is in sorted order of size, so higher enum value = larger type
-//         if (op1 > op2) {
-//             // op1 is larger, cast op2 to op1's type
-//             op2 = op1;
-//         }
-//         else {
-//             // op2 is larger, cast op1 to op2's type
-//             op1 = op2;
-//         }
-//     }
-// }
-
 void make_signed(PrimitiveTypes& op) {
 
     if (op % 2 == 0 && op < 10 && op > -1) {
@@ -750,10 +721,10 @@ Expression* conditional_expression(OpExpression* oe) {
     TAC::add_label(FALSE_C);
     std::string true_label = TAC::get_label(TRUE_C);
     std::string false_label = TAC::get_label(FALSE_C);
-    TAC::print_tac("if " + oe->op1.name + " == 0 goto " + false_label);
+    TAC::print_tac(".if " + oe->op1.name + " == 0 .goto " + false_label);
     oe->name = TAC::get_temp();
     TAC::print_tac(oe->name + " = " + oe->op2.name);
-    TAC::print_tac("goto " + true_label);
+    TAC::print_tac(".goto " + true_label);
     TAC::remove_false_label();
     TAC::print_tac(oe->name + " = " + oe->op3.name);
     TAC::remove_true_label();
@@ -1163,13 +1134,13 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
         }
         int j = 0;
         for (auto& itr : ae->operands) {
-            TAC::print_tac("param " + ae->operands[j].name);
+            TAC::print_tac(".param " + ae->operands[j].name);
             j++;
         }
 
         P->prim_type = INT_T;
         std::string new_temp = TAC::get_temp();
-        TAC::print_tac(new_temp + " = call " + fi->name + " , " + std::to_string(j));
+        TAC::print_tac(new_temp + " = .call " + fi->name + " , " + std::to_string(j));
         P->name = new_temp;
         return P;
     }
@@ -1205,13 +1176,13 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
         }
         int j = 0;
         for (auto& itr : ae->operands) {
-            TAC::print_tac("param " + ae->operands[j].name);
+            TAC::print_tac(".param " + ae->operands[j].name);
             j++;
         }
 
         P->prim_type = INT_T;
         std::string new_temp = TAC::get_temp();
-        TAC::print_tac(new_temp + " = call " + fi->name + " , " + std::to_string(j));
+        TAC::print_tac(new_temp + " = .call " + fi->name + " , " + std::to_string(j));
         P->name = new_temp;
         return P;
     }
@@ -1274,13 +1245,13 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
         }
         int j = 0;
         for (auto& itr : ste->identifier.type->function_type->args.identifiers) {
-            TAC::print_tac("param " + ae->operands[j].name);
+            TAC::print_tac(".param " + ae->operands[j].name);
             j++;
         }
     }
 
     std::string new_temp = TAC::get_temp();
-    TAC::print_tac(new_temp + " = call " + fi->name + " , " + std::to_string(ste->identifier.type->function_type->args.identifiers.size()));
+    TAC::print_tac(new_temp + " = .call " + fi->name + " , " + std::to_string(ste->identifier.type->function_type->args.identifiers.size()));
     P->exp_type = ste->identifier.type->function_type->return_type;
     if (P->exp_type->type_tag == STANDARD_TYPE) {
         P->prim_type = getPrimitiveType(P->exp_type->standard_type->name);
@@ -1960,10 +1931,10 @@ Expression* create_expression_simple(ExpressionType exp_type, std::string token)
         e->prim_type = ERROR_T;
         debug_msg("String: " + token);
         std::string new_temp = TAC::get_temp();
-        TAC::print_tac(new_temp + " = alloc " + std::to_string(sizeof(char) * (token.length() - 1)));
+        TAC::print_tac(".static " + new_temp + " " + std::to_string(sizeof(char) * (token.length() - 1)));
         std::string str_temp = TAC::get_temp();
         TAC::print_tac(str_temp + " = " + token);
-        TAC::print_tac("copy " + str_temp + ", " + new_temp);
+        TAC::print_tac(".copy " + str_temp + ", " + new_temp);
         e->name = new_temp;
         e->is_assignable = false;
         return e;

@@ -6,8 +6,8 @@
 #include <tac.h>
 
 int label_count = 0;
+std::vector<int> temp_counts;
 int temp_count = 0;
-
 std::vector<int> breakCase;
 std::vector<int> continueCase;
 std::vector<int> returnCase;
@@ -154,7 +154,21 @@ std::string TAC::get_label(Case caseLabel) {
 }
 
 std::string TAC::get_temp() {
+    temp_counts.back()++;
     return "t" + std::to_string(temp_count++);
+}
+
+void TAC::enter_scope() {
+    temp_counts.push_back(0);
+}
+
+void TAC::exit_scope() {
+    if (temp_counts.empty()) {
+        error_msg("No scope to exit");
+        return;
+    }
+    temp_count -= temp_counts.back();
+    temp_counts.pop_back();
 }
 
 void TAC::print_label(Case labelCase) {
@@ -240,7 +254,7 @@ void TAC::remove_false_label() {
 }
 
 void TAC::create_function_definition(std::string function_name) {
-    print_tac("func " + function_name + ":");
+    print_tac(".func " + function_name + ":");
 }
 
 void TAC::create_loop_statement() {
@@ -262,22 +276,22 @@ void TAC::print_goto_conditional(class Expression* expr, int _case) {
 
     switch (_case) {
     case BREAK_C:
-        TAC::print_tac("if " + expr->name + " == 0 goto " + TAC::get_label(BREAK_C));
+        TAC::print_tac(".if " + expr->name + " == 0 .goto " + TAC::get_label(BREAK_C));
         break;
     case CONTINUE_C:
-        TAC::print_tac("if " + expr->name + " == 0 goto " + TAC::get_label(CONTINUE_C));
+        TAC::print_tac(".if " + expr->name + " == 0 .goto " + TAC::get_label(CONTINUE_C));
         break;
     case RETURN_C:
-        TAC::print_tac("if " + expr->name + " == 0 goto " + TAC::get_label(RETURN_C));
+        TAC::print_tac(".if " + expr->name + " == 0 .goto " + TAC::get_label(RETURN_C));
         break;
     case GOTO_C:
-        TAC::print_tac("if " + expr->name + " == 0 goto " + TAC::get_label(GOTO_C));
+        TAC::print_tac(".if " + expr->name + " == 0 .goto " + TAC::get_label(GOTO_C));
         break;
     case TRUE_C:
-        TAC::print_tac("if " + expr->name + " == 0 goto " + TAC::get_label(TRUE_C));
+        TAC::print_tac(".if " + expr->name + " == 0 .goto " + TAC::get_label(TRUE_C));
         break;
     case FALSE_C:
-        TAC::print_tac("if " + expr->name + " == 0 goto " + TAC::get_label(FALSE_C));
+        TAC::print_tac(".if " + expr->name + " == 0 .goto " + TAC::get_label(FALSE_C));
         break;
     default:
         error_msg("Invalid case for goto conditional");
@@ -285,42 +299,42 @@ void TAC::print_goto_conditional(class Expression* expr, int _case) {
     }
 }
 void TAC::print_goto_do_while(class Expression* expr) {
-    TAC::print_tac("if " + expr->name + " != 0 goto " + TAC::get_label(CONTINUE_C));
+    TAC::print_tac(".if " + expr->name + " != 0 .goto " + TAC::get_label(CONTINUE_C));
 }
 void TAC::print_goto(int _case, bool remove) {
     switch (_case) {
     case BREAK_C:
-        TAC::print_tac("goto " + TAC::get_label(BREAK_C));
+        TAC::print_tac(".goto " + TAC::get_label(BREAK_C));
         if (remove) {
             TAC::remove_break_label();
         }
         break;
     case CONTINUE_C:
-        TAC::print_tac("goto " + TAC::get_label(CONTINUE_C));
+        TAC::print_tac(".goto " + TAC::get_label(CONTINUE_C));
         if (remove) {
             TAC::remove_continue_label();
         }
         break;
     case RETURN_C:
-        TAC::print_tac("goto " + TAC::get_label(RETURN_C));
+        TAC::print_tac(".goto " + TAC::get_label(RETURN_C));
         if (remove) {
             TAC::remove_return_label();
         }
         break;
     case GOTO_C:
-        TAC::print_tac("goto " + TAC::get_label(GOTO_C));
+        TAC::print_tac(".goto " + TAC::get_label(GOTO_C));
         if (remove) {
             TAC::remove_goto_label();
         }
         break;
     case TRUE_C:
-        TAC::print_tac("goto " + TAC::get_label(TRUE_C));
+        TAC::print_tac(".goto " + TAC::get_label(TRUE_C));
         if (remove) {
             TAC::remove_true_label();
         }
         break;
     case FALSE_C:
-        TAC::print_tac("goto " + TAC::get_label(FALSE_C));
+        TAC::print_tac(".goto " + TAC::get_label(FALSE_C));
         if (remove) {
             TAC::remove_false_label();
         }
@@ -343,7 +357,7 @@ void TAC::print_goto_label(std::string name) {
     if(labels.count(name) == 0) {
         labels[name] = 0;
     }
-    TAC::print_tac("goto " + name);
+    TAC::print_tac(".goto " + name);
 }
 
 void TAC::check_labels() {

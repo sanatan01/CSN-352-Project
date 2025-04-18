@@ -9,7 +9,7 @@ int errorCount = 0;
 int yycolumn = 1;
 static char* line_start = NULL;
 
-
+extern FILE* output_file;
 
 %}
 
@@ -210,13 +210,20 @@ void comment() {
 
 void displayLexer(int token, const char* text) {
     static int first_call = 1;
+
+    if (output_file == NULL) {
+        fprintf(stderr, "Error: output_file is not initialized\n");
+        exit(EXIT_FAILURE);
+    }
+
     if (first_call) {
-        printf("+----------------------+----------------------+\n");
-        printf("| %-20s | %-20s |\n", "Token", "Text");
-        printf("+----------------------+----------------------+\n");
+        fprintf(output_file, "+----------------------+----------------------+\n");
+        fprintf(output_file, "| %-20s | %-20s |\n", "Token", "Text");
+        fprintf(output_file, "+----------------------+----------------------+\n");
         first_call = 0;
     }
-    printf("| %-20s | %-20s |\n", getTokenName(token), text);
+    fprintf(output_file, "| %-20s | %-20s |\n", getTokenName(token), text);
+    fflush(output_file); // Ensure the output is written to the file immediately
 }
 
 /* Add this function at the end */

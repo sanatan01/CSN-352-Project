@@ -44,3 +44,14 @@
 - Assembly code is:
     ```
     ```
+
+
+### For STRING LITERALS :
+- Ideally based on the way the string literal is defined, we decide wether to store on stack or heap
+    ```
+    char *s = "hello"; // This would be stored in the data segment (where static variables are stored)
+    char s[] = "hello"; // This would be stored in the stack
+    char *s = malloc(10); // This would be stored in the heap
+    ```
+
+- In the current implementation we always create a `char *` when we encounter a string. So for now it will always be stored in data segment. If we add the stack implementation we will store it in the stack. 

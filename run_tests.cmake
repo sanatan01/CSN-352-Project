@@ -15,14 +15,14 @@ foreach(input_file IN LISTS INPUT_FILES)
     set(test_dir "${OUTPUT_DIR}/${filename_no_ext}")
     file(MAKE_DIRECTORY ${test_dir})
 
-    set(output_file "${test_dir}/output.txt")
+    set(lexer_file "${test_dir}/lexer.txt")
     set(error_file "${test_dir}/error.txt")
     set(symtab_file "${test_dir}/symtab.txt")
     set(tac_file "${test_dir}/tac.txt")
+    set(tac_lex_file "${test_dir}/tac_lex.txt")
 
     execute_process(
-        COMMAND ${EXECUTABLE} ${input_file} ${symtab_file} ${tac_file}
-        OUTPUT_FILE ${output_file}
+        COMMAND ${EXECUTABLE} ${input_file} ${lexer_file} ${symtab_file} ${tac_file} ${tac_lex_file}
         ERROR_FILE ${error_file}
     )
 endforeach()

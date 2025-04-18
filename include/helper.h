@@ -101,9 +101,4 @@ static inline const char* getTokenName(int token) {
 
 
 // Function declarations
-void displayTables();
 void comment();
-
-// 
-
-// Other necessary declarations
