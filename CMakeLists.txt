@@ -39,28 +39,34 @@ if(DEBUG)
 endif()
 
 # Include directories
-include_directories(${INCLUDE_DIR})
+include_directories(
+    ${INCLUDE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_DIR}  # Add this line to include the build's include directory
+)
 
 # Find Bison and Flex
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-# Bison target
-BISON_TARGET(MyParser ${BISON_SRC} ${BISON_OUTPUT_SRC}
-    DEFINES_FILE ${BISON_OUTPUT_HDR}
+# Fix the Bison target to generate files in the correct locations
+BISON_TARGET(MyParser 
+    ${BISON_SRC} 
+    ${CMAKE_CURRENT_BINARY_DIR}/${BISON_OUTPUT_SRC}
+    DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/${BISON_OUTPUT_HDR}
     COMPILE_FLAGS "-Wnone")
 
 # Flex targets
 FLEX_TARGET(MyScanner ${FLEX_SRC} ${FLEX_OUTPUT_SRC})
 FLEX_TARGET(TacScanner ${TAC_FLEX_SRC} ${TAC_FLEX_OUTPUT_SRC})  # Added TAC lexer target
 
-# Add custom command to move Bison header to include dir
-add_custom_command(
-    OUTPUT ${BISON_OUTPUT_HDR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BISON_TARGET_MyParser_DEFINES_FILE} ${BISON_OUTPUT_HDR}
-    DEPENDS ${BISON_TARGET_MyParser_DEFINES_FILE}
-    COMMENT "Copying Bison header to ${BISON_OUTPUT_HDR}"
-)
+# Remove this custom command as it's redundant and may be causing issues
+# The BISON_TARGET with DEFINES_FILE already handles this
+# add_custom_command(
+#     OUTPUT ${BISON_OUTPUT_HDR}
+#     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BISON_TARGET_MyParser_DEFINES_FILE} ${BISON_OUTPUT_HDR}
+#     DEPENDS ${BISON_TARGET_MyParser_DEFINES_FILE}
+#     COMMENT "Copying Bison header to ${BISON_OUTPUT_HDR}"
+# )
 
 # Combine Bison and Flex
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
