@@ -22,7 +22,7 @@ void SymbolTable::exit_scope() {
     for (auto it = symbol_map.begin(); it != symbol_map.end();) {
         auto& [name, symbols] = *it;
         while (!symbols.empty() && symbols.back().current_level == current_scope_level) {
-            if(!(symbols.back().identifier.type->getSpecifiers()->is_static)) {
+            if(symbols.back().identifier.type->getSpecifiers()!= nullptr && !(symbols.back().identifier.type->getSpecifiers()->is_static)) {
                 total_size += symbols.back().identifier.type->getSize();
             }
 
@@ -53,7 +53,7 @@ void SymbolTable::add_symbol(Identifier* id, int line, int column) {
             TAC::print_tac(id->name + " = 0");
         }
 
-        if(id->type->getSpecifiers()->is_static) {
+        if(id->type->getSpecifiers()!= nullptr && id->type->getSpecifiers()->is_static) {
             TAC::print_tac(".static " + id->name + " " + std::to_string(id->type->getSize()));
         } else {
             TAC::print_tac(".push " + id->name + " " + std::to_string(id->type->getSize()));

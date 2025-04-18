@@ -259,7 +259,11 @@ Union::Union(std::string name, VectorStructElement* members1): StandardType("uni
 }
 
 Union::Union(const Union& other): StandardType(other) {
-    members = other.members;
+    members = VectorStructElement();
+    for (const auto& element : other.members.elements) {
+        StructElement new_element(element);
+        members.elements.push_back(new_element);
+    }
     union_name = other.union_name;
 }
 
@@ -267,6 +271,9 @@ Union::Union(const Union& other): StandardType(other) {
 size_t Union::set_size() {
     this->size = 0;
     for (auto& member : members.elements) {
+        if(member.size == 0){
+            member.size = member.id->type->getSize();
+        }
         if (this->size < member.size) {
             this->size = member.size;
         };
