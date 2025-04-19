@@ -4,7 +4,7 @@
 #include <iostream>
 #include <types.h>
 #include <tac.h>
-
+#include <codegen.h>
 extern int yyparse();
 extern int tac_parse();
 extern FILE* yyin;
@@ -102,6 +102,10 @@ int main(int argc, char** argv) {
 
     tac_parse();
 
+    // Print the contents of tac_instructions to verify elements are being pushed into it
+    std::cerr << "\n----- TAC Instructions -----\n";
+    print_tac_instructions();
+    std::cerr << "----- End of TAC Instructions -----\n";
     fclose(tac_input_file);
     fclose(tac_lex_file);
 

@@ -31,3 +31,9 @@ mkdir -p build
 cmake -B build -G Ninja 
 ninja -C build run_tests
 ```
+
+For removing generated files:
+```
+chmod +x clean.sh
+./clean.sh
+```

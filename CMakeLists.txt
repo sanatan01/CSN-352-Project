@@ -23,6 +23,7 @@ set(PARSING_SRCS
     ${SRC_DIR}/types.cpp  
     ${SRC_DIR}/expression.cpp 
     ${SRC_DIR}/tac.cpp
+    ${SRC_DIR}/codegen.cpp
 )
 
 # Output files for Bison and Flex
@@ -111,3 +112,36 @@ message(STATUS "Flex outputs: ${FLEX_MyScanner_OUTPUTS}")
 message(STATUS "TAC Flex outputs: ${FLEX_TacScanner_OUTPUTS}")
 message(STATUS "Bison outputs: ${BISON_MyParser_OUTPUT_SOURCE}")
 message(STATUS "TAC Bison outputs: ${BISON_TacParser_OUTPUT_SOURCE}")  # Added debug info
+
+# Define files that need to be cleaned
+set(GENERATED_FILES_TO_CLEAN
+    ${SRC_DIR}/lex.yy.c
+    ${SRC_DIR}/y.tab.c
+    ${SRC_DIR}/lex.tac.c
+    ${INCLUDE_DIR}/tac.tab.h
+    ${CMAKE_CURRENT_BINARY_DIR}/${SRC_DIR}/y.tab.c
+    ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_DIR}/y.tab.h
+    ${CMAKE_CURRENT_BINARY_DIR}/${SRC_DIR}/tac.tab.c
+    ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_DIR}/tac.tab.h
+)
+
+# Custom clean target for generated files only
+add_custom_target(clean_generated
+    COMMAND ${CMAKE_COMMAND} -E remove -f ${GENERATED_FILES_TO_CLEAN}
+    COMMENT "Cleaning generated flex/bison files"
+)
+
+# Full clean target: clean generated files + ninja clean
+add_custom_target(deep_clean
+    COMMAND ${CMAKE_COMMAND} -E remove -f ${GENERATED_FILES_TO_CLEAN}
+    COMMAND ${CMAKE_COMMAND} -E echo "Cleaning build directory..."
+    COMMAND cd ${CMAKE_BINARY_DIR} && ninja clean
+    COMMENT "Performing deep clean (generated files + build)"
+)
+
+# Set as property to also clean with regular clean
+foreach(GENERATED_FILE ${GENERATED_FILES_TO_CLEAN})
+    if(EXISTS ${GENERATED_FILE})
+        set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES ${GENERATED_FILE})
+    endif()
+endforeach()

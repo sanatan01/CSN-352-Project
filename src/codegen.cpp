@@ -47,3 +47,13 @@ std::string get_gpr_name(GPR reg) {
     }
 }
 
+void print_tac_instructions() {
+    for (auto instruction : tac_instructions) {
+        instruction->print();
+    }
+}
+
+// can't implement without temporary variables
+void live_analysis() {
+
+}

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <tac.h>
+#include <codegen.h>
 
 int label_count = 0;
 int temp_count = 0;
@@ -14,6 +15,8 @@ std::vector<int> gotoCase;
 std::vector<int> trueCase;
 std::vector<int> falseCase;
 std::map<std::string, bool> labels;
+
+std::vector<TACInstruction*> tac_instructions;
 
 std::ostringstream tac_stream;
 std::ostringstream tac_temp_stream;
