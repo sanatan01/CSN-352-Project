@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <string>
 #include <map>
 
@@ -57,6 +58,57 @@ public:
     }
 };
 
-class CodeGen {
-    
+
+extern std::vector<TACInstruction*> tac_instructions;
+
+class TACInstruction {
+public:
+    unsigned int line_number;
 };
+
+class Quad: public TACInstruction {
+public:
+    std::string result;
+    std::string op1;
+    std::string op;
+    std::string op2;
+};
+
+class Triplet: public TACInstruction {
+public:
+    std::string result;
+    std::string op;
+    std::string op1;
+};
+class Double:public TACInstruction{
+    std::string result;
+    std::string op1;
+};
+
+class Label: public TACInstruction {
+public:
+    std::string label;
+};
+
+class Goto: public TACInstruction {
+public:
+    Label* label;
+};
+
+class Call: public TACInstruction {
+public:
+    std::string function_name;
+    int num_args;
+};
+
+class Arg: public TACInstruction {
+public:
+    std::string arg_name;
+};
+
+class Return: public TACInstruction {
+public:
+    std::string return_value; // change it to return value's address
+};
+
+
