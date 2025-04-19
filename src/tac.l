@@ -1,6 +1,6 @@
 %{
 #include <backend_helper.h>
-#include <y.tab.h>
+#include <tac.tab.h>
 
 void displayLexer(const char * name, const char* text);
 int check_type();
@@ -26,56 +26,61 @@ IS          (u|U|l|L|ll|LL|ul|uL|Ul|UL|lu|lU|Lu|LU|ull|uLL|Ull|ULL|llu|llU|LLu|L
 
 %%
 
-".call"     { displayLexer("CALL", yytext);}
-".return"   { displayLexer("RETURN", yytext);}
-".param"    { displayLexer("PARAM", yytext);}
-".push"     { displayLexer("PUSH", yytext);}
-".pop"      { displayLexer("POP", yytext);}
-".goto"     { displayLexer("GOTO", yytext);}
-".static"   { displayLexer("STATIC", yytext);}
-".copy"     { displayLexer("COPY", yytext);}
-".if"       { displayLexer("IF", yytext);}
-".func"     { displayLexer("FUNC", yytext);}
+".call"     { displayLexer("CALL", yytext); tac_lval.string = strdup("CALL"); return CALL; }
+".return"   { displayLexer("RETURN", yytext); tac_lval.string = strdup("RETURN"); return RETURN; }
+".param"    { displayLexer("PARAM", yytext); tac_lval.string = strdup("PARAM"); return PARAM; }
+".push"     { displayLexer("PUSH", yytext); tac_lval.string = strdup("PUSH"); return PUSH; }
+".pop"      { displayLexer("POP", yytext); tac_lval.string = strdup("POP"); return POP; }
+".goto"     { displayLexer("GOTO", yytext); tac_lval.string = strdup("GOTO"); return GOTO; }
+".static"   { displayLexer("STATIC", yytext); tac_lval.string = strdup("STATIC"); return STATIC; }
+".copy"     { displayLexer("COPY", yytext); tac_lval.string = strdup("COPY"); return COPY; }
+".if"       { displayLexer("IF", yytext); tac_lval.string = strdup("IF"); return IF; }
+".func"     { displayLexer("FUNC", yytext); tac_lval.string = strdup("FUNC"); return FUNC; }
+".enter"    { displayLexer("ENTER", yytext); tac_lval.string = strdup("ENTER"); return ENTER; }
+".exit"     { displayLexer("EXIT", yytext); tac_lval.string = strdup("EXIT"); return EXIT; }
+".index"    { displayLexer("INDEX", yytext); tac_lval.string = strdup("INDEX"); return INDEX; }
+"addr"         { displayLexer("REFERENCE", yytext); tac_lval.string = strdup(yytext); return REFERENCE; }
 
-{L}({L}|{D})*":" { displayLexer("LABEL", yytext);}
-"t"({D})*        { displayLexer("TEMP", yytext);}
-{L}({L}|{D})*    { displayLexer("IDENTIFIER", yytext);}
-
-
-0[xX]{H}+{IS}?                   { displayLexer("CONSTANT_LITERAL", yytext);}
-0{D}+{IS}?                       { displayLexer("CONSTANT_LITERAL", yytext);}
-{D}+{IS}?                        { displayLexer("CONSTANT_LITERAL", yytext);}
-L?'(\\.|[^\\'])+\'               { displayLexer("CONSTANT_LITERAL", yytext);}
-{D}+{E}{FS}?                     { displayLexer("CONSTANT_LITERAL", yytext);}
-{D}*"."{D}+({E})?{FS}?           { displayLexer("CONSTANT_LITERAL", yytext);}
-{D}+"."{D}*({E})?{FS}?           { displayLexer("CONSTANT_LITERAL", yytext);}
+{L}({L}|{D})*":" { displayLexer("LABEL", yytext); tac_lval.string = strdup(yytext); return LABEL; }
+"t"({D})*        { displayLexer("TEMP", yytext); tac_lval.string = strdup(yytext); return TEMP; }
+{L}({L}|{D})*    { displayLexer("IDENTIFIER", yytext); tac_lval.string = strdup(yytext); return IDENTIFIER; }
 
 
-L?\"(\\.|[^\\"])*\"              { displayLexer("STRING_LITERAL", yytext);}
+0[xX]{H}+{IS}?                   { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+0{D}+{IS}?                       { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+{D}+{IS}?                        { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+L?'(\\.|[^\\'])+\'               { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+{D}+{E}{FS}?                     { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+{D}*"."{D}+({E})?{FS}?           { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+{D}+"."{D}*({E})?{FS}?           { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
 
 
-">>"        { displayLexer("RIGHT_OP", yytext); }
-"<<"        { displayLexer("LEFT_OP", yytext); }
-"&&"        { displayLexer("AND_OP", yytext); }
-"||"        { displayLexer("OR_OP", yytext); }
-"=="        { displayLexer("EQ_OP", yytext); }
-"!="        { displayLexer("NE_OP", yytext); }
-","         { displayLexer("COMMA", yytext); }
-":"         { displayLexer("COLON", yytext); }
-"="         { displayLexer("ASSIGN", yytext); }
-"."         { displayLexer("DOT", yytext); }
-"&"         { displayLexer("AMPERSAND", yytext); }
-"!"         { displayLexer("EXCLAMATION", yytext); }
-"~"         { displayLexer("TILDE", yytext); }
-"-"         { displayLexer("MINUS", yytext); }
-"+"         { displayLexer("PLUS", yytext); }
-"*"         { displayLexer("ASTERISK", yytext); }
-"/"         { displayLexer("SLASH", yytext); }
-"%"         { displayLexer("PERCENT", yytext); }
-"<"         { displayLexer("LESS_THAN", yytext); }
-">"         { displayLexer("GREATER_THAN", yytext); }
-"^"         { displayLexer("CARET", yytext); }
-"|"         { displayLexer("PIPE", yytext); }
+L?\"(\\.|[^\\"])*\"              { displayLexer("STRING_LITERAL", yytext); tac_lval.string = strdup(yytext); return STRING_LITERAL; }
+
+
+">>"        { displayLexer("RIGHT_OP", yytext); tac_lval.string = strdup(yytext); return RIGHT_OP; }
+"<<"        { displayLexer("LEFT_OP", yytext); tac_lval.string = strdup(yytext); return LEFT_OP; }
+"&&"        { displayLexer("AND_OP", yytext); tac_lval.string = strdup(yytext); return AND_OP; }
+"||"        { displayLexer("OR_OP", yytext); tac_lval.string = strdup(yytext); return OR_OP; }
+"=="        { displayLexer("EQ_OP", yytext); tac_lval.string = strdup(yytext); return EQ_OP; }
+"!="        { displayLexer("NE_OP", yytext); tac_lval.string = strdup(yytext); return NE_OP; }
+"<="        { displayLexer("LE_OP", yytext); tac_lval.string = strdup(yytext); return LE_OP; }
+">="        { displayLexer("GE_OP", yytext); tac_lval.string = strdup(yytext); return GE_OP; }
+","         { displayLexer("COMMA", yytext); tac_lval.string = strdup(yytext); return COMMA; }
+"="         { displayLexer("ASSIGN", yytext); tac_lval.string = strdup(yytext); return ASSIGN; }
+"."         { displayLexer("DOT", yytext); tac_lval.string = strdup(yytext); return DOT; }
+"&"         { displayLexer("AMPERSAND", yytext); tac_lval.string = strdup(yytext); return AMPERSAND; }
+"!"         { displayLexer("EXCLAMATION", yytext); tac_lval.string = strdup(yytext); return EXCLAMATION; }
+"~"         { displayLexer("TILDE", yytext); tac_lval.string = strdup(yytext); return TILDE; }
+"-"         { displayLexer("MINUS", yytext); tac_lval.string = strdup(yytext); return MINUS; }
+"+"         { displayLexer("PLUS", yytext); tac_lval.string = strdup(yytext); return PLUS; }
+"*"         { displayLexer("ASTERISK", yytext); tac_lval.string = strdup(yytext); return ASTERISK; }
+"/"         { displayLexer("SLASH", yytext); tac_lval.string = strdup(yytext); return SLASH; }
+"%"         { displayLexer("PERCENT", yytext); tac_lval.string = strdup(yytext); return PERCENT; }
+"<"         { displayLexer("LESS_THAN", yytext); tac_lval.string = strdup(yytext); return LESS_THAN; }
+">"         { displayLexer("GREATER_THAN", yytext); tac_lval.string = strdup(yytext); return GREATER_THAN; }
+"^"         { displayLexer("CARET", yytext); tac_lval.string = strdup(yytext); return CARET; }
+"|"         { displayLexer("PIPE", yytext); tac_lval.string = strdup(yytext); return PIPE; }
 
 ([\n]) {
     tac_yycolumn = 1;

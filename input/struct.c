@@ -20,6 +20,7 @@ int main() {
         int s;
         int fs;
         long long g;
+        char f[50];
     };
 
     union k gus;

@@ -6,6 +6,7 @@
 #include <tac.h>
 
 extern int yyparse();
+extern int tac_parse();
 extern FILE* yyin;
 extern int yylineno;
 extern int yycolumn;
@@ -99,7 +100,7 @@ int main(int argc, char** argv) {
     tac_in = tac_input_file;
     tac_lineno = 1; // Initialize line number
 
-    tac_lex();
+    tac_parse();
 
     fclose(tac_input_file);
     fclose(tac_lex_file);

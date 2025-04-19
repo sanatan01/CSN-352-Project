@@ -25,11 +25,17 @@ static int bar(int a, float b)
     return 1;
 }
 
+
+void  funct(){
+
+}
+
+
 int main()
 {
     int a = 100, b[20], ret;
 
-    
+    funct();
     for (int i = 0; i < a; i++)
     {
         int b = 0;

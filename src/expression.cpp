@@ -1083,11 +1083,12 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
     // oe->line_num = line_num;
     // oe->column = column;
 
-    std::string temp2 = TAC::get_temp();
-    TAC::print_tac(temp2 + " = " + temp1);
+
     std::string temp3 = TAC::get_temp();
-    TAC::print_tac(temp3 + " = " + pe->name + " + " + temp2);
-    P->name = "*" + temp3;
+    TAC::print_tac(temp3 + " = " + pe->name + " + " + temp1);
+    std::string temp4 = TAC::get_temp();
+    TAC::print_tac(temp4 + " = * " + temp3);
+    P->name = temp4;
     return P;
 }
 
@@ -1134,7 +1135,15 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
         }
         int j = 0;
         for (auto& itr : ae->operands) {
-            TAC::print_tac(".param " + ae->operands[j].name);
+            if(itr.name[0] == '*'){
+                std::string new_temp = TAC::get_temp();
+                TAC::print_tac(new_temp + " = * " + itr.name);
+                itr.name = new_temp;
+            }
+        }
+        j=0;
+        for (auto& itr : ae->operands) {
+            TAC::print_tac(".param " + itr.name);
             j++;
         }
 
@@ -1176,7 +1185,15 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
         }
         int j = 0;
         for (auto& itr : ae->operands) {
-            TAC::print_tac(".param " + ae->operands[j].name);
+            if(itr.name[0] == '*'){
+                std::string new_temp = TAC::get_temp();
+                TAC::print_tac(new_temp + " = * " + itr.name);
+                itr.name = new_temp;
+            }
+        }
+        j=0;
+        for (auto& itr : ae->operands) {
+            TAC::print_tac(".param " + itr.name);
             j++;
         }
 
@@ -1244,8 +1261,15 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
             }
         }
         int j = 0;
-        for (auto& itr : ste->identifier.type->function_type->args.identifiers) {
-            TAC::print_tac(".param " + ae->operands[j].name);
+        for (auto& itr : ae->operands) {
+            if(itr.name[0] == '*'){
+                std::string new_temp = TAC::get_temp();
+                TAC::print_tac(new_temp + " = * " + itr.name.substr(1));
+                itr.name = new_temp;
+            }
+        }
+        for (auto& itr : ae->operands) {
+            TAC::print_tac(".param " + itr.name);
             j++;
         }
     }
@@ -1299,7 +1323,9 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 }
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
-                P->name = " * " + new_temp;
+                std::string temp1 = TAC::get_temp();
+                TAC::print_tac(temp1 + " = * " + new_temp);
+                P->name = temp1;
                 // TAC::print_tac(" *"+temp1 + " = " + pe->name + " + " std::to_string(offset));
                 return P;
             } else if (pe->exp_type->type_tag == UNION_TYPE) {
@@ -1318,7 +1344,9 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 }
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
-                P->name = " * " + new_temp;
+                std::string temp1 = TAC::get_temp();
+                TAC::print_tac(temp1 + " = * " + new_temp);
+                P->name = temp1;
                 // TAC::print_tac(" *"+temp1 + " = " + pe->name + " + " std::to_string(offset));
                 return P;
             }
@@ -1358,7 +1386,9 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 }
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
-                P->name = " & " + new_temp;
+                std::string temp1 = TAC::get_temp();
+                TAC::print_tac(temp1 + " = addr " + new_temp);
+                P->name = temp1;
                 return P;
             } else if (pe->exp_type->pointer_type->return_type->type_tag == UNION_TYPE) {
 
@@ -1372,7 +1402,9 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
 
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
-                P->name = " & " + new_temp;
+                std::string temp1 = TAC::get_temp();
+                TAC::print_tac(temp1 + " = addr " + new_temp);
+                P->name = temp1;
                 return P;
             }
 

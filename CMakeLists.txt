@@ -15,7 +15,8 @@ set(OUTPUT_DIR output)
 # Source files
 set(BISON_SRC ${SRC_DIR}/mylang.y)
 set(FLEX_SRC ${SRC_DIR}/lexer.l)
-set(TAC_FLEX_SRC ${SRC_DIR}/tac.l)  # Added TAC lexer source
+set(TAC_FLEX_SRC ${SRC_DIR}/tac.l)
+set(TAC_BISON_SRC ${SRC_DIR}/tac.y)  # Added TAC parser source
 set(SCANNER_SRC ${SRC_DIR}/scanner.cpp)
 set(PARSING_SRCS 
     ${SRC_DIR}/symtab.cpp 
@@ -28,7 +29,9 @@ set(PARSING_SRCS
 set(BISON_OUTPUT_SRC ${SRC_DIR}/y.tab.c)
 set(BISON_OUTPUT_HDR ${INCLUDE_DIR}/y.tab.h)
 set(FLEX_OUTPUT_SRC ${SRC_DIR}/lex.yy.c)
-set(TAC_FLEX_OUTPUT_SRC ${SRC_DIR}/lex.tac.c)  # Added TAC lexer output
+set(TAC_FLEX_OUTPUT_SRC ${SRC_DIR}/lex.tac.c)
+set(TAC_BISON_OUTPUT_SRC ${SRC_DIR}/tac.tab.c)  # Added TAC parser output
+set(TAC_BISON_OUTPUT_HDR ${INCLUDE_DIR}/tac.tab.h)  # Added TAC parser header
 
 # Optional debug flags
 option(DEBUG "Enable debugging flags" OFF)
@@ -48,35 +51,35 @@ include_directories(
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-# Fix the Bison target to generate files in the correct locations
+# Main language parser (Bison)
 BISON_TARGET(MyParser 
     ${BISON_SRC} 
     ${CMAKE_CURRENT_BINARY_DIR}/${BISON_OUTPUT_SRC}
     DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/${BISON_OUTPUT_HDR}
     COMPILE_FLAGS "-Wnone")
 
+# TAC parser (Bison)
+BISON_TARGET(TacParser
+    ${TAC_BISON_SRC}
+    ${CMAKE_CURRENT_BINARY_DIR}/${TAC_BISON_OUTPUT_SRC}
+    DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/${TAC_BISON_OUTPUT_HDR}
+    COMPILE_FLAGS "-Wnone")
+
 # Flex targets
 FLEX_TARGET(MyScanner ${FLEX_SRC} ${FLEX_OUTPUT_SRC})
-FLEX_TARGET(TacScanner ${TAC_FLEX_SRC} ${TAC_FLEX_OUTPUT_SRC})  # Added TAC lexer target
+FLEX_TARGET(TacScanner ${TAC_FLEX_SRC} ${TAC_FLEX_OUTPUT_SRC})
 
-# Remove this custom command as it's redundant and may be causing issues
-# The BISON_TARGET with DEFINES_FILE already handles this
-# add_custom_command(
-#     OUTPUT ${BISON_OUTPUT_HDR}
-#     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BISON_TARGET_MyParser_DEFINES_FILE} ${BISON_OUTPUT_HDR}
-#     DEPENDS ${BISON_TARGET_MyParser_DEFINES_FILE}
-#     COMMENT "Copying Bison header to ${BISON_OUTPUT_HDR}"
-# )
-
-# Combine Bison and Flex
+# Connect lexers with their respective parsers
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
+ADD_FLEX_BISON_DEPENDENCY(TacScanner TacParser)
 
 # Add executable
 add_executable(syntax_analyser
     ${SCANNER_SRC}
     ${FLEX_MyScanner_OUTPUTS}
-    ${FLEX_TacScanner_OUTPUTS}  # Added TAC lexer output
+    ${FLEX_TacScanner_OUTPUTS}
     ${BISON_MyParser_OUTPUT_SOURCE}
+    ${BISON_TacParser_OUTPUT_SOURCE}  # Added TAC parser output
     ${PARSING_SRCS}
 )
 
@@ -93,8 +96,9 @@ add_custom_target(run_tests
 # Set source file properties
 set_source_files_properties(
     ${BISON_MyParser_OUTPUT_SOURCE}
+    ${BISON_TacParser_OUTPUT_SOURCE}  # Added TAC parser output
     ${FLEX_MyScanner_OUTPUTS}
-    ${FLEX_TacScanner_OUTPUTS}  # Added TAC lexer output
+    ${FLEX_TacScanner_OUTPUTS}
     PROPERTIES LANGUAGE CXX
 )
 
@@ -104,5 +108,6 @@ set_target_properties(syntax_analyser PROPERTIES
 )
 
 message(STATUS "Flex outputs: ${FLEX_MyScanner_OUTPUTS}")
-message(STATUS "TAC Flex outputs: ${FLEX_TacScanner_OUTPUTS}")  # Added debug info
+message(STATUS "TAC Flex outputs: ${FLEX_TacScanner_OUTPUTS}")
 message(STATUS "Bison outputs: ${BISON_MyParser_OUTPUT_SOURCE}")
+message(STATUS "TAC Bison outputs: ${BISON_TacParser_OUTPUT_SOURCE}")  # Added debug info
