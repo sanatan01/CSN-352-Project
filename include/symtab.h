@@ -37,6 +37,8 @@ public:
 	class Symbol* copy_symbol() const { return new Symbol(*this); }
 };
 
+
+
 class UserDefinedType {
 public:
 	class GlobalType type;
@@ -55,6 +57,7 @@ public:
 class SymbolTable {
 private:
 	static std::unordered_map<std::string, std::vector<Symbol> > symbol_map;
+	static std::vector<Symbol> all_symbols;
 	static int current_scope_level;
 	static std::vector<UserDefinedType> udt;
 

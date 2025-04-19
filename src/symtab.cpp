@@ -3,6 +3,7 @@
 
 // Initialize static members
 std::unordered_map<std::string, std::vector<Symbol> > SymbolTable::symbol_map;
+std::vector<Symbol> SymbolTable::all_symbols;
 int SymbolTable::current_scope_level = 0;
 std::vector<UserDefinedType> SymbolTable::udt;
 
@@ -46,6 +47,12 @@ void SymbolTable::exit_scope() {
 
 void SymbolTable::add_symbol(Identifier* id, int line, int column) {
 
+    Symbol symbol(*id, current_scope_level, id->type->isDefined(), line, column);
+    std::string name = symbol.identifier.name;
+    symbol_map[name].push_back(symbol);
+    all_symbols.push_back(symbol);
+    SymbolTable::print_symbol(symbol);
+
     // Print TAC
     if(id->type->type_tag != FUNCTION_TYPE ) {
 
@@ -58,12 +65,9 @@ void SymbolTable::add_symbol(Identifier* id, int line, int column) {
         } else {
             TAC::print_tac(".push " + id->name + " " + std::to_string(id->type->getSize()));
         }
-    }
 
-    Symbol symbol(*id, current_scope_level, id->type->isDefined(), line, column);
-    std::string name = symbol.identifier.name;
-    symbol_map[name].push_back(symbol);
-    SymbolTable::print_symbol(symbol);
+        TAC::print_tac(".index " + id->name + " " + std::to_string(all_symbols.size() - 1));
+    }
 }
 
 void SymbolTable::add_symbols(VectorIdentifiers* ids, int line, int column) {
