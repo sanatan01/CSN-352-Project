@@ -80,6 +80,7 @@ int main(int argc, char** argv) {
     fclose(output_file);
 
     // ---------------- BACKEND ------------------------
+
     // Open the 3AC file for reading
     FILE * tac_input_file = fopen(argv[4], "r");
     if (!tac_input_file) {

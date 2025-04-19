@@ -6,7 +6,6 @@
 #include <tac.h>
 
 int label_count = 0;
-std::vector<int> temp_counts;
 int temp_count = 0;
 std::vector<int> breakCase;
 std::vector<int> continueCase;
@@ -154,21 +153,15 @@ std::string TAC::get_label(Case caseLabel) {
 }
 
 std::string TAC::get_temp() {
-    temp_counts.back()++;
     return "t" + std::to_string(temp_count++);
 }
 
 void TAC::enter_scope() {
-    temp_counts.push_back(0);
+    TAC::print_tac(".enter");
 }
 
 void TAC::exit_scope() {
-    if (temp_counts.empty()) {
-        error_msg("No scope to exit");
-        return;
-    }
-    temp_count -= temp_counts.back();
-    temp_counts.pop_back();
+    TAC::print_tac(".exit");
 }
 
 void TAC::print_label(Case labelCase) {
