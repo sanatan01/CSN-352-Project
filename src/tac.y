@@ -4,6 +4,7 @@
 #include <string.h>
 #include <backend_helper.h>
 #include <iostream>
+#include <tacgen.h>
 
 extern int tac_lex();
 extern int tac_lineno;
@@ -26,6 +27,8 @@ void tac_error(const char* msg);
 %token <string> TILDE MINUS PLUS ASTERISK SLASH PERCENT DOT
 %token <string> LESS_THAN GREATER_THAN CARET PIPE LE_OP GE_OP
 %token <string> RIGHT_OP LEFT_OP AND_OP OR_OP EQ_OP NE_OP
+
+%type <string> variable
 
 %start program
 
@@ -72,20 +75,20 @@ special_operator
     ;
 
 statement
-    : label_statement
-    | function_statement
+    : label_statement // Done
+    | function_statement // Done
     | if_statement
-    | return_statement
-    | call_statement
+    | return_statement // Done
+    | call_statement // Done
     | assignment_statement
-    | param_statement
-    | push_statement
-    | pop_statement
-    | goto_statement
-    | static_statement
-    | copy_statement
-    | ENTER
-    | EXIT
+    | param_statement // Done
+    | push_statement // Done
+    | pop_statement // Done
+    | goto_statement // Done
+    | static_statement // Done
+    | copy_statement // Done
+    | ENTER // Done
+    | EXIT // Done
     ;
 
 conditional_operator
@@ -95,13 +98,6 @@ conditional_operator
     | GE_OP
     | EQ_OP
     | NE_OP
-    ;
-
-condition
-    : variable conditional_operator variable
-    | variable conditional_operator CONSTANT_LITERAL
-    | CONSTANT_LITERAL conditional_operator variable
-    | CONSTANT_LITERAL conditional_operator CONSTANT_LITERAL
     ;
 
 quad_statement
@@ -125,9 +121,7 @@ double_statement
     ;
 
 label_statement
-    : LABEL {
-        std::cerr << "Label: " << $1 << std::endl;
-    }
+    : LABEL { create_label_statement(std::string($1), tac_lineno); }
     ;
 
 function_statement
@@ -135,11 +129,14 @@ function_statement
     ;
 
 if_statement
-    : IF condition goto_statement
+    : IF variable conditional_operator variable GOTO IDENTIFIER
+    | IF variable conditional_operator CONSTANT_LITERAL GOTO IDENTIFIER
+    | IF CONSTANT_LITERAL conditional_operator variable GOTO IDENTIFIER
+    | IF CONSTANT_LITERAL conditional_operator CONSTANT_LITERAL GOTO IDENTIFIER
     ;
 
 return_statement
-    : RETURN variable
+    : RETURN variable 
     | RETURN CONSTANT_LITERAL
     | RETURN
     ;
@@ -149,10 +146,10 @@ call_statement
     ;
 
 assignment_statement
-    : quad_statement
-    | triple_statement
-    | double_statement
-    | variable ASSIGN call_statement
+    : quad_statement // Done
+    | triple_statement // Done
+    | double_statement // Done
+    | variable ASSIGN CALL IDENTIFIER COMMA CONSTANT_LITERAL
     ;
 
 param_statement
@@ -183,8 +180,8 @@ copy_statement
     ;
 
 variable
-    : IDENTIFIER
-    | TEMP
+    : IDENTIFIER { $$ = $1; }
+    | TEMP { $$ = $1; }
     ;
 
 %%

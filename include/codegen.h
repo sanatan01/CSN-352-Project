@@ -2,24 +2,21 @@
 
 #include <string>
 #include <map>
+#include <vector>
+#include <sstream>
 
-extern std::map<GPR, Register> gpr_map;
-
-void init_gpr_map();
-
-std::string get_gpr_name(GPR reg);
-
-enum GPR {
-    r0 = 0, // Constant 0
-    at = 1, // Reserved for assembler
-    v0 = 2, // Expression evaluation and
-    v1 = 3, // results of a function
-    a0 = 4, // Argument 1
-    a1 = 5, // Argument 2
-    a2 = 6, // Argument 3
-    a3 = 7, // Argument 4
-    t0 = 8, // Temporary (not preserved across call)
-    t1 = 9, // Temporary (not preserved across call)
+enum GPR
+{
+    r0 = 0,  // Constant 0
+    at = 1,  // Reserved for assembler
+    v0 = 2,  // Expression evaluation and
+    v1 = 3,  // results of a function
+    a0 = 4,  // Argument 1
+    a1 = 5,  // Argument 2
+    a2 = 6,  // Argument 3
+    a3 = 7,  // Argument 4
+    t0 = 8,  // Temporary (not preserved across call)
+    t1 = 9,  // Temporary (not preserved across call)
     t2 = 10, // Temporary (not preserved across call)
     t3 = 11, // Temporary (not preserved across call)
     t4 = 12, // Temporary (not preserved across call)
@@ -44,19 +41,29 @@ enum GPR {
     ra = 31  // Return address
 };
 
-class Register {
+class Register;
+
+extern std::map<GPR, Register> gpr_map;
+
+void init_gpr_map();
+
+std::string get_gpr_name(GPR reg);
+
+class Register
+{
 public:
     int value;
     std::string name;
     std::string reg_name;
 
     Register() : value(0), name(""), reg_name("") {}
-    void free_reg() {
+    void free_reg()
+    {
         value = 0;
         name = "";
     }
 };
 
-class CodeGen {
-    
+class CodeGen
+{
 };
