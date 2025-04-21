@@ -1,4 +1,5 @@
 #include <tacgen.h>
+#include <utils.h>
 
 namespace backend
 {
@@ -6,6 +7,58 @@ namespace backend
 
     std::vector<std::unique_ptr<TACStatement>> statements;
     std::map<std::string, Label> tac_labels;
+
+    // Enum functions
+
+    std::string get_type_name(StatementType type)
+    {
+        switch (type)
+        {
+        case COPY_St:
+            return "COPY";
+        case GOTO_St:
+            return "GOTO";
+        case STATIC_St:
+            return "STATIC";
+        case POP_St:
+            return "POP";
+        case PUSH_St:
+            return "PUSH";
+        case PARAM_St:
+            return "PARAM";
+        case CALL_St:
+            return "CALL";
+        case RETURN_St:
+            return "RETURN";
+        case FUNC_St:
+            return "FUNC";
+        case LABEL_St:
+            return "LABEL";
+        case ENTER_St:
+            return "ENTER";
+        case EXIT_St:
+            return "EXIT";
+        default:
+            return "";
+        }
+    }
+
+    std::string get_type_name(TACType type)
+    {
+        switch (type)
+        {
+        case QUAD:
+            return "QUAD";
+        case TRIPLE:
+            return "TRIPLE";
+        case DOUBLE:
+            return "DOUBLE";
+        case COMMON:
+            return "COMMON";
+        default:
+            return "";
+        }
+    }
 
     // Class Constructors
     size_t get_size_const(std::string name)
@@ -289,9 +342,22 @@ namespace backend
 
     void optimise_tac()
     {
-        // Placeholder for TAC optimisation logic
-        // In a real implementation, this would contain logic to optimise the TAC statements
-        // Prints the TAC statements in new file for now
+        output_msg("Optimising TAC...");
+
+        // For now print all the TAC statement types
+        for (const auto &statement : statements)
+        {
+            TACType type = statement->get_type();
+            if (type == COMMON)
+            {
+                CommonStatement *common_stmt = static_cast<CommonStatement *>(statement.get());
+                output_msg(get_type_name(common_stmt->type));
+            }
+            else
+            {
+                output_msg(get_type_name(type));
+            }
+        }
     }
 
 }

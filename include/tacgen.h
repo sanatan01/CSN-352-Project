@@ -190,6 +190,10 @@ namespace backend
         EXIT_St,
     };
 
+    std::string get_type_name(StatementType type);
+
+    std::string get_type_name(TACType type);
+
     class CommonStatement : public TACStatement
     {
     public:

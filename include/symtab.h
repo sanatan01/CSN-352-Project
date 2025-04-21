@@ -82,3 +82,5 @@ public:
 	static class GlobalType *get_global_type(class GlobalType *global_type);
 	static void print_udt();
 };
+
+void formatSymbolTable();

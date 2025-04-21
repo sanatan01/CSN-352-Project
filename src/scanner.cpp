@@ -16,16 +16,6 @@ FILE *tac_lex_file = NULL;
 std::fstream symbol_table_file;
 std::ofstream tac_file;
 
-void formatSymbolTable()
-{
-    symbol_table_file << std::left << std::setw(15) << "Symbol:" << '|'
-                      << std::left << std::setw(15) << "Scope:" << '|'
-                      << std::left << std::setw(15) << "Line:" << '|'
-                      << std::left << std::setw(15) << "Column:" << '|'
-                      << std::left << std::setw(15) << "Return Type:" << '\n';
-    symbol_table_file << "---------------------------------------------------------------------\n";
-}
-
 int main(int argc, char **argv)
 {
     if (argc < 5)
@@ -111,6 +101,8 @@ int main(int argc, char **argv)
     tac_lineno = 1; // Initialize line number
 
     tac_parse();
+
+    backend::optimise_tac();
 
     fclose(tac_input_file);
     fclose(tac_lex_file);
