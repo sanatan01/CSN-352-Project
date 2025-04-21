@@ -11,6 +11,8 @@ extern int tac_lineno;
 extern char* tac_text;
 extern FILE* tac_lex_file;
 void tac_error(const char* msg);
+
+using namespace backend;
 %}
 
 %define api.prefix {tac_}
@@ -67,6 +69,8 @@ unary_operator
     | ASTERISK          { $$ = DEREF_OP; }
     | TILDE             { $$ = TILDE_OP; }
     | EXCLAMATION       { $$ = EXCLAMATION_OP; }
+    | MINUS             { $$ = NEG_OP; }
+    | PLUS              { $$ = POS_OP; }
     ;
 
 special_operator

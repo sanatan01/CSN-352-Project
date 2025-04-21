@@ -21,7 +21,8 @@ extern std::vector<int> trueCase;
 extern std::vector<int> falseCase;
 extern std::map<std::string, bool> labels;
 
-enum Case {
+enum Case
+{
     BREAK_C,
     CONTINUE_C,
     RETURN_C,
@@ -30,7 +31,8 @@ enum Case {
     FALSE_C
 };
 
-class TAC {
+class TAC
+{
 public:
     TAC() = delete;
     static void dump_to_postfix();
@@ -43,7 +45,6 @@ public:
     static void clear_stream();
     static void print_tac(std::string str);
     static void print_tac(std::string result, std::string op1, std::string op, std::string op2);
-    
 
     static void add_label(Case labelCase);
 
@@ -68,8 +69,8 @@ public:
     static void add_jump_label(std::string name);
 
     static void create_if_statement();
-    static void print_goto_conditional(class Expression* expr, int _case);
-    static void print_goto_do_while(class Expression* expr);
+    static void print_goto_conditional(class Expression *expr, int _case);
+    static void print_goto_do_while(class Expression *expr);
     static void print_goto(int _case, bool remove);
     static void print_goto_label(std::string name);
     static void check_labels();

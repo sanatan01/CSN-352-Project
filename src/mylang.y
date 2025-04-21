@@ -15,6 +15,7 @@ int test_count = 0;
 
 class Expression* switch_temp = new Expression();
 std::vector<class Expression*> switch_temps = std::vector<class Expression*>();
+
 %}
 
 %define parse.error verbose
@@ -194,7 +195,7 @@ postfix_expression
     | IDENTIFIER LEFT_PAREN argument_expression_list RIGHT_PAREN 	{
 		$$ = create_postfix_expr_fun (new Identifier($1), $3); 
 	}
- 	| postfix_expression DOT IDENTIFIER 							{  debug_msg("Halal");  $$ = create_postfix_expr_struct(".", $1, new Identifier($3)); }
+ 	| postfix_expression DOT IDENTIFIER 							{  $$ = create_postfix_expr_struct(".", $1, new Identifier($3)); }
  	| postfix_expression PTR_OP IDENTIFIER 							{ $$ = create_postfix_expr_struct("->", $1, new Identifier($3)); }
  	;
 
