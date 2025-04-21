@@ -163,18 +163,49 @@ namespace backend
         statements.push_back(std::make_unique<Double>(double_stmt));
     }
 
-    void create_label_statement(std::string name, int location)
+    void create_label_statement(std::string _name, int location)
     {
-        tac_labels.emplace(name, Label(name, location));
+        // _name will be of the form identifier: 
+        // So we remove the last colon
+        if (_name[_name.length() - 1] == ':')
+        {
+            _name = _name.substr(0, _name.length() - 1);
+        }
+
+        auto it = tac_labels.find(_name);
+        if (it == tac_labels.end())
+        {
+            // The label has not appeared yet, we will create one
+            tac_labels.emplace(_name, Label(_name, location));
+        }
+        else
+        {
+            it->second = Label(_name, location);
+        }
+
         CommonStatement _statement = CommonStatement();
         _statement.type = LABEL_St;
-        _statement.labels.push_back(tac_labels.at(name));
+        _statement.labels.push_back(tac_labels.at(_name));
         statements.push_back(std::make_unique<CommonStatement>(_statement));
     }
 
     void create_func_statement(std::string function_name, int location)
     {
-        tac_labels.emplace(function_name, Label(function_name, location));
+        if (function_name[function_name.length() - 1] == ':')
+        {
+            function_name = function_name.substr(0, function_name.length() - 1);
+        }
+
+        auto it = tac_labels.find(function_name);
+        if (it == tac_labels.end())
+        {
+            // The label has not appeared yet, we will create one
+            tac_labels.emplace(function_name, Label(function_name, location));
+        }
+        else
+        {
+            it->second = Label(function_name, location);
+        }
         CommonStatement _statement = CommonStatement();
         _statement.type = FUNC_St;
         _statement.labels.push_back(Label(function_name, location));
@@ -356,6 +387,16 @@ namespace backend
             else
             {
                 output_msg(get_type_name(type));
+            }
+        }
+
+        // Check if all labels have been defined
+
+        for (const auto &label : tac_labels)
+        {
+            if (label.second.location == -1)
+            {
+                output_msg("Label " + label.first + " has not been defined");
             }
         }
     }
