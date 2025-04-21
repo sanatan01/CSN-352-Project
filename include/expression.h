@@ -156,8 +156,4 @@ PrimitiveTypes getPrimitiveType(std::string type);
 bool is_expr_signed(class Expression* expr);
 bool is_expr_unsigned(class Expression* expr);
 
-void error_msg(std::string msg, int line_num = 0, int column = 0);
-void warning_msg(std::string msg, int line_num = 0, int column = 0);
-void debug_msg(std::string msg, int line_num = 0, int column = 0);
-
 class Expression* prim_to_type(class Expression* expr);

@@ -108,7 +108,8 @@ void create_double(std::string result, std::string op1, bool is_const, bool is_s
     statements.push_back(std::make_unique<Double>(double_stmt));
 }
 
-void create_label_statement(std::string name, int location) {
+void create_label_statement(std::string name, int location)
+{
     tac_labels.emplace(name, Label(name, location));
     CommonStatement _statement = CommonStatement();
     _statement.type = LABEL_St;
@@ -116,5 +117,167 @@ void create_label_statement(std::string name, int location) {
     statements.push_back(std::make_unique<CommonStatement>(_statement));
 }
 
+void create_func_statement(std::string function_name, int location)
+{
+    tac_labels.emplace(function_name, Label(function_name, location));
+    CommonStatement _statement = CommonStatement();
+    _statement.type = FUNC_St;
+    _statement.labels.push_back(Label(function_name, location));
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
 
+void create_if_statement(std::string op1, std::string op2, BinaryOp op, std::string label, bool left_const, bool right_const)
+{
+    Quad quad;
+    quad.is_conditional = true;
+    quad.op = op;
 
+    if (op < 12)
+    {
+        // Throw error message
+        return;
+    }
+
+    if (left_const)
+    {
+        quad.operands.push_back(Operand(op1, true));
+    }
+    else
+    {
+        quad.operands.push_back(Operand(op1, false));
+    }
+
+    if (right_const)
+    {
+        quad.operands.push_back(Operand(op2, true));
+    }
+    else
+    {
+        quad.operands.push_back(Operand(op2, false));
+    }
+
+    quad.labels.push_back(tac_labels.at(label));
+
+    statements.push_back(std::make_unique<Quad>(quad));
+}
+
+void create_return_statement(std::string result, bool is_const)
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = RETURN_St;
+
+    if (result != "")
+    {
+        if (is_const)
+        {
+            _statement.operands.push_back(Operand(result, true));
+        }
+        else
+        {
+            _statement.operands.push_back(Operand(result, false));
+        }
+    }
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_call_statement(std::string function_name, std::string arg_count)
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = CALL_St;
+    _statement.operands.push_back(Operand(function_name, false));
+    _statement.operands.push_back(Operand(arg_count, true));
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_param_statement(std::string param, bool is_const)
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = PARAM_St;
+
+    if (is_const)
+    {
+        _statement.operands.push_back(Operand(param, true));
+    }
+    else
+    {
+        _statement.operands.push_back(Operand(param, false));
+    }
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_push_statement(std::string var, std::string sz, std::string index)
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = PUSH_St;
+    _statement.operands.push_back(Operand(var, false));
+    _statement.operands.push_back(Operand(sz, true));
+    _statement.operands.push_back(Operand(index, true));
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_pop_statement(std::string sz)
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = POP_St;
+    _statement.operands.push_back(Operand(sz, true));
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_goto_statement(std::string label)
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = GOTO_St;
+    _statement.labels.push_back(tac_labels.at(label));
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_static_statement(std::string var, std::string sz, std::string index)
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = STATIC_St;
+    _statement.operands.push_back(Operand(var, false));
+    _statement.operands.push_back(Operand(sz, true));
+    if (index != "")
+        _statement.operands.push_back(Operand(index, true));
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_copy_statement(std::string result, std::string op1)
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = COPY_St;
+    _statement.operands.push_back(Operand(result, false));
+    _statement.operands.push_back(Operand(op1, false));
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_enter_statement()
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = ENTER_St;
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void create_exit_statement()
+{
+    CommonStatement _statement = CommonStatement();
+    _statement.type = EXIT_St;
+
+    statements.push_back(std::make_unique<CommonStatement>(_statement));
+}
+
+void optimise_tac()
+{
+    // Placeholder for TAC optimisation logic
+    // In a real implementation, this would contain logic to optimise the TAC statements
+    // Prints the TAC statements in new file for now
+}

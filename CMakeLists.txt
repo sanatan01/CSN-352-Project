@@ -25,6 +25,7 @@ set(PARSING_SRCS
     ${SRC_DIR}/tac.cpp
     ${SRC_DIR}/codegen.cpp
     ${SRC_DIR}/tacgen.cpp
+    ${SRC_DIR}/utils.cpp
 )
 
 # Output files for Bison and Flex

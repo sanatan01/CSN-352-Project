@@ -103,8 +103,9 @@ enum SpecialOp
 
 enum UnaryOp
 {
+    NOP,
     REF_OP,
-    ASTERISK_OP,
+    DEREF_OP,
     EXCLAMATION_OP,
     TILDE_OP,
 };
@@ -226,10 +227,18 @@ void create_param_statement(std::string param, bool is_const);
 
 void create_push_statement(std::string var, std::string sz, std::string index);
 
-void create_pop_statement(std::string var, std::string sz);
+void create_pop_statement(std::string sz);
 
 void create_goto_statement(std::string label);
 
 void create_static_statement(std::string var, std::string sz, std::string index = "");
 
 void create_copy_statement(std::string result, std::string op1);
+
+void create_enter_statement();
+
+void create_exit_statement();
+
+// Main function to make all changes to TAC
+
+void optimise_tac();

@@ -2,26 +2,11 @@
 #include <cassert>
 #include <initializer_list>
 #include <tac.h>
+#include <utils.h>
 
 int line_num = 0, column = 0;
 
 extern int yylineno, yycolumn;
-
-void error_msg(std::string msg, int line_num, int column) {
-    std::cerr << "[  ERROR  ] " << msg << " at line " << yylineno << ", column " << yycolumn << std::endl;
-}
-
-void warning_msg(std::string msg, int line_num, int column) {
-    std::cerr << "[ WARNING ] " << msg << " at line " << yylineno << ", column " << yycolumn << std::endl;
-}
-
-void debug_msg(std::string msg, int line_num, int column) {
-#ifdef _DEBUG_MODE
-
-    std::cerr << "[  DEBUG  ] " << msg << " at line " << yylineno << ", column " << yycolumn << std::endl;
-
-#endif
-}
 
 Expression::Expression(PrimitiveTypes type, int num_operands): prim_type(static_cast<int>(type)), num_operands(num_operands), is_assignable(true), exp_type(create_primitive_type(type)) {};
 Expression::Expression(): prim_type(static_cast<int>(ERROR_T)), num_operands(0), is_assignable(true), exp_type(create_invalid_type("Invalid expression", line_num, column)) {};
@@ -998,7 +983,7 @@ Expression* create_cast_expression_typename(OpExpression* oe) {
         }
     }
     else {
-        error_msg("Undefined casting operation" + line_num);
+        error_msg("Undefined casting operation");
         oe->prim_type = ERROR_T;
         return oe;
     }

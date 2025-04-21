@@ -4,6 +4,7 @@
 #include <symtab.h>
 #include <expression.h>
 #include <tac.h>
+#include <utils.h>
 
 void yyerror(const char *s);
 extern int yylex();

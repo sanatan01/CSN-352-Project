@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <tac.h>
+#include <utils.h>
 
 int label_count = 0;
 int temp_count = 0;

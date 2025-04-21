@@ -20,9 +20,12 @@ foreach(input_file IN LISTS INPUT_FILES)
     set(symtab_file "${test_dir}/symtab.txt")
     set(tac_file "${test_dir}/tac.txt")
     set(tac_lex_file "${test_dir}/tac_lex.txt")
+    set(output_file "${test_dir}/debug.txt")
+    set(assembly_file "${test_dir}/assembly.txt")
 
     execute_process(
-        COMMAND ${EXECUTABLE} ${input_file} ${lexer_file} ${symtab_file} ${tac_file} ${tac_lex_file}
+        COMMAND ${EXECUTABLE} ${input_file} ${lexer_file} ${symtab_file} ${tac_file} ${tac_lex_file} ${assembly_file}
+        OUTPUT_FILE ${output_file}
         ERROR_FILE ${error_file}
     )
 endforeach()
