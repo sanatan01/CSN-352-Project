@@ -4,18 +4,22 @@
 #include <string.h>
 #include <backend_helper.h>
 #include <iostream>
+#include <tacgen.h>
 
 extern int tac_lex();
 extern int tac_lineno;
 extern char* tac_text;
 extern FILE* tac_lex_file;
 void tac_error(const char* msg);
+
+using namespace backend;
 %}
 
 %define api.prefix {tac_}
 
 %union {
     char* string;
+    int op_type;
 }
 
 %define parse.error verbose
@@ -27,6 +31,9 @@ void tac_error(const char* msg);
 %token <string> LESS_THAN GREATER_THAN CARET PIPE LE_OP GE_OP
 %token <string> RIGHT_OP LEFT_OP AND_OP OR_OP EQ_OP NE_OP
 
+%type <string> variable
+%type <op_type> binary_operator unary_operator special_operator conditional_operator
+
 %start program
 
 %%
@@ -37,38 +44,47 @@ program
     ;
 
 binary_operator
-    : PLUS
-    | MINUS
-    | ASTERISK
-    | AMPERSAND
-    | SLASH
-    | PERCENT
-    | CARET
-    | PIPE
-    | AND_OP
-    | OR_OP
-    | LEFT_OP
-    | RIGHT_OP
-    | EQ_OP
-    | NE_OP
-    | LESS_THAN
-    | GREATER_THAN
-    | GE_OP
-    | LE_OP
+    : PLUS              { $$ = ADD; }
+    | MINUS             { $$ = SUB; } 
+    | ASTERISK          { $$ = MUL; }
+    | AMPERSAND         { $$ = BITWISE_AND; }
+    | SLASH             { $$ = DIV; }
+    | PERCENT           { $$ = MOD; }
+    | CARET             { $$ = BITWISE_XOR; }
+    | PIPE              { $$ = BITWISE_OR; }
+    | AND_OP            { $$ = LOGICAL_AND; }
+    | OR_OP             { $$ = LOGICAL_OR; }
+    | LEFT_OP           { $$ = SHL; }
+    | RIGHT_OP          { $$ = SHR; }
+    | EQ_OP             { $$ = EQ; }
+    | NE_OP             { $$ = NE; }
+    | LESS_THAN         { $$ = LT; }
+    | GREATER_THAN      { $$ = GT; }
+    | GE_OP             { $$ = GE; }
+    | LE_OP             { $$ = LE; }
     ;
 
 unary_operator
-    : REFERENCE    
-    | ASTERISK      
-    | PLUS          
-    | MINUS         
-    | TILDE         
-    | EXCLAMATION  
+    : REFERENCE         { $$ = REF_OP; }
+    | ASTERISK          { $$ = DEREF_OP; }
+    | TILDE             { $$ = TILDE_OP; }
+    | EXCLAMATION       { $$ = EXCLAMATION_OP; }
+    | MINUS             { $$ = NEG_OP; }
+    | PLUS              { $$ = POS_OP; }
     ;
 
 special_operator
-    : AMPERSAND
-    | ASTERISK
+    : AMPERSAND         { $$ = AMPERSAND_SP; }
+    | ASTERISK          { $$ = ASTERISK_SP; }
+    ;
+
+conditional_operator
+    : LESS_THAN         { $$ = LT; }
+    | GREATER_THAN      { $$ = GT; }
+    | LE_OP             { $$ = LE; }
+    | GE_OP             { $$ = GE; }
+    | EQ_OP             { $$ = EQ; }
+    | NE_OP             { $$ = NE; }
     ;
 
 statement
@@ -84,107 +100,146 @@ statement
     | goto_statement
     | static_statement
     | copy_statement
-    | ENTER
-    | EXIT
-    ;
-
-conditional_operator
-    : LESS_THAN
-    | GREATER_THAN
-    | LE_OP
-    | GE_OP
-    | EQ_OP
-    | NE_OP
-    ;
-
-condition
-    : variable conditional_operator variable
-    | variable conditional_operator CONSTANT_LITERAL
-    | CONSTANT_LITERAL conditional_operator variable
-    | CONSTANT_LITERAL conditional_operator CONSTANT_LITERAL
+    | ENTER { create_enter_statement(); }
+    | EXIT { create_exit_statement(); }
     ;
 
 quad_statement
-    : variable ASSIGN variable binary_operator variable
-    | variable ASSIGN variable binary_operator CONSTANT_LITERAL
-    | variable ASSIGN CONSTANT_LITERAL binary_operator variable
-    | variable ASSIGN CONSTANT_LITERAL binary_operator CONSTANT_LITERAL
-    ;
-
-triple_statement
-    : variable ASSIGN unary_operator variable
-    | variable ASSIGN unary_operator CONSTANT_LITERAL
-    | special_operator variable ASSIGN variable
-    | special_operator variable ASSIGN CONSTANT_LITERAL
-    ;
-
-double_statement
-    : variable ASSIGN variable
-    | variable ASSIGN CONSTANT_LITERAL
-    | variable ASSIGN STRING_LITERAL
-    ;
-
-label_statement
-    : LABEL {
-        std::cerr << "Label: " << $1 << std::endl;
+    : variable ASSIGN variable binary_operator variable {
+        create_quad(std::string($1), std::string($3), static_cast<BinaryOp>($4), std::string($5), false, false);
+    }
+    | variable ASSIGN variable binary_operator CONSTANT_LITERAL {
+        create_quad(std::string($1), std::string($3), static_cast<BinaryOp>($4), std::string($5), false, true);
+    }
+    | variable ASSIGN CONSTANT_LITERAL binary_operator variable {
+        create_quad(std::string($1), std::string($3), static_cast<BinaryOp>($4), std::string($5), true, false);
+    }
+    | variable ASSIGN CONSTANT_LITERAL binary_operator CONSTANT_LITERAL {
+        create_quad(std::string($1), std::string($3), static_cast<BinaryOp>($4), std::string($5), true, true);
     }
     ;
 
+triple_statement
+    : variable ASSIGN unary_operator variable {
+        create_triple(std::string($1), false, static_cast<UnaryOp>($3), NONE, std::string($4));
+    }
+    | variable ASSIGN unary_operator CONSTANT_LITERAL {
+        create_triple(std::string($1), true, static_cast<UnaryOp>($3), NONE, std::string($4));
+    }
+    | special_operator variable ASSIGN variable {
+        create_triple(std::string($2), false, NOP, static_cast<SpecialOp>($1), std::string($4));
+    }
+    | special_operator variable ASSIGN CONSTANT_LITERAL {
+        create_triple(std::string($2), true, NOP, static_cast<SpecialOp>($1), std::string($4));
+    }
+    ;
+
+double_statement
+    : variable ASSIGN variable {
+        create_double(std::string($1), std::string($3), false, false);
+    }
+    | variable ASSIGN CONSTANT_LITERAL {
+        create_double(std::string($1), std::string($3), true, false);
+    }
+    | variable ASSIGN STRING_LITERAL {
+        create_double(std::string($1), std::string($3), false, true);
+    }
+    ;
+
+label_statement
+    : LABEL { create_label_statement(std::string($1), tac_lineno); }
+    ;
+
 function_statement
-    : FUNC LABEL
+    : FUNC LABEL { create_func_statement(std::string($2), tac_lineno); }
     ;
 
 if_statement
-    : IF condition goto_statement
+    : IF variable conditional_operator variable GOTO IDENTIFIER {
+        create_if_statement(std::string($2), std::string($4), static_cast<BinaryOp>($3), std::string($6), false, false);
+    }
+    | IF variable conditional_operator CONSTANT_LITERAL GOTO IDENTIFIER{
+        create_if_statement(std::string($2), std::string($4), static_cast<BinaryOp>($3), std::string($6), false, true);
+    }
+    | IF CONSTANT_LITERAL conditional_operator variable GOTO IDENTIFIER {
+        create_if_statement(std::string($2), std::string($4), static_cast<BinaryOp>($3), std::string($6), true, false);
+    }
+    | IF CONSTANT_LITERAL conditional_operator CONSTANT_LITERAL GOTO IDENTIFIER {
+        create_if_statement(std::string($2), std::string($4), static_cast<BinaryOp>($3), std::string($6), true, true);
+    }
     ;
 
 return_statement
-    : RETURN variable
-    | RETURN CONSTANT_LITERAL
-    | RETURN
+    : RETURN variable { 
+        create_return_statement(std::string($2), false);
+    }
+    | RETURN CONSTANT_LITERAL {
+        create_return_statement(std::string($2), true);
+    }
+    | RETURN {
+        create_return_statement("", false);
+    }
     ;
 
 call_statement
-    : CALL IDENTIFIER COMMA CONSTANT_LITERAL
+    : CALL IDENTIFIER COMMA CONSTANT_LITERAL {
+        create_call_statement(std::string($2), std::string($4));
+    }
     ;
 
 assignment_statement
     : quad_statement
     | triple_statement
     | double_statement
-    | variable ASSIGN call_statement
+    | variable ASSIGN CALL IDENTIFIER COMMA CONSTANT_LITERAL { // TODO 
+    }
     ;
 
 param_statement
-    : PARAM variable
-    | PARAM CONSTANT_LITERAL
+    : PARAM variable {
+        create_param_statement(std::string($2), false);
+    }
+    | PARAM CONSTANT_LITERAL {
+        create_param_statement(std::string($2), true);
+    }
     ;
 
 push_statement
-    : PUSH variable CONSTANT_LITERAL INDEX CONSTANT_LITERAL
+    : PUSH variable CONSTANT_LITERAL INDEX CONSTANT_LITERAL {
+        create_push_statement(std::string($2), std::string($3), std::string($5));
+    }
     ;
 
 pop_statement
-    : POP CONSTANT_LITERAL
+    : POP CONSTANT_LITERAL {
+        create_pop_statement(std::string($2));
+    }
     ;
 
 goto_statement
-    : GOTO IDENTIFIER
+    : GOTO IDENTIFIER {
+        create_goto_statement(std::string($2));
+    }
     ;
 
 static_statement
-    : STATIC variable CONSTANT_LITERAL INDEX CONSTANT_LITERAL
-    | STATIC variable CONSTANT_LITERAL
-// This is for string static
+    : STATIC variable CONSTANT_LITERAL INDEX CONSTANT_LITERAL {
+        create_static_statement(std::string($2), std::string($3), std::string($5));
+    }
+    | STATIC variable CONSTANT_LITERAL {
+        create_static_statement(std::string($2), std::string($3)); // This is for string static
+    }
     ;
 
 copy_statement
-    : COPY variable COMMA variable
+    : COPY variable COMMA variable {
+        create_copy_statement(std::string($2), std::string($4));
+    }
     ;
 
 variable
-    : IDENTIFIER
-    | TEMP
+    : IDENTIFIER { $$ = $1; }
+    | TEMP { $$ = $1; }
     ;
 
 %%

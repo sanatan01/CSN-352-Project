@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <types.h>
 #include <tac.h>
+#include <utils.h>
 
 // Creates unordered map of standard types that can be accessed in O(1) time
 std::unordered_map<PrimitiveTypes, StandardType*> createStandardTypes() {

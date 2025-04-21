@@ -6,7 +6,6 @@ void displayLexer(const char * name, const char* text);
 int check_type();
 void tacError(const char* message, ...);
 int tac_errorCount = 0;
-int tac_yycolumn = 1;
 static char* line_start = NULL;
 
 extern FILE* tac_lex_file;
@@ -83,7 +82,6 @@ L?\"(\\.|[^\\"])*\"              { displayLexer("STRING_LITERAL", yytext); tac_l
 "|"         { displayLexer("PIPE", yytext); tac_lval.string = strdup(yytext); return PIPE; }
 
 ([\n]) {
-    tac_yycolumn = 1;
     line_start = yytext + yyleng;
 }
 ([ \t\v\f])* { }

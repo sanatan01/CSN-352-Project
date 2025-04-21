@@ -378,3 +378,13 @@ void SymbolTable::print_udt()
     // Print all structs
     symbol_table_file << udt.size();
 }
+
+void formatSymbolTable()
+{
+    symbol_table_file << std::left << std::setw(15) << "Symbol:" << '|'
+                      << std::left << std::setw(15) << "Scope:" << '|'
+                      << std::left << std::setw(15) << "Line:" << '|'
+                      << std::left << std::setw(15) << "Column:" << '|'
+                      << std::left << std::setw(15) << "Return Type:" << '\n';
+    symbol_table_file << "---------------------------------------------------------------------\n";
+}
