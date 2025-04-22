@@ -147,11 +147,11 @@ double_statement
     ;
 
 label_statement
-    : LABEL { create_label_statement(std::string($1), tac_lineno); }
+    : LABEL { create_label_statement(std::string($1)); }
     ;
 
 function_statement
-    : FUNC LABEL { create_func_statement(std::string($2), tac_lineno); }
+    : FUNC LABEL { create_func_statement(std::string($2)); }
     ;
 
 if_statement

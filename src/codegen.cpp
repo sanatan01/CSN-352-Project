@@ -83,7 +83,54 @@ namespace backend
             return "$fp";
         case ra:
             return "$ra";
+        default:
+            return "empty";
         }
+    }
+
+    void Register::free_reg()
+    {
+        value = 0;
+        name = "";
+    }
+
+    bool Register::is_free()
+    {
+        return value == 0;
+    }
+
+    GPR temps[10] = {t0, t1, t2, t3, t4, t5, t6, t7, t8, t9};
+
+    GPR get_free_gpr()
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            if (gpr_map[temps[i]].is_free())
+            {
+                return temps[i];
+            }
+        }
+        return empty;
+    }
+
+    void set_gpr(GPR reg, std::string name) {
+        gpr_map[reg].value = 1;
+        gpr_map[reg].name = name;
+    }
+
+    void free_gpr(GPR reg) {
+        gpr_map[reg].free_reg();
+    }
+
+    GPR get_assigned_gpr(std::string name) {
+        for (int i = 0; i < 10; ++i)
+        {
+            if (gpr_map[temps[i]].name == name)
+            {
+                return temps[i];
+            }
+        }
+        return empty;
     }
 
 }

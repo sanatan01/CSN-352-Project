@@ -9,6 +9,8 @@
 namespace backend
 {
 
+    extern std::map<std::string, int> last_used;
+
     class Label
     {
     public:
@@ -58,10 +60,11 @@ namespace backend
         std::vector<Operand> operands;
         std::vector<Label> labels;
         std::stringstream asm_stream;
+        int line_number;
 
         // Explicitly define a copy constructor
         TACStatement(const TACStatement &other)
-            : operands(other.operands), labels(other.labels)
+            : operands(other.operands), labels(other.labels), line_number(other.line_number)
         {
             asm_stream << other.asm_stream.str();
         }
@@ -177,17 +180,17 @@ namespace backend
     enum StatementType
     {
         COPY_St,
-        GOTO_St,
-        STATIC_St,
-        POP_St,
-        PUSH_St,
+        GOTO_St, // No register
+        STATIC_St, // No register
+        POP_St, // No register
+        PUSH_St, // No register
         PARAM_St,
         CALL_St,
         RETURN_St,
-        FUNC_St,
-        LABEL_St,
-        ENTER_St,
-        EXIT_St,
+        FUNC_St, // No Register
+        LABEL_St, // No Register
+        ENTER_St, // No Register
+        EXIT_St, // No Register
     };
 
     std::string get_type_name(StatementType type);

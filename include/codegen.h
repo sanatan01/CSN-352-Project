@@ -10,6 +10,7 @@ namespace backend
 
     enum GPR
     {
+        empty = -1, // When GPR is not assigned
         r0 = 0,  // Constant 0
         at = 1,  // Reserved for assembler
         v0 = 2,  // Expression evaluation and
@@ -43,15 +44,7 @@ namespace backend
         fp = 30, // Frame pointer
         ra = 31  // Return address
     };
-
-    class Register;
-
-    extern std::map<GPR, Register> gpr_map;
-
-    void init_gpr_map();
-
-    std::string get_gpr_name(GPR reg);
-
+    
     class Register
     {
     public:
@@ -60,12 +53,25 @@ namespace backend
         std::string reg_name;
 
         Register() : value(0), name(""), reg_name("") {}
-        void free_reg()
-        {
-            value = 0;
-            name = "";
-        }
+        
+        void free_reg();
+        bool is_free();
+
     };
+
+    extern std::map<GPR, Register> gpr_map;
+
+    void init_gpr_map();
+
+    std::string get_gpr_name(GPR reg);
+
+    GPR get_free_gpr();
+
+    void set_gpr(GPR reg, std::string name);
+
+    void free_gpr(GPR reg);
+
+    GPR get_assigned_gpr(std::string name);
 
     class CodeGen
     {

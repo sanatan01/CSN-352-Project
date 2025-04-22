@@ -1,12 +1,25 @@
 #include <tacgen.h>
 #include <utils.h>
+#include <codegen.h>
 
 namespace backend
 {
     // Extern variables
-
+    std::map<std::string, int> last_used;
     std::vector<std::unique_ptr<TACStatement>> statements;
     std::map<std::string, Label> tac_labels;
+
+    int curr_line = 1;
+
+    void add_operand(Operand op)
+    {
+        if (op.type == CONSTANT)
+        {
+            return;
+        }
+
+        last_used[op.name] = curr_line;
+    }
 
     // Enum functions
 
@@ -97,6 +110,7 @@ namespace backend
         Quad quad;
         quad.is_conditional = false;
         quad.op = op;
+        quad.line_number = curr_line;
 
         if (left_const)
         {
@@ -118,6 +132,14 @@ namespace backend
 
         quad.operands.push_back(Operand(result, false));
         statements.push_back(std::make_unique<Quad>(quad));
+
+        // Add operands to map
+        for (const auto &operand : quad.operands)
+        {
+            add_operand(operand);
+        }
+
+        curr_line++;
     }
 
     void create_triple(std::string result, bool is_const, UnaryOp op, SpecialOp special_op, std::string op1)
@@ -125,6 +147,7 @@ namespace backend
         Triple triple;
         triple.op = op;
         triple.special_op = special_op;
+        triple.line_number = curr_line;
 
         if (is_const)
         {
@@ -138,6 +161,14 @@ namespace backend
         triple.operands.push_back(Operand(result, false));
 
         statements.push_back(std::make_unique<Triple>(triple));
+
+        // Add operands to map
+        for (const auto &operand : triple.operands)
+        {
+            add_operand(operand);
+        }
+
+        curr_line++;
     }
 
     void create_double(std::string result, std::string op1, bool is_const, bool is_str)
@@ -145,6 +176,7 @@ namespace backend
         Double double_stmt;
         double_stmt.string_lit = is_str;
         double_stmt.str = op1;
+        double_stmt.line_number = curr_line;
 
         if (!is_str)
         {
@@ -161,11 +193,19 @@ namespace backend
         double_stmt.operands.push_back(Operand(result, false));
 
         statements.push_back(std::make_unique<Double>(double_stmt));
+
+        // Add operands to map
+        for (const auto &operand : double_stmt.operands)
+        {
+            add_operand(operand);
+        }
+
+        curr_line++;
     }
 
-    void create_label_statement(std::string _name, int location)
+    void create_label_statement(std::string _name)
     {
-        // _name will be of the form identifier: 
+        // _name will be of the form identifier:
         // So we remove the last colon
         if (_name[_name.length() - 1] == ':')
         {
@@ -176,20 +216,23 @@ namespace backend
         if (it == tac_labels.end())
         {
             // The label has not appeared yet, we will create one
-            tac_labels.emplace(_name, Label(_name, location));
+            tac_labels.emplace(_name, Label(_name, curr_line));
         }
         else
         {
-            it->second = Label(_name, location);
+            it->second = Label(_name, curr_line);
         }
 
         CommonStatement _statement = CommonStatement();
         _statement.type = LABEL_St;
         _statement.labels.push_back(tac_labels.at(_name));
+        _statement.line_number = curr_line;
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        curr_line++;
     }
 
-    void create_func_statement(std::string function_name, int location)
+    void create_func_statement(std::string function_name)
     {
         if (function_name[function_name.length() - 1] == ':')
         {
@@ -200,16 +243,19 @@ namespace backend
         if (it == tac_labels.end())
         {
             // The label has not appeared yet, we will create one
-            tac_labels.emplace(function_name, Label(function_name, location));
+            tac_labels.emplace(function_name, Label(function_name, curr_line));
         }
         else
         {
-            it->second = Label(function_name, location);
+            it->second = Label(function_name, curr_line);
         }
         CommonStatement _statement = CommonStatement();
         _statement.type = FUNC_St;
-        _statement.labels.push_back(Label(function_name, location));
+        _statement.labels.push_back(tac_labels.at(function_name));
+        _statement.line_number = curr_line;
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        curr_line++;
     }
 
     void create_if_statement(std::string op1, std::string op2, BinaryOp op, std::string label, bool left_const, bool right_const)
@@ -217,6 +263,7 @@ namespace backend
         Quad quad;
         quad.is_conditional = true;
         quad.op = op;
+        quad.line_number = curr_line;
 
         if (op < 12)
         {
@@ -250,12 +297,21 @@ namespace backend
         quad.labels.push_back(tac_labels.at(label));
 
         statements.push_back(std::make_unique<Quad>(quad));
+
+        // Add operands to map
+        for (const auto &operand : quad.operands)
+        {
+            add_operand(operand);
+        }
+
+        curr_line++;
     }
 
     void create_return_statement(std::string result, bool is_const)
     {
         CommonStatement _statement = CommonStatement();
         _statement.type = RETURN_St;
+        _statement.line_number = curr_line;
 
         if (result != "")
         {
@@ -270,22 +326,39 @@ namespace backend
         }
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        // Add operands to map
+        for (const auto &operand : _statement.operands)
+        {
+            add_operand(operand);
+        }
+
+        curr_line++;
     }
 
     void create_call_statement(std::string function_name, std::string arg_count)
     {
         CommonStatement _statement = CommonStatement();
         _statement.type = CALL_St;
-        _statement.operands.push_back(Operand(function_name, false));
+        if (tac_labels.find(function_name) == tac_labels.end())
+        {
+            // The label has not appeared yet, we will create one
+            tac_labels.emplace(function_name, Label(function_name, -1));
+        }
+        _statement.labels.push_back(tac_labels.at(function_name));
         _statement.operands.push_back(Operand(arg_count, true));
+        _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        curr_line++;
     }
 
     void create_param_statement(std::string param, bool is_const)
     {
         CommonStatement _statement = CommonStatement();
         _statement.type = PARAM_St;
+        _statement.line_number = curr_line;
 
         if (is_const)
         {
@@ -297,6 +370,13 @@ namespace backend
         }
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        // Add operands to map
+        for (const auto &operand : _statement.operands)
+        {
+            add_operand(operand);
+        }
+        curr_line++;
     }
 
     void create_push_statement(std::string var, std::string sz, std::string index)
@@ -306,8 +386,16 @@ namespace backend
         _statement.operands.push_back(Operand(var, false));
         _statement.operands.push_back(Operand(sz, true));
         _statement.operands.push_back(Operand(index, true));
+        _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        // Add operands to map
+        for (const auto &operand : _statement.operands)
+        {
+            add_operand(operand);
+        }
+        curr_line++;
     }
 
     void create_pop_statement(std::string sz)
@@ -315,8 +403,11 @@ namespace backend
         CommonStatement _statement = CommonStatement();
         _statement.type = POP_St;
         _statement.operands.push_back(Operand(sz, true));
+        _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        curr_line++;
     }
 
     void create_goto_statement(std::string label)
@@ -329,8 +420,11 @@ namespace backend
             tac_labels.emplace(label, Label(label, -1));
         }
         _statement.labels.push_back(tac_labels.at(label));
+        _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        curr_line++;
     }
 
     void create_static_statement(std::string var, std::string sz, std::string index)
@@ -339,10 +433,18 @@ namespace backend
         _statement.type = STATIC_St;
         _statement.operands.push_back(Operand(var, false));
         _statement.operands.push_back(Operand(sz, true));
+        _statement.line_number = curr_line;
         if (index != "")
             _statement.operands.push_back(Operand(index, true));
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        // Add operands to map
+        for (const auto &operand : _statement.operands)
+        {
+            add_operand(operand);
+        }
+        curr_line++;
     }
 
     void create_copy_statement(std::string result, std::string op1)
@@ -351,53 +453,113 @@ namespace backend
         _statement.type = COPY_St;
         _statement.operands.push_back(Operand(result, false));
         _statement.operands.push_back(Operand(op1, false));
+        _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        // Add operands to map
+        for (const auto &operand : _statement.operands)
+        {
+            add_operand(operand);
+        }
+        curr_line++;
     }
 
     void create_enter_statement()
     {
         CommonStatement _statement = CommonStatement();
         _statement.type = ENTER_St;
+        _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        curr_line++;
     }
 
     void create_exit_statement()
     {
         CommonStatement _statement = CommonStatement();
         _statement.type = EXIT_St;
+        _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<CommonStatement>(_statement));
+
+        curr_line++;
     }
 
     void optimise_tac()
     {
         output_msg("Optimising TAC...");
 
-        // For now print all the TAC statement types
+        // Print the map
+        // for (const auto &pair : last_used)
+        // {
+        //     output_msg(pair.first + ": " + std::to_string(pair.second));
+        // }
+
+        // Iterate through the statements and assign registers
         for (const auto &statement : statements)
         {
-            TACType type = statement->get_type();
-            if (type == COMMON)
-            {
-                CommonStatement *common_stmt = static_cast<CommonStatement *>(statement.get());
-                output_msg(get_type_name(common_stmt->type));
+            // We dont need variables for certain statements we can skip
+            if (statement->get_type() == COMMON) {
+                CommonStatement *common_statement = static_cast<CommonStatement *>(statement.get());
+                if (common_statement->type == GOTO_St || common_statement->type == STATIC_St || common_statement->type == POP_St ||
+                    common_statement->type == PUSH_St || common_statement->type == FUNC_St || common_statement->type == LABEL_St ||
+                    common_statement->type == ENTER_St || common_statement->type == EXIT_St)
+                {
+                    continue;
+                }
             }
-            else
-            {
-                output_msg(get_type_name(type));
-            }
-        }
 
-        // Check if all labels have been defined
-
-        for (const auto &label : tac_labels)
-        {
-            if (label.second.location == -1)
+            std::string msg = "";
+            for (const auto &operand : statement->operands)
             {
-                output_msg("Label " + label.first + " has not been defined");
+                if (operand.type == CONSTANT)
+                {
+                    continue;
+                }
+
+                GPR reg = get_assigned_gpr(operand.name);
+                if (reg == empty)
+                {
+                    GPR reg = get_free_gpr();
+                    if (reg != empty)
+                    {
+                        set_gpr(reg, operand.name);
+                        msg += "# " + operand.name + " to " + get_gpr_name(reg) + " | ";
+                    }
+                    else
+                    {
+                        msg += "Failed to assign " + operand.name + " to a register ";
+                    }
+                }
+                else
+                {
+                    msg += operand.name + " to " + get_gpr_name(reg) + " | ";
+                }
             }
+
+            // Perform operations with the register
+
+            // Free unused register
+            for (const auto &operand : statement->operands)
+            {
+                if (operand.type == CONSTANT)
+                {
+                    continue;
+                }
+
+                if (last_used[operand.name] <= statement->line_number) {
+                    GPR reg = get_assigned_gpr(operand.name);
+                    if (reg != empty)
+                    {
+                        free_gpr(reg);
+                        msg += "! " + operand.name + " from " + get_gpr_name(reg) + " | ";
+                    }
+                }
+            }
+
+            output_msg(std::to_string(statement->line_number) + ": " + msg);
         }
     }
 
