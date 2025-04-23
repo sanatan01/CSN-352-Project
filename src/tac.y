@@ -25,7 +25,7 @@ using namespace backend;
 %define parse.error verbose
 
 %token <string> IDENTIFIER TEMP STRING_LITERAL CONSTANT_LITERAL LABEL REFERENCE
-%token <string> CALL RETURN PARAM PUSH POP GOTO STATIC COPY IF FUNC ENTER EXIT INDEX
+%token <string> CALL RETURN PARAM PUSH POP GOTO STATIC COPY IF FUNC ENTER EXIT DATA GLOBAL
 %token <string> COMMA ASSIGN AMPERSAND EXCLAMATION
 %token <string> TILDE MINUS PLUS ASTERISK SLASH PERCENT DOT
 %token <string> LESS_THAN GREATER_THAN CARET PIPE LE_OP GE_OP
@@ -88,17 +88,15 @@ conditional_operator
     ;
 
 statement
-    : label_statement
-    | function_statement
+    : labeled_statement
+    | add_variable_statement
     | if_statement
     | return_statement
     | call_statement
     | assignment_statement
     | param_statement
-    | push_statement
     | pop_statement
     | goto_statement
-    | static_statement
     | copy_statement
     | ENTER { create_enter_statement(); }
     | EXIT { create_exit_statement(); }
@@ -146,12 +144,9 @@ double_statement
     }
     ;
 
-label_statement
+labeled_statement
     : LABEL { create_label_statement(std::string($1)); }
-    ;
-
-function_statement
-    : FUNC LABEL { create_func_statement(std::string($2)); }
+    | FUNC LABEL { create_func_statement(std::string($2)); }
     ;
 
 if_statement
@@ -204,9 +199,18 @@ param_statement
     }
     ;
 
-push_statement
-    : PUSH variable CONSTANT_LITERAL INDEX CONSTANT_LITERAL {
-        create_push_statement(std::string($2), std::string($3), std::string($5));
+add_variable_statement
+    : PUSH variable CONSTANT_LITERAL {
+        create_variable_statement(LOCAL_St, std::string($2), std::string($3));
+    }
+    | STATIC variable CONSTANT_LITERAL {
+        create_variable_statement(STATIC_St, std::string($2), std::string($3));
+    }
+    | GLOBAL variable CONSTANT_LITERAL {
+        create_variable_statement(GLOBAL_St, std::string($2), std::string($3));
+    }
+    | DATA variable CONSTANT_LITERAL {
+        create_variable_statement(DATA_St, std::string($2), std::string($3));
     }
     ;
 
@@ -219,15 +223,6 @@ pop_statement
 goto_statement
     : GOTO IDENTIFIER {
         create_goto_statement(std::string($2));
-    }
-    ;
-
-static_statement
-    : STATIC variable CONSTANT_LITERAL INDEX CONSTANT_LITERAL {
-        create_static_statement(std::string($2), std::string($3), std::string($5));
-    }
-    | STATIC variable CONSTANT_LITERAL {
-        create_static_statement(std::string($2), std::string($3)); // This is for string static
     }
     ;
 

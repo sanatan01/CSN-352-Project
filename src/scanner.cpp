@@ -5,6 +5,7 @@
 #include <types.h>
 #include <tac.h>
 #include <tacgen.h>
+#include <codegen.h>
 
 extern int yyparse();
 extern int tac_parse();
@@ -16,11 +17,13 @@ FILE *tac_lex_file = NULL;
 std::fstream symbol_table_file;
 std::ofstream tac_file;
 
+std::fstream assembly_file;
+
 int main(int argc, char **argv)
 {
-    if (argc < 5)
+    if (argc < 6)
     {
-        fprintf(stderr, "Usage: %s <input_file> <lexer_file> <symtab_file> <3ac_file> <3ac_lex>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <input_file> <lexer_file> <symtab_file> <3ac_file> <3ac_lex> <assembly_file>\n", argv[0]);
         exit(1);
     }
 
@@ -97,15 +100,26 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    // Open the assembly file for writing
+    assembly_file.open(argv[6], std::ios::out);
+    if (!assembly_file.is_open())
+    {
+        std::cerr << "Error opening assembly file" << std::endl;
+        fclose(tac_input_file);
+        exit(1);
+    }
+
     tac_in = tac_input_file;
     tac_lineno = 1; // Initialize line number
 
     tac_parse();
 
     backend::optimise_tac();
+    backend::print_assembly();
 
     fclose(tac_input_file);
     fclose(tac_lex_file);
+    assembly_file.close(); 
 
     return 0;
 }

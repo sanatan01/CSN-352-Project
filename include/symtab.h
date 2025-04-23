@@ -81,6 +81,8 @@ public:
 	static void decrement_scope();
 	static class GlobalType *get_global_type(class GlobalType *global_type);
 	static void print_udt();
+
+	static Symbol get_symbol_by_index(int index);
 };
 
 void formatSymbolTable();

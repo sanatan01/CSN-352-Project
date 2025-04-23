@@ -31,12 +31,8 @@ namespace backend
             return "COPY";
         case GOTO_St:
             return "GOTO";
-        case STATIC_St:
-            return "STATIC";
         case POP_St:
             return "POP";
-        case PUSH_St:
-            return "PUSH";
         case PARAM_St:
             return "PARAM";
         case CALL_St:
@@ -379,25 +375,6 @@ namespace backend
         curr_line++;
     }
 
-    void create_push_statement(std::string var, std::string sz, std::string index)
-    {
-        CommonStatement _statement = CommonStatement();
-        _statement.type = PUSH_St;
-        _statement.operands.push_back(Operand(var, false));
-        _statement.operands.push_back(Operand(sz, true));
-        _statement.operands.push_back(Operand(index, true));
-        _statement.line_number = curr_line;
-
-        statements.push_back(std::make_unique<CommonStatement>(_statement));
-
-        // Add operands to map
-        for (const auto &operand : _statement.operands)
-        {
-            add_operand(operand);
-        }
-        curr_line++;
-    }
-
     void create_pop_statement(std::string sz)
     {
         CommonStatement _statement = CommonStatement();
@@ -427,17 +404,15 @@ namespace backend
         curr_line++;
     }
 
-    void create_static_statement(std::string var, std::string sz, std::string index)
+    void create_variable_statement(VariableType type, std::string var, std::string ind)
     {
-        CommonStatement _statement = CommonStatement();
-        _statement.type = STATIC_St;
+        VariableStatement _statement = VariableStatement();
+        _statement.type = type;
         _statement.operands.push_back(Operand(var, false));
-        _statement.operands.push_back(Operand(sz, true));
+        _statement.operands.push_back(Operand(ind, true));
         _statement.line_number = curr_line;
-        if (index != "")
-            _statement.operands.push_back(Operand(index, true));
 
-        statements.push_back(std::make_unique<CommonStatement>(_statement));
+        statements.push_back(std::make_unique<VariableStatement>(_statement));
 
         // Add operands to map
         for (const auto &operand : _statement.operands)
@@ -491,55 +466,11 @@ namespace backend
     {
         output_msg("Optimising TAC...");
 
-        // Print the map
-        // for (const auto &pair : last_used)
-        // {
-        //     output_msg(pair.first + ": " + std::to_string(pair.second));
-        // }
-
-        // Iterate through the statements and assign registers
         for (const auto &statement : statements)
         {
-            // We dont need variables for certain statements we can skip
-            if (statement->get_type() == COMMON) {
-                CommonStatement *common_statement = static_cast<CommonStatement *>(statement.get());
-                if (common_statement->type == GOTO_St || common_statement->type == STATIC_St || common_statement->type == POP_St ||
-                    common_statement->type == PUSH_St || common_statement->type == FUNC_St || common_statement->type == LABEL_St ||
-                    common_statement->type == ENTER_St || common_statement->type == EXIT_St)
-                {
-                    continue;
-                }
-            }
-
-            std::string msg = "";
-            for (const auto &operand : statement->operands)
-            {
-                if (operand.type == CONSTANT)
-                {
-                    continue;
-                }
-
-                GPR reg = get_assigned_gpr(operand.name);
-                if (reg == empty)
-                {
-                    GPR reg = get_free_gpr();
-                    if (reg != empty)
-                    {
-                        set_gpr(reg, operand.name);
-                        msg += "# " + operand.name + " to " + get_gpr_name(reg) + " | ";
-                    }
-                    else
-                    {
-                        msg += "Failed to assign " + operand.name + " to a register ";
-                    }
-                }
-                else
-                {
-                    msg += operand.name + " to " + get_gpr_name(reg) + " | ";
-                }
-            }
-
-            // Perform operations with the register
+            // Get the registers being used
+            std::vector<GPR> used_gprs = CodeGen::get_used_gprs(*statement);
+            statement->asm_stream = CodeGen::generate_asm(*statement, used_gprs);
 
             // Free unused register
             for (const auto &operand : statement->operands)
@@ -549,17 +480,26 @@ namespace backend
                     continue;
                 }
 
-                if (last_used[operand.name] <= statement->line_number) {
+                if (last_used[operand.name] <= statement->line_number)
+                {
                     GPR reg = get_assigned_gpr(operand.name);
                     if (reg != empty)
                     {
                         free_gpr(reg);
-                        msg += "! " + operand.name + " from " + get_gpr_name(reg) + " | ";
+                        output_msg("Freed " + operand.name + " from " + get_gpr_name(reg));
                     }
                 }
             }
+        }
+    }
 
-            output_msg(std::to_string(statement->line_number) + ": " + msg);
+    void print_assembly()
+    {
+        output_msg("Printing assembly...");
+
+        for (const auto &statement : statements)
+        {
+            assembly_file << statement->asm_stream.str();
         }
     }
 

@@ -37,8 +37,9 @@ IS          (u|U|l|L|ll|LL|ul|uL|Ul|UL|lu|lU|Lu|LU|ull|uLL|Ull|ULL|llu|llU|LLu|L
 ".func"     { displayLexer("FUNC", yytext); tac_lval.string = strdup("FUNC"); return FUNC; }
 ".enter"    { displayLexer("ENTER", yytext); tac_lval.string = strdup("ENTER"); return ENTER; }
 ".exit"     { displayLexer("EXIT", yytext); tac_lval.string = strdup("EXIT"); return EXIT; }
-".index"    { displayLexer("INDEX", yytext); tac_lval.string = strdup("INDEX"); return INDEX; }
-"addr"         { displayLexer("REFERENCE", yytext); tac_lval.string = strdup(yytext); return REFERENCE; }
+".global"   { displayLexer("GLOBAL", yytext); tac_lval.string = strdup("GLOBAL"); return GLOBAL; }
+".addr"     { displayLexer("REFERENCE", yytext); tac_lval.string = strdup("REFERENCE"); return REFERENCE; }
+".data"     { displayLexer("DATA", yytext); tac_lval.string = strdup("DATA"); return DATA; }
 
 {L}({L}|{D})*":" { displayLexer("LABEL", yytext); tac_lval.string = strdup(yytext); return LABEL; }
 "t"({D})*        { displayLexer("TEMP", yytext); tac_lval.string = strdup(yytext); return TEMP; }

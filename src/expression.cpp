@@ -1622,7 +1622,7 @@ Expression *create_postfix_expr_struct(std::string access_op, Expression *pe, Id
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
                 std::string temp1 = TAC::get_temp();
-                TAC::print_tac(temp1 + " = addr " + new_temp);
+                TAC::print_tac(temp1 + " = .addr " + new_temp);
                 P->name = temp1;
                 return P;
             }
@@ -1643,7 +1643,7 @@ Expression *create_postfix_expr_struct(std::string access_op, Expression *pe, Id
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
                 std::string temp1 = TAC::get_temp();
-                TAC::print_tac(temp1 + " = addr " + new_temp);
+                TAC::print_tac(temp1 + " = .addr " + new_temp);
                 P->name = temp1;
                 return P;
             }
@@ -1954,7 +1954,7 @@ Expression *create_unary_expression(OpExpression *oe)
                 oe->exp_type->pointer_type->ptr_level++;
                 oe->prim_type = ERROR_T;
                 new_temp = TAC::get_temp();
-                TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+                TAC::print_tac(new_temp + " = .addr " + oe->op1.name);
                 // TAC::print_tac(oe->op1.name + " = " + new_temp);
                 oe->name = new_temp;
                 return oe;
@@ -1964,7 +1964,7 @@ Expression *create_unary_expression(OpExpression *oe)
                 oe->prim_type = ERROR_T;
                 oe->exp_type = create_pointer_type(oe->op1.exp_type);
                 new_temp = TAC::get_temp();
-                TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+                TAC::print_tac(new_temp + " = .addr " + oe->op1.name);
                 // TAC::print_tac(oe->op1.name + " = " + new_temp);
                 oe->name = new_temp;
                 return oe;
@@ -1974,7 +1974,7 @@ Expression *create_unary_expression(OpExpression *oe)
                 oe->prim_type = ERROR_T;
                 oe->exp_type = create_pointer_type(oe->op1.exp_type);
                 new_temp = TAC::get_temp();
-                TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+                TAC::print_tac(new_temp + " = .addr " + oe->op1.name);
                 // TAC::print_tac(oe->op1.name + " = " + new_temp);
                 oe->name = new_temp;
                 return oe;
@@ -1984,7 +1984,7 @@ Expression *create_unary_expression(OpExpression *oe)
                 oe->prim_type = ERROR_T;
                 oe->exp_type->pointer_type->ptr_level++;
                 new_temp = TAC::get_temp();
-                TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+                TAC::print_tac(new_temp + " = .addr " + oe->op1.name);
                 // TAC::print_tac(oe->op1.name + " = " + new_temp);
                 oe->name = new_temp;
                 return oe;
@@ -1994,7 +1994,7 @@ Expression *create_unary_expression(OpExpression *oe)
                 oe->exp_type = create_pointer_type(oe->op1.exp_type, 1, oe->op1.exp_type->getSpecifiers());
                 oe->prim_type = ERROR_T;
                 new_temp = TAC::get_temp();
-                TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+                TAC::print_tac(new_temp + " = .addr " + oe->op1.name);
                 // TAC::print_tac(oe->op1.name + " = " + new_temp);
                 oe->name = new_temp;
                 return oe;
@@ -2015,7 +2015,7 @@ Expression *create_unary_expression(OpExpression *oe)
             oe->exp_type = create_pointer_type(oe->op1.exp_type);
             oe->prim_type = ERROR_T;
             new_temp = TAC::get_temp();
-            TAC::print_tac(new_temp + " = addr " + oe->op1.name);
+            TAC::print_tac(new_temp + " = .addr " + oe->op1.name);
             // TAC::print_tac(oe->op1.name + " = " + new_temp);
             oe->name = new_temp;
             return oe;
@@ -2265,7 +2265,7 @@ Expression *create_expression_simple(ExpressionType exp_type, std::string token)
         e->prim_type = ERROR_T;
         debug_msg("String: " + token);
         std::string new_temp = TAC::get_temp();
-        TAC::print_tac(".static " + new_temp + " " + std::to_string(sizeof(char) * (token.length() - 1)));
+        TAC::print_tac(".data " + new_temp + " " + std::to_string(sizeof(char) * (token.length() - 1)));
         std::string str_temp = TAC::get_temp();
         TAC::print_tac(str_temp + " = " + token);
         TAC::print_tac(".copy " + str_temp + ", " + new_temp);

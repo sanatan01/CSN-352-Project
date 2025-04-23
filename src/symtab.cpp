@@ -67,18 +67,19 @@ void SymbolTable::add_symbol(Identifier *id, int line, int column)
     if (id->type->type_tag != FUNCTION_TYPE)
     {
 
-        if (current_scope_level == 0 && !id->type->isDefined())
+        if (current_scope_level == 0)
         {
-            TAC::print_tac(id->name + " = 0");
+            if (!id->type->isDefined())
+                TAC::print_tac(id->name + " = 0");
+            TAC::print_tac(".global " + id->name + " " + std::to_string(all_symbols.size() - 1));
         }
-
-        if (id->type->getSpecifiers() != nullptr && id->type->getSpecifiers()->is_static)
+        else if (id->type->getSpecifiers() != nullptr && id->type->getSpecifiers()->is_static)
         {
-            TAC::print_tac(".static " + id->name + " " + std::to_string(id->type->getSize()) + " .index " + std::to_string(all_symbols.size() - 1));
+            TAC::print_tac(".static " + id->name + " " + std::to_string(all_symbols.size() - 1));
         }
         else
         {
-            TAC::print_tac(".push " + id->name + " " + std::to_string(id->type->getSize()) + " .index " + std::to_string(all_symbols.size() - 1));
+            TAC::print_tac(".push " + id->name + " " + std::to_string(all_symbols.size() - 1));
         }
     }
 }
@@ -377,6 +378,15 @@ void SymbolTable::print_udt()
 {
     // Print all structs
     symbol_table_file << udt.size();
+}
+
+Symbol SymbolTable::get_symbol_by_index(int index)
+{
+    if (index < 0 || index >= all_symbols.size())
+    {
+        throw std::out_of_range("Index out of range");
+    }
+    return all_symbols[index];
 }
 
 void formatSymbolTable()

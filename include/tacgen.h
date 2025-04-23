@@ -5,6 +5,9 @@
 #include <vector>
 #include <sstream>
 #include <memory>
+#include <fstream>
+
+extern std::fstream assembly_file;
 
 namespace backend
 {
@@ -43,6 +46,7 @@ namespace backend
         size_t size;
         OpType type;
 
+        Operand() = default;
         Operand(std::string name, bool is_const);
     };
 
@@ -51,7 +55,8 @@ namespace backend
         QUAD,
         TRIPLE,
         DOUBLE,
-        COMMON
+        COMMON,
+        VARIABLE
     };
 
     class TACStatement
@@ -181,16 +186,14 @@ namespace backend
     {
         COPY_St,
         GOTO_St, // No register
-        STATIC_St, // No register
-        POP_St, // No register
-        PUSH_St, // No register
+        POP_St,  // No register
         PARAM_St,
         CALL_St,
         RETURN_St,
-        FUNC_St, // No Register
+        FUNC_St,  // No Register
         LABEL_St, // No Register
         ENTER_St, // No Register
-        EXIT_St, // No Register
+        EXIT_St,  // No Register
     };
 
     std::string get_type_name(StatementType type);
@@ -215,7 +218,31 @@ namespace backend
         }
     };
 
-    extern std::vector<std::unique_ptr<TACStatement>> statements;
+    enum VariableType
+    {
+        GLOBAL_St,
+        STATIC_St,
+        LOCAL_St,
+        DATA_St,
+    };
+
+    class VariableStatement : public TACStatement
+    {
+    public:
+        VariableType type;
+
+        VariableStatement(const VariableStatement &other) : TACStatement(other), type(other.type) {}
+
+        VariableStatement() : type() {}
+
+        TACType get_type() const override
+        {
+            return VARIABLE;
+        }
+    };
+
+    extern std::vector<std::unique_ptr<TACStatement>>
+        statements;
     extern std::map<std::string, Label> tac_labels;
 
     // Function declarations
@@ -225,9 +252,9 @@ namespace backend
 
     void create_double(std::string result, std::string op1, bool is_const, bool is_str);
 
-    void create_label_statement(std::string label, int location);
+    void create_label_statement(std::string label);
 
-    void create_func_statement(std::string function_name, int location);
+    void create_func_statement(std::string function_name);
 
     void create_if_statement(std::string op1, std::string op2, BinaryOp op, std::string label, bool left_const, bool right_const);
 
@@ -237,13 +264,11 @@ namespace backend
 
     void create_param_statement(std::string param, bool is_const);
 
-    void create_push_statement(std::string var, std::string sz, std::string index);
-
     void create_pop_statement(std::string sz);
 
     void create_goto_statement(std::string label);
 
-    void create_static_statement(std::string var, std::string sz, std::string index = "");
+    void create_variable_statement(VariableType type, std::string var, std::string ind);
 
     void create_copy_statement(std::string result, std::string op1);
 
@@ -254,4 +279,6 @@ namespace backend
     // Main function to make all changes to TAC
 
     void optimise_tac();
+
+    void print_assembly();
 }
