@@ -9,8 +9,7 @@
 
 // --------------------------------------------------------------------------------------------
 
-enum ExpressionOpType
-{
+enum ExpressionOpType {
   MULTIPLICATIVE,
   ADDITIVE,
   SHIFT,
@@ -29,8 +28,7 @@ enum ExpressionOpType
   UNARY
 };
 
-enum ExpressionType
-{
+enum ExpressionType {
   IDENTIFIER_ET,
   CONSTANT_ET,
   EXPRESSION_ET,
@@ -39,45 +37,40 @@ enum ExpressionType
 
 extern std::unordered_map<std::string, PrimitiveTypes> type_map;
 
-class Expression
-{
+class Expression {
 public:
   int num_operands;
   bool is_assignable;
-  class GlobalType *exp_type;
+  bool is_constant;
+  class GlobalType* exp_type;
   int prim_type;
 
   std::string name;
   Expression(PrimitiveTypes type, int num_operands);
   Expression();
-  Expression(class GlobalType *type);
+  Expression(class GlobalType* type);
 };
 
-class VectorExpression : public Expression
-{
+class VectorExpression: public Expression {
 public:
   std::vector<Expression> operands;
-  VectorExpression()
-  {
+  VectorExpression() {
     this->operands = std::vector<Expression>();
   };
-  void add_element(Expression *e)
-  {
+  void add_element(Expression* e) {
     this->operands.push_back(*e);
   };
-  void add_elements(std::vector<Expression> elements)
-  {
+  void add_elements(std::vector<Expression> elements) {
     this->operands.insert(this->operands.end(), elements.begin(), elements.end());
   };
 };
 
-Expression *create_expression_simple(ExpressionType exp_type, std::string token);
-Expression *create_expression(ExpressionOpType op_type, std::string op, VectorExpression *ve);
+Expression* create_expression_simple(ExpressionType exp_type, std::string token);
+Expression* create_expression(ExpressionOpType op_type, std::string op, VectorExpression* ve);
 
 // --------------------------------------------------------------------------------------------
 
-class OpExpression : public Expression
-{
+class OpExpression: public Expression {
 public:
   Expression op1;
   Expression op2;
@@ -85,8 +78,7 @@ public:
   ExpressionOpType op_type;
   std::string op;
 
-  OpExpression() : Expression(PrimitiveTypes(ERROR_T), 2)
-  {
+  OpExpression(): Expression(PrimitiveTypes(ERROR_T), 2) {
     op1 = Expression();
     op2 = Expression();
     op3 = Expression();
@@ -98,14 +90,12 @@ public:
 // Grammar wrapper for OpExpression
 
 //-------------------------------------------------
-class UnaryExpression : public Expression
-{
+class UnaryExpression: public Expression {
 public:
-  Expression *op1;
+  Expression* op1;
   std::string op;
 
-  UnaryExpression() : Expression(PrimitiveTypes(ERROR_T), 1)
-  {
+  UnaryExpression(): Expression(PrimitiveTypes(ERROR_T), 1) {
     op1 = nullptr;
     op = "";
   }
@@ -115,18 +105,16 @@ public:
 
 // --------------------------------------------------------------------------------------------
 
-class CastExpression : public Expression
-{
+class CastExpression: public Expression {
 public:
-  Expression *op1;
+  Expression* op1;
   /**
     Index of Type casted to in GlobalTypes
     -1 if there is no casting
   */
   int typeCast;
 
-  CastExpression() : Expression(PrimitiveTypes(ERROR_T), 1)
-  {
+  CastExpression(): Expression(PrimitiveTypes(ERROR_T), 1) {
     op1 = nullptr;
     typeCast = -1;
   };
@@ -136,17 +124,15 @@ public:
 // Expression* create_cast_expression_typename(TypeName* tn, Expression* ce); // type_name wala add krna hai// can change string to node* later for assignment operator
 
 // --------------------------------------------------------------------------------------------
-class PostfixExpression : public Expression
-{
+class PostfixExpression: public Expression {
 public:
-  PostfixExpression *pe;
-  Expression *exp;
-  Identifier *id;
-  VectorExpression *ae_list;
+  PostfixExpression* pe;
+  Expression* exp;
+  Identifier* id;
+  VectorExpression* ae_list;
   std::string op;
 
-  PostfixExpression() : Expression(PrimitiveTypes(ERROR_T), 0)
-  {
+  PostfixExpression(): Expression(PrimitiveTypes(ERROR_T), 0) {
     pe = nullptr;
     exp = new Expression();
     id = nullptr;
@@ -156,16 +142,22 @@ public:
 };
 
 // Grammar for PostfixExpression
-Expression *create_postfix_expr_arr(Expression *pe, Expression *exp);
-Expression *create_postfix_expr_fun(Identifier *fi, VectorExpression *ae);
-Expression *create_postfix_expr_struct(std::string access_op, Expression *pe, Identifier *id);
-Expression *create_postfix_expr_ido(std::string op, Expression *pe);
+Expression* create_postfix_expr_arr(Expression* pe, Expression* exp);
+Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae);
+Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Identifier* id);
+Expression* create_postfix_expr_ido(std::string op, Expression* pe);
 
-bool isCompatible(class GlobalType *left, class GlobalType *right);
+bool isCompatible(class GlobalType* left, class GlobalType* right);
 bool isCompatiblePrim(PrimitiveTypes p1, PrimitiveTypes p2);
 PrimitiveTypes getPrimitiveType(std::string type);
+PrimitiveTypes greater_type(PrimitiveTypes p1, PrimitiveTypes p2);
+void change_type(Expression* expr, Expression* new_type);
+std::string convert_to_int_value(std::string input);
+std::string convert_to_float_value(std::string input);
+std::string operation_integer_values(std::string op, std::string op1, std::string op2);
+std::string operation_relational(std::string op, std::string op1, PrimitiveTypes opt1, std::string op2, PrimitiveTypes opt2);
 
-bool is_expr_signed(class Expression *expr);
-bool is_expr_unsigned(class Expression *expr);
+bool is_expr_signed(class Expression* expr);
+bool is_expr_unsigned(class Expression* expr);
 
-class Expression *prim_to_type(class Expression *expr);
+class Expression* prim_to_type(class Expression* expr);

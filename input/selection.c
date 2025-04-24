@@ -4,11 +4,13 @@ int main() {
     int b = 10;
     
     if (a > b) {
-        a=10;
+        a=10<1;
     }
     else
     {
         b = 20 * 3 - 79;
+        b=b+3;
+        b = (float)a;
     }
 
     if (b >= a) {
