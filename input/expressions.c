@@ -12,7 +12,7 @@ void foo(){
 
      int **a;
 
-     int *c = *a;
+     int **c = a;
 }
 
 
@@ -20,7 +20,7 @@ void foo(){
 int main() {
     int arr[5];
 
-    char * c = "hello";
+    char * cab = "hello";
 
     arr[3]=5;
     // Basic arithmetic expressions
@@ -101,8 +101,7 @@ int main() {
     cond = (a > b) ? a : b;
     cond = (a > b) ? a : x;
 
-    int za;
-    int zb;
+    int za,zb;
     int res;
     res=add(za,zb);
 
@@ -126,8 +125,6 @@ int main() {
 
     char *ptr1;
 
-    int za,zb;
-
     za = ptr1[3];
 
     int arr1[];
@@ -148,5 +145,6 @@ int main() {
     int s;
     s = add(1,2);
 
-    int a = -100, b(int a), c=10;
+    int aaaloo = -100, bhaijaan(int a), chowmein=10;
+
 }

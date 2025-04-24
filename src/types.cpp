@@ -14,13 +14,13 @@ std::unordered_map<PrimitiveTypes, StandardType*> createStandardTypes() {
         {SHORT_T, new StandardType("short", sizeof(short))},
         {U_INT_T, new StandardType("unsigned int", sizeof(unsigned int))},
         {INT_T, new StandardType("int", sizeof(int))},
-        {U_LONG_T, new StandardType("unsigned long", sizeof(unsigned long))},
-        {LONG_T, new StandardType("long", sizeof(long))},
-        {LLONG_T, new StandardType("long long", sizeof(long long))},
-        {U_LLONG_T, new StandardType("unsigned long long", sizeof(unsigned long long))},
+        {U_LONG_T, new StandardType("unsigned long", sizeof(unsigned int))},
+        {LONG_T, new StandardType("long", sizeof(int))},
+        {LLONG_T, new StandardType("long long", sizeof(long))},
+        {U_LLONG_T, new StandardType("unsigned long long", sizeof(unsigned long))},
         {FLOAT_T, new StandardType("float", sizeof(float))},
         {DOUBLE_T, new StandardType("double", sizeof(double))},
-        {LONG_DOUBLE_T, new StandardType("long double", sizeof(long double))},
+        {LONG_DOUBLE_T, new StandardType("long double", sizeof(double))},
         {VOID_T, new StandardType("void", 0)},
         {BOOL_T, new StandardType("bool", sizeof(bool))},
         {ERROR_T, new StandardType("error", 0)} };
@@ -347,13 +347,13 @@ size_t FunctionType::get_num_args() const {
 
 PointerType::PointerType() {
     this->ptr_level = 1;
-    this->size = sizeof(void*);
+    this->size = sizeof(int);
 }
 
 PointerType::PointerType(class GlobalType* return_type) {
     this->ptr_level = 1;
     this->return_type = return_type ? new GlobalType(*return_type) : nullptr;
-    this->size = sizeof(void*);
+    this->size = sizeof(int);
 }
 
 PointerType::PointerType(const PointerType& other): ptr_level(other.ptr_level), return_type(other.return_type ? new GlobalType(*other.return_type) : nullptr) {}

@@ -1272,6 +1272,8 @@ Expression *create_postfix_expr_fun(Identifier *fi, VectorExpression *ae)
     Expression *P = new Expression();
 
     Symbol *ste = SymbolTable::get_symbol(fi->name);
+    std::string fullName = ste->identifier.name;
+    std::string baseName = fullName.substr(0, fullName.find('.'));
     if (ste == nullptr)
     {
         // Error
@@ -1279,7 +1281,7 @@ Expression *create_postfix_expr_fun(Identifier *fi, VectorExpression *ae)
         P->prim_type = ERROR_T;
         return P;
     }
-    else if (ste->identifier.name == "printf")
+    else if (baseName == "printf")
     {
         // printf and scanf are special cases
         Expression *arg = &(ae->operands[0]);
@@ -1340,7 +1342,7 @@ Expression *create_postfix_expr_fun(Identifier *fi, VectorExpression *ae)
         P->name = new_temp;
         return P;
     }
-    else if (ste->identifier.name == "scanf")
+    else if (baseName == "scanf")
     {
         // printf and scanf are special cases
         Expression *arg = &(ae->operands[0]);
@@ -2236,7 +2238,7 @@ Expression *create_expression_simple(ExpressionType exp_type, std::string token)
         }
         }
 
-        e->name = token;
+        e->name = s->identifier.name;
 
         return e;
         break;

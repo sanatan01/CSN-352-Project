@@ -5,6 +5,7 @@
 #include <backend_helper.h>
 #include <iostream>
 #include <tacgen.h>
+#include <utils.h>
 
 extern int tac_lex();
 extern int tac_lineno;
@@ -203,17 +204,32 @@ add_variable_statement
     : PUSH variable CONSTANT_LITERAL {
         create_variable_statement(LOCAL_St, std::string($2), std::string($3));
     }
+    | PUSH variable ASSIGN variable CONSTANT_LITERAL {
+        create_variable_statement_assign(LOCAL_St, std::string($2), std::string($4), false, std::string($5));
+    }
+    | PUSH variable ASSIGN CONSTANT_LITERAL CONSTANT_LITERAL {
+        create_variable_statement_assign(LOCAL_St, std::string($2), std::string($4), true, std::string($5));
+    }
     | STATIC variable CONSTANT_LITERAL {
         create_variable_statement(STATIC_St, std::string($2), std::string($3));
+    }
+    | STATIC variable ASSIGN variable CONSTANT_LITERAL {
+        error_msg("Cannot assign static variable non const-type");
+    }
+    | STATIC variable ASSIGN CONSTANT_LITERAL CONSTANT_LITERAL {
+        create_variable_statement_assign(STATIC_St, std::string($2), std::string($4), true, std::string($5));
     }
     | GLOBAL variable CONSTANT_LITERAL {
         create_variable_statement(GLOBAL_St, std::string($2), std::string($3));
     }
+    | GLOBAL variable ASSIGN variable CONSTANT_LITERAL {
+        create_variable_statement_assign(GLOBAL_St, std::string($2), std::string($4), false, std::string($5));
+    }
+    | GLOBAL variable ASSIGN CONSTANT_LITERAL CONSTANT_LITERAL {
+        create_variable_statement_assign(GLOBAL_St, std::string($2), std::string($4), true, std::string($5));
+    }
     | DATA variable CONSTANT_LITERAL {
         create_variable_statement(DATA_St, std::string($2), std::string($3));
-    }
-    | EQU variable ASSIGN CONSTANT_LITERAL {
-        create_variable_statement(EQU_St, std::string($2), std::string($4));
     }
     ;
 

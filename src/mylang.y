@@ -5,6 +5,7 @@
 #include <expression.h>
 #include <tac.h>
 #include <utils.h>
+#include <string>
 
 void yyerror(const char *s);
 extern int yylex();
@@ -15,6 +16,8 @@ int test_count = 0;
 
 class Expression* switch_temp = new Expression();
 std::vector<class Expression*> switch_temps = std::vector<class Expression*>();
+
+std::vector<std::string> assignment_statements;
 
 %}
 
@@ -522,7 +525,8 @@ declaration
 				element.type = combine_global_type($2, element.type);
 			}
 			$$=$3;
-			SymbolTable::add_symbols($$);
+			SymbolTable::add_symbols_with_assign($$,   assignment_statements);
+			assignment_statements.clear();
 		}
 	}
 	;
@@ -554,12 +558,18 @@ init_declarator_list
  init_declarator
  	: declarator {
  		$$ = $1;
+		assignment_statements.push_back("");
  	}
  	| declarator ASSIGN assignment_expression {
 		
 		$3 = prim_to_type($3);
-
-		TAC::print_tac($1->name + " = " + $3->name);
+		if ($3->name[0] == '*') {
+			std::string new_temp = TAC::get_temp();
+            TAC::print_tac(new_temp + " = " + $3->name);
+			assignment_statements.push_back("= " + new_temp + " ");
+		} else {
+			assignment_statements.push_back("= " + $3->name + " ");
+		}
  		$$ = $1;
 		if($$->type->type_tag == NONE) {
 			$$->type = $3->exp_type;
@@ -1167,7 +1177,7 @@ empty_else
 
 /* Control flow */
 selection_statement
-	: IF INC_SCOPE {TAC::create_if_statement(); } LEFT_PAREN expression { TAC::print_goto_conditional($5, FALSE_C);} RIGHT_PAREN statement { TAC::print_goto(TRUE_C, false); TAC::remove_false_label(); SymbolTable::exit_scope(); } empty_else { TAC::remove_true_label(); }
+	: IF {TAC::create_if_statement(); } LEFT_PAREN expression RIGHT_PAREN INC_SCOPE { TAC::print_goto_conditional($4, FALSE_C);} statement { TAC::print_goto(TRUE_C, false); SymbolTable::exit_scope(); TAC::remove_false_label(); } empty_else { TAC::remove_true_label(); }
 	| switch_statement
 	;
 
@@ -1262,7 +1272,10 @@ function_definition
 		}
 
 		SymbolTable::add_symbol($3); 
-		} INC_SCOPE { TAC::create_function_definition(std::string($3->name)); SymbolTable::add_symbols(&($3->type->function_type->args));} compound_statement { 
+	  	TAC::create_function_definition(std::string($3->name)); 
+		SymbolTable::enter_scope(); 
+		SymbolTable::add_symbols(&($3->type->function_type->args));} 
+		compound_statement { 
  		$$ = $3;
 		$$->type->setDefined();
 		SymbolTable::exit_scope();

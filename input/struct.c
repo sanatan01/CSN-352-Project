@@ -16,16 +16,16 @@ int main() {
     int c = z.gsd->x;
     z.gsd->x = 10;
 
-    union k {
-        int s;
-        int fs;
-        long long g;
-        char f[50];
-    };
+    // union k {
+    //     int s;
+    //     int fs;
+    //     long long g;
+    //     // char f[50];
+    // };
 
-    union k gus;
-    gus.s = 5;
-    gus.g = 7;
+    // union k gus;
+    // gus.s = 5;
+    // gus.g = 7;
 
     enum Color {
         A, B=7, C=9, D

@@ -8,11 +8,9 @@
 #include <utils.h>
 #include <memory>
 
-namespace backend
-{
+namespace backend {
 
-    enum GPR
-    {
+    enum GPR {
         empty = -1, // When GPR is not assigned
         r0 = 0,     // Constant 0
         at = 1,     // Reserved for assembler
@@ -48,14 +46,13 @@ namespace backend
         ra = 31     // Return address
     };
 
-    class Register
-    {
+    class Register {
     public:
         int value;
         std::string name;
         std::string reg_name;
 
-        Register() : value(0), name(""), reg_name("") {}
+        Register(): value(0), name(""), reg_name("") {}
 
         void free_reg();
         bool is_free();
@@ -75,8 +72,7 @@ namespace backend
 
     GPR get_assigned_gpr(std::string name);
 
-    class Stack
-    {
+    class Stack {
     private:
         static std::vector<Operand> stack;
         static std::map<std::string, Operand> symbol_map; // This acts as the symbol table for backend
@@ -96,17 +92,18 @@ namespace backend
         static bool is_symbol_present(std::string name);
     };
 
-    class CodeGen
-    {
+    class CodeGen {
     public:
-        static bool is_text_section;
         static int current_scope;
 
         CodeGen() = delete;
 
-        static std::vector<GPR> get_used_gprs(const TACStatement &statement);
-        static std::stringstream generate_asm(const TACStatement &statement, std::vector<GPR> &used_gprs);
+        static std::vector<GPR> get_used_gprs(const TACStatement& statement);
+        static std::stringstream generate_asm(const TACStatement& statement, std::vector<GPR>& used_gprs);
+        static std::stringstream generate_data(const TACStatement& statement);
     };
 
-    std::string generate_asm_str(std::string txt, bool is_text, bool indent = true);
+    std::string generate_asm_str(std::string txt, bool indent = true);
+    std::string data_str(std::string name, int size, bool is_asssigned, long long val);
+    std::string data_str_float(std::string name, int size, bool is_assigned, long double val);
 }

@@ -65,6 +65,7 @@ namespace backend
         std::vector<Operand> operands;
         std::vector<Label> labels;
         std::stringstream asm_stream;
+        std::stringstream data_stream;
         int line_number;
 
         // Explicitly define a copy constructor
@@ -224,7 +225,6 @@ namespace backend
         STATIC_St,
         LOCAL_St,
         DATA_St,
-        EQU_St,
     };
 
     class VariableStatement : public TACStatement
@@ -270,6 +270,8 @@ namespace backend
     void create_goto_statement(std::string label);
 
     void create_variable_statement(VariableType type, std::string var, std::string ind);
+
+    void create_variable_statement_assign(VariableType type, std::string var, std::string rval, bool is_constant, std::string ind);
 
     void create_copy_statement(std::string result, std::string op1);
 

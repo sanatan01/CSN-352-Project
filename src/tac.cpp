@@ -154,7 +154,7 @@ std::string TAC::get_label(Case caseLabel) {
 }
 
 std::string TAC::get_temp() {
-    return "t" + std::to_string(temp_count++);
+    return ".t" + std::to_string(temp_count++);
 }
 
 void TAC::enter_scope() {

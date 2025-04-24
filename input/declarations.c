@@ -19,7 +19,7 @@ int main() {
 
     int duck = 10;
 
-    int c;
+    // int c;
     int z;
     struct  nice {
         int a;
@@ -31,14 +31,19 @@ int main() {
         int a;
     };
 
-    enum fuck {
+    enum luck {
         NICE,
         NOTNICE
     };
 
-    enum j gay = b;
+    enum j say = b;
+    enum j notSay;
 
-    int a;
+    {
+        int a = NICE;
+    }
+
+    // int a;
 
     unsigned int cq;
 
