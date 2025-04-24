@@ -217,6 +217,17 @@ int Struct::get_offset(std::string member_name) {
     return -1;
 }
 
+std::string Struct::get_member_name(int offset) {
+    int current_offset = 0;
+    for (auto& member : members.elements) {
+        if (current_offset == offset) {
+            return member.id->name;
+        }
+        current_offset += member.size;
+    }
+    return "";
+}
+
 size_t Struct::set_size() {
     this->size = 0;
     for (auto& member : members.elements) {

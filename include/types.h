@@ -137,6 +137,7 @@ public:
 	Struct(const Struct &other); // Declaration only
 
 	int get_offset(std::string member_name);
+	std::string get_member_name(int offset);
 	GlobalType *get_member_type(std::string member_name);
 
 	size_t set_size();

@@ -109,8 +109,18 @@ namespace backend {
     }
 
     void set_gpr(GPR reg, std::string name) {
-        gpr_map[reg].value = 1;
-        gpr_map[reg].name = name;
+        if(reg == empty) {
+            error_msg("Invalid register");
+            return;
+        }
+        if (gpr_map[reg].is_free()) {
+            gpr_map[reg].value = 1;
+            gpr_map[reg].name = name;
+        }
+        else {
+
+            error_msg("Register already assigned");
+        }
     }
 
     void free_gpr(GPR reg) {
@@ -360,6 +370,26 @@ namespace backend {
                 asm_stream << generate_asm_str("j " + label + '\n');
                 break;
             }
+            case PARAM_St:
+            {
+                if (statement.operands.size() != 1) {
+                    error_msg("Invalid number of operands for PARAM statement");
+                    return asm_stream;
+                }
+                // Fetch the operands
+                Operand param = statement.operands[0];
+                // TODO: check if argument registers are full
+                if (param.type == CONSTANT) {
+                    // TODO: use argument registers
+                    asm_stream << generate_asm_str("li $a0, " + param.name + '\n');
+                }
+                // TODO: add other types
+                else if (param.type == SIGNED) {
+                    // TODO: check if already in some register
+                    asm_stream << generate_asm_str("mov $a0, " + param.name + '\n');
+                }
+                break;
+            }
             default:
                 asm_stream << "Not yet generated assembly for " << get_type_name(common_statement->type) << "\n";
                 break;
@@ -372,7 +402,6 @@ namespace backend {
             {
                 if (statement.operands.size() == 2) {
                     // Fetch the operands
-
                     if (Stack::add_symbol(statement.operands[0].name, std::stoi(statement.operands[1].name))) {
                         Operand op = Operand();
                         op.name = statement.operands[0].name;
@@ -380,6 +409,7 @@ namespace backend {
                         op.type = Stack::get_symbol_type(statement.operands[0].name);
                         Stack::push(op);
                         asm_stream << generate_asm_str("addi $sp, $sp, -" + std::to_string(op.size) + '\n');
+
                     }
                     else {
                         error_msg("Failed to add symbol to stack");
@@ -433,6 +463,164 @@ namespace backend {
             // }
             // }
         }
+        else if (statement.get_type() == DOUBLE) {
+            const Double* double_statement = dynamic_cast<const Double*>(&statement);
+            if (double_statement->operands.size() != 2) {
+                error_msg("Invalid number of operands for DOUBLE statement, STRING_LITERAL not handled yet");
+                return asm_stream;
+            }
+
+            Operand op = double_statement->operands[0];
+            Operand result = double_statement->operands[1];
+            bool imm = false;
+            if (op.type == CONSTANT) {
+                imm = true;
+            }
+            GPR result_reg = get_assigned_gpr(result.name);
+            GPR op_reg = get_assigned_gpr(op.name);
+            if (result_reg == empty) {
+                result_reg = get_free_gpr();
+                if (result_reg != empty) {
+                    set_gpr(result_reg, result.name);
+                }
+                else {
+                    error_msg("No free registers available");
+                }
+            }
+
+            if (imm) {
+                asm_stream << generate_asm_str("li " + get_gpr_name(result_reg) + ", " + op.name + '\n');
+            }
+            else {
+                // TODO: check if op_reg is empty load it again , if no register is already allocated
+                asm_stream << generate_asm_str("mov " + get_gpr_name(result_reg) + ", " + get_gpr_name(op_reg) + '\n');
+            }
+        }else if (statement.get_type() == QUAD) {
+            const Quad* quad_statement = dynamic_cast<const Quad*>(&statement);
+            if (quad_statement->operands.size() != 3) {
+                error_msg("Invalid number of operands for QUAD statement");
+                return asm_stream;
+            }
+            Operand op1 = quad_statement->operands[0];
+            Operand op2 = quad_statement->operands[1];
+            Operand result = quad_statement->operands[2];
+
+            BinaryOp op = quad_statement->op;
+            bool imm=false;
+            GPR result_reg = get_assigned_gpr(result.name);
+            GPR op1_reg = get_assigned_gpr(op1.name);
+            GPR op2_reg = get_assigned_gpr(op2.name);
+            if (result_reg == empty) {
+                result_reg = get_free_gpr();
+                if (result_reg != empty) {
+                    set_gpr(result_reg, result.name);
+                }
+                else {
+                    error_msg("No free registers available");
+                }
+            }
+            if (op1.type != CONSTANT && op1_reg == empty) {
+                error_msg(op1.name + " not assigned to a register");
+            }
+            if (op2.type != CONSTANT && op2_reg == empty) {
+                error_msg(op2.name + " not assigned to a register");
+            }
+            if(op1.type == CONSTANT || op2.type == CONSTANT) {
+                imm = true;
+            }
+            
+            switch (op) {
+            case ADD:
+                if(imm) {
+                    if(op1.type == CONSTANT) {
+                        asm_stream << generate_asm_str("addi " + get_gpr_name(result_reg) + ", " + get_gpr_name(op2_reg) + ", " + op1.name + '\n');
+                    }
+                    else {
+                        asm_stream << generate_asm_str("addi " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + op2.name + '\n');
+                    }
+                }
+                else {
+                    asm_stream << generate_asm_str("add " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + get_gpr_name(op2_reg) + '\n');
+                }
+                break;
+            case SUB:
+                if(imm) {
+                    if(op1.type == CONSTANT) {
+                        asm_stream << generate_asm_str("subi " + get_gpr_name(result_reg) + ", " + get_gpr_name(op2_reg) + ", " + op1.name + '\n');
+                    }
+                    else {
+                        asm_stream << generate_asm_str("subi " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + op2.name + '\n');
+                    }
+                }
+                else {
+                    asm_stream << generate_asm_str("sub " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + get_gpr_name(op2_reg) + '\n');
+                }
+                break;
+            case MUL:
+                if(imm) {
+                    error_msg("Multiplication with immediate value not supported");
+                }else{
+                    asm_stream << generate_asm_str("mul " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + get_gpr_name(op2_reg) + '\n');
+                }
+                break;
+            case LOGICAL_AND:
+                if (imm) {
+                    if(op1.type == CONSTANT) {
+                        asm_stream << generate_asm_str("andi " + get_gpr_name(result_reg) + ", " + get_gpr_name(op2_reg) + ", " + op1.name + '\n');
+                    }
+                    else {
+                        asm_stream << generate_asm_str("andi " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + op2.name + '\n');
+                    }
+                }
+                else {
+                    asm_stream << generate_asm_str("and " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + get_gpr_name(op2_reg) + '\n');
+                }
+                break;
+            case LOGICAL_OR:
+                 if (imm) {
+                    if(op1.type == CONSTANT) {
+                        asm_stream << generate_asm_str("andi " + get_gpr_name(result_reg) + ", " + get_gpr_name(op2_reg) + ", " + op1.name + '\n');
+                    }
+                    else {
+                        asm_stream << generate_asm_str("andi " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + op2.name + '\n');
+                    }
+                }
+                else {
+                    asm_stream << generate_asm_str("or " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + get_gpr_name(op2_reg) + '\n');
+                }
+                break;
+            case BITWISE_XOR:
+                if (imm) {
+                    if(op1.type == CONSTANT) {
+                        asm_stream << generate_asm_str("xori " + get_gpr_name(result_reg) + ", " + get_gpr_name(op2_reg) + ", " + op1.name + '\n');
+                    }
+                    else {
+                        asm_stream << generate_asm_str("xori " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + op2.name + '\n');
+                    }
+                }else{
+                    asm_stream << generate_asm_str("xor " + get_gpr_name(result_reg) + ", " + get_gpr_name(op1_reg) + ", " + get_gpr_name(op2_reg) + '\n');
+                }
+                break;
+            default:
+                asm_stream << "Not yet generated assembly for " << op << "\n";
+                break;
+            }
+        }
+        // else if (statement.get_type() == TRIPLE) {
+        //     const Triple* triple_statement = dynamic_cast<const Triple*>(&statement);
+        //     if (triple_statement->operands.size() != 3) {
+        //         error_msg("Invalid number of operands for TRIPLE statement");
+        //         return asm_stream;
+        //     }
+        //     Operand op1 = triple_statement->operands[0];
+        //     Operand op2 = triple_statement->operands[1];
+        //     Operand result = triple_statement->operands[2];
+        //     if (op1.type == CONSTANT) {
+        //         GPR reg = get_assigned_gpr(result.name);
+        //         if (reg != empty) {
+        //             asm_stream << generate_asm_str("li " + get_gpr_name(reg) + ", " + op1.name + '\n');
+        //         }
+        // }
         else {
             asm_stream << "Not yet generated assembly for " << get_type_name(statement.get_type()) << "\n";
         }
