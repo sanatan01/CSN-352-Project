@@ -24,7 +24,7 @@ using namespace backend;
 
 %define parse.error verbose
 
-%token <string> IDENTIFIER TEMP STRING_LITERAL CONSTANT_LITERAL LABEL REFERENCE
+%token <string> IDENTIFIER TEMP STRING_LITERAL CONSTANT_LITERAL LABEL REFERENCE EQU
 %token <string> CALL RETURN PARAM PUSH POP GOTO STATIC COPY IF FUNC ENTER EXIT DATA GLOBAL
 %token <string> COMMA ASSIGN AMPERSAND EXCLAMATION
 %token <string> TILDE MINUS PLUS ASTERISK SLASH PERCENT DOT
@@ -211,6 +211,9 @@ add_variable_statement
     }
     | DATA variable CONSTANT_LITERAL {
         create_variable_statement(DATA_St, std::string($2), std::string($3));
+    }
+    | EQU variable ASSIGN CONSTANT_LITERAL {
+        create_variable_statement(EQU_St, std::string($2), std::string($4));
     }
     ;
 

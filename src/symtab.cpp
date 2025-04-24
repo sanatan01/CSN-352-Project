@@ -225,14 +225,7 @@ void SymbolTable::add_udt(class GlobalType *global_type)
         global_type->enum_type->calculate_values();
         for (auto &pq : global_type->enum_type->enum_values.elements)
         {
-            Identifier *id = new Identifier(pq.name);
-            id->type = create_primitive_type(INT_T, global_type->getSpecifiers());
-            id->type->setDefined();
-            Symbol symbol(*id, current_scope_level, id->type->isDefined());
-            std::string name = pq.name;
-            symbol_map[name].push_back(symbol);
-            SymbolTable::print_symbol(symbol);
-            TAC::print_tac(pq.name + " = " + std::to_string(pq.value));
+            TAC::print_tac(".equ " + pq.name + " = " + std::to_string(pq.value));
         }
         break;
     }

@@ -224,6 +224,7 @@ namespace backend
         STATIC_St,
         LOCAL_St,
         DATA_St,
+        EQU_St,
     };
 
     class VariableStatement : public TACStatement

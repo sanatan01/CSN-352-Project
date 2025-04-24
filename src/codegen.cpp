@@ -306,6 +306,11 @@ namespace backend
                 return used_gprs;
             }
         }
+        else if (statement.get_type() == VARIABLE)
+        {
+            const VariableStatement *var_statement = dynamic_cast<const VariableStatement *>(&statement);
+            return used_gprs;
+        }
 
         for (const auto &operand : statement.operands)
         {
@@ -433,6 +438,17 @@ namespace backend
                 {
                     error_msg("Failed to add symbol to stack");
                 }
+                break;
+            }
+            case EQU_St:
+            {
+                if (statement.operands.size() != 2)
+                {
+                    error_msg("Invalid number of operands for EQU statement");
+                    return asm_stream;
+                }
+                // Fetch the operands
+                asm_stream << generate_asm_str(".equ " + statement.operands[0].name + ", " + statement.operands[1].name + "\n", true);
                 break;
             }
             default:

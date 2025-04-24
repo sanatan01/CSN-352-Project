@@ -40,6 +40,7 @@ IS          (u|U|l|L|ll|LL|ul|uL|Ul|UL|lu|lU|Lu|LU|ull|uLL|Ull|ULL|llu|llU|LLu|L
 ".global"   { displayLexer("GLOBAL", yytext); tac_lval.string = strdup("GLOBAL"); return GLOBAL; }
 ".addr"     { displayLexer("REFERENCE", yytext); tac_lval.string = strdup("REFERENCE"); return REFERENCE; }
 ".data"     { displayLexer("DATA", yytext); tac_lval.string = strdup("DATA"); return DATA; }
+".equ"      { displayLexer("EQU", yytext); tac_lval.string = strdup("EQU"); return EQU; }
 
 {L}({L}|{D})*":" { displayLexer("LABEL", yytext); tac_lval.string = strdup(yytext); return LABEL; }
 "t"({D})*        { displayLexer("TEMP", yytext); tac_lval.string = strdup(yytext); return TEMP; }

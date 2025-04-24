@@ -36,7 +36,7 @@ int main() {
         NOTNICE
     };
 
-    enum gay;
+    enum j gay = b;
 
     int a;
 
