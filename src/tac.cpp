@@ -248,7 +248,7 @@ void TAC::remove_false_label() {
 }
 
 void TAC::create_function_definition(std::string function_name) {
-    print_tac(".func " + function_name + ":");
+    print_tac(".func " + function_name + ": " + std::to_string(SymbolTable::all_symbols.size() - 1));
 }
 
 void TAC::create_loop_statement() {

@@ -26,7 +26,7 @@ using namespace backend;
 %define parse.error verbose
 
 %token <string> IDENTIFIER TEMP STRING_LITERAL CONSTANT_LITERAL LABEL REFERENCE LPAREN RPAREN
-%token <string> CALL RETURN PARAM PUSH POP GOTO STATIC IF FUNC ENTER EXIT DATA GLOBAL
+%token <string> CALL RETURN PARAM PUSH POP GOTO STATIC IF FUNC ENTER EXIT DATA GLOBAL ARG
 %token <string> COMMA ASSIGN AMPERSAND EXCLAMATION
 %token <string> TILDE MINUS PLUS ASTERISK SLASH PERCENT DOT
 %token <string> LESS_THAN GREATER_THAN CARET PIPE LE_OP GE_OP
@@ -149,7 +149,7 @@ double_statement
 
 labeled_statement
     : LABEL { create_label_statement(std::string($1)); }
-    | FUNC LABEL { create_func_statement(std::string($2)); }
+    | FUNC LABEL CONSTANT_LITERAL { create_func_statement(std::string($2), std::string($3)); }
     ;
 
 if_statement
@@ -233,6 +233,9 @@ add_variable_statement
     }
     | DATA variable STRING_LITERAL {
         create_variable_statement(DATA_St, std::string($2), std::string($3));
+    }
+    | ARG variable CONSTANT_LITERAL {
+        create_variable_statement(ARG_St, std::string($2), std::string($3));
     }
     ;
 

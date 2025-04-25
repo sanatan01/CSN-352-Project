@@ -105,11 +105,17 @@ namespace backend
     void init_gpr_map();
 
     GPR get_free_gpr(Operand op, bool load);
+    void get_free_arg_gpr(Operand op);
 
     void set_gpr(GPR reg, std::string name);
 
     void free_gpr(GPR reg);
+    void free_arg_gprs();
     void store_gpr(GPR reg, std::string name);
+
+    void dump_all_regs();
+    void free_all_regs();
+    void restore_all_regs();
 
     GPR get_assigned_gpr(std::string name);
     GPR get_gpr(Operand op, bool load = true);
@@ -121,6 +127,7 @@ namespace backend
         static std::map<std::string, Operand> symbol_map; // This acts as the symbol table for backend
 
     public:
+        static std::map<std::string, GlobalType> function_map;
         MMU() = delete;
 
         static void push(Operand op);
@@ -134,12 +141,18 @@ namespace backend
         static Operand get_symbol(std::string name);
         static GlobalType *get_symbol_type(std::string name);
         static bool is_symbol_present(std::string name);
+        static void add_to_func_map(std::string name, std::string index);
     };
 
     class CodeGen
     {
     public:
         static int current_scope;
+        static int stack_pushed;
+        static bool first_param;
+
+        // Making things work
+        static std::vector<std::vector<Register>> dump_map;
 
         static std::stringstream asm_stream;
         static std::stringstream data_stream;
@@ -150,15 +163,8 @@ namespace backend
 
         static void add_to_asm(std::string txt, bool indent = true);
         static void add_to_data(std::string name, int size, std::string val, int type);
-        static std::stringstream &get_asm_stream();
-        static std::stringstream &get_data_stream();
-
-        static std::stringstream generate_asm(const TACStatement &statement, std::vector<GPR> &used_gprs);
     };
 
-    std::string generate_asm_str(std::string txt, bool indent = true);
-    std::string data_str(std::string name, int size, bool is_asssigned, long long val);
-    std::string data_str_float(std::string name, int size, bool is_assigned, long double val);
     bool is_float(GlobalType typ);
     std::pair<std::string, std::string> getHighLowBytes(const std::string &decimalStr);
     std::pair<std::string, std::string> floatToIEEEHex(const std::string &inputStr, bool isDouble);

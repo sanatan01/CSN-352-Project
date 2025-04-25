@@ -61,7 +61,7 @@ void SymbolTable::exit_scope() {
     TAC::exit_scope();
 }
 
-void SymbolTable::add_symbol(Identifier* id, int line, int column) {
+void SymbolTable::add_symbol(Identifier* id, bool args, int line, int column) {
     Symbol* g = get_symbol(id->name);
     if ((g != nullptr) && (g->current_level == current_scope_level)) {
         if (g->identifier.type->type_tag == FUNCTION_TYPE && !(g->identifier.type->isDefined())) {
@@ -93,8 +93,10 @@ void SymbolTable::add_symbol(Identifier* id, int line, int column) {
         else if (id->type->getSpecifiers() != nullptr && id->type->getSpecifiers()->is_static) {
             TAC::print_tac(".static " + symbol.identifier.name + " " + std::to_string(all_symbols.size() - 1));
         }
-        else {
+        else if (!args){
             TAC::print_tac(".push " + symbol.identifier.name + " " + std::to_string(all_symbols.size() - 1));
+        } else {
+            TAC::print_tac(".arg " + symbol.identifier.name + " " + std::to_string(all_symbols.size() - 1));
         }
     }
 }
@@ -153,10 +155,10 @@ void SymbolTable::add_symbol_enum_element(Identifier* id, int val, int line, int
 
 }
 
-void SymbolTable::add_symbols(VectorIdentifiers* ids, int line, int column) {
+void SymbolTable::add_symbols(VectorIdentifiers* ids, bool args, int line, int column) {
     for (auto& id : ids->identifiers) {
         debug_msg("Adding symbol of type " + id.type->getType());
-        add_symbol(&id, line, column);
+        add_symbol(&id, args, line, column);
     }
 }
 

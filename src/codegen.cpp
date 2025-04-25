@@ -3,11 +3,18 @@
 #include <climits>
 #include <string>
 #include <algorithm>
+#include <vector>
+#include <map>
 
 namespace backend
 {
 
     int CodeGen::current_scope = 0;
+    int CodeGen::stack_pushed = 0;
+    bool CodeGen::first_param = true;
+
+    std::vector<std::vector<Register>> CodeGen::dump_map;
+    std::map<std::string, GlobalType> MMU::function_map;
 
     std::stringstream CodeGen::asm_stream;
     std::stringstream CodeGen::data_stream;
@@ -183,14 +190,16 @@ namespace backend
 
     GPR empty_strategy_float()
     {
-        for (auto i : floats)
+        for (int i = 0; i < 32; i++)
         {
-            Operand op = MMU::get_symbol(gpr_map[i].name);
+            if (i == 0 || i == 1 || (i >= 12 && i <= 14))
+                continue;
+            Operand op = MMU::get_symbol(gpr_map[floats[i]].name);
             if (op.storage_loc != TEMP)
             {
-                store_gpr(i, op.name);
-                free_gpr(i);
-                return i;
+                store_gpr(floats[i], op.name);
+                free_gpr(floats[i]);
+                return floats[i];
             }
         }
         return empty;
@@ -198,18 +207,23 @@ namespace backend
 
     GPR empty_strategy_double()
     {
-        for (auto i : floats)
+        for (int i = 0; i < 32; i += 2)
         {
-            Operand op = MMU::get_symbol(gpr_map[i].name);
+            if (i == 0 || i == 1 || (i >= 12 && i <= 14))
+                continue;
+            Operand op = MMU::get_symbol(gpr_map[floats[i]].name);
             if (op.storage_loc != TEMP)
             {
-                store_gpr(i, op.name);
-                free_gpr(i);
-                return i;
+                store_gpr(floats[i], op.name);
+                free_gpr(floats[i]);
+                return floats[i];
             }
         }
         for (int i = 0; i < 32; i += 2)
         {
+            if (i == 0 || i == 12 || i == 14)
+                continue;
+
             if (gpr_map[floats[i]].is_free() || gpr_map[floats[i + 1]].is_free())
             {
                 if (gpr_map[floats[i]].is_free())
@@ -278,7 +292,7 @@ namespace backend
         return false;
     }
 
-    void load_gpr(GPR reg, Operand op)
+    void load_gpr(GPR reg, Operand op, bool store_long = false)
     {
         switch (op.storage_loc)
         {
@@ -308,7 +322,16 @@ namespace backend
                 }
                 else
                 {
+                    // TODO, make sure that hi lo are set properly
                     CodeGen::add_to_asm("la " + gpr_map[reg].reg_name + ", " + std::to_string(offset) + "($sp)\n", true);
+                    gpr_map[reg].value = 1;
+                    gpr_map[reg].name = op.name;
+                    if (store_long && op.size == 8)
+                    {
+                        CodeGen::add_to_asm("la " + gpr_map[static_cast<GPR>(int(reg) + 1)].reg_name + ", " + std::to_string(offset + 4) + "($sp)\n", true);
+                        gpr_map[static_cast<GPR>(int(reg) + 1)].value = 1;
+                        gpr_map[static_cast<GPR>(int(reg) + 1)].name = op.name;
+                    }
                 }
             }
             else
@@ -344,6 +367,14 @@ namespace backend
             else
             {
                 CodeGen::add_to_asm("la " + gpr_map[reg].reg_name + ", " + CodeGen::convert_to_valid(op.name) + "\n", true);
+                gpr_map[reg].value = 1;
+                gpr_map[reg].name = op.name;
+                if (store_long && op.size == 8)
+                {
+                    CodeGen::add_to_asm("la " + gpr_map[static_cast<GPR>(int(reg) + 1)].reg_name + ", 4(" + CodeGen::convert_to_valid(op.name) + ")\n", true);
+                    gpr_map[static_cast<GPR>(int(reg) + 1)].value = 1;
+                    gpr_map[static_cast<GPR>(int(reg) + 1)].name = op.name;
+                }
             }
         }
         break;
@@ -360,29 +391,38 @@ namespace backend
             {
                 for (int i = 0; i < 32; i += 2)
                 {
+                    if (i == 0 || i == 12 || i == 14)
+                        continue;
+
                     if (gpr_map[floats[i]].is_free() && gpr_map[floats[i + 1]].is_free())
                     {
-                        if (load) load_gpr(floats[i], op);
+                        if (load)
+                            load_gpr(floats[i], op);
                         return floats[i];
                     }
                 }
                 GPR ret = empty_strategy_double();
-                if (load) load_gpr(ret, op);
+                if (load)
+                    load_gpr(ret, op);
                 return ret;
             }
             else
             {
                 for (int i = 0; i < 32; ++i)
                 {
+                    if (i == 0 || i == 1 || (i >= 12 && i <= 14))
+                        continue;
                     if (gpr_map[floats[i]].is_free())
                     {
-                        if (load) load_gpr(floats[i], op);
+                        if (load)
+                            load_gpr(floats[i], op);
                         return floats[i];
                     }
                 }
 
                 GPR ret = empty_strategy_float();
-                if (load) load_gpr(ret, op);
+                if (load)
+                    load_gpr(ret, op);
                 return ret;
             };
         }
@@ -391,13 +431,161 @@ namespace backend
         {
             if (gpr_map[temps[i]].is_free())
             {
-                if (load) load_gpr(temps[i], op);
+                if (load)
+                    load_gpr(temps[i], op);
                 return temps[i];
             }
         }
         GPR ret = empty_strategy_gpr();
-        if (load) load_gpr(ret, op);
+        if (load)
+            load_gpr(ret, op);
         return ret;
+    }
+
+    void get_free_arg_gpr(Operand op)
+    {
+        std::vector<GPR> args;
+        bool is_fl = is_float(op.type);
+
+        // check if a0 or f12 is set
+        // if f12 is not param, store
+        if (gpr_map[a0].is_free() && gpr_map[f12].is_free())
+        {
+            if (is_fl)
+            {
+                load_gpr(f12, op, true);
+                args.push_back(f12);
+                if (op.size == 8)
+                {
+                    args.push_back(f13);
+                }
+            }
+            else
+            {
+                load_gpr(a0, op, true);
+                args.push_back(a0);
+                if (op.size == 8)
+                {
+                    args.push_back(a1);
+                }
+            }
+        }
+        else if (gpr_map[a1].is_free() && gpr_map[f14].is_free())
+        {
+            if (is_fl)
+            {
+                load_gpr(f14, op, true);
+                args.push_back(f14);
+                if (op.size == 8)
+                {
+                    args.push_back(f15);
+                }
+            }
+            else
+            {
+                load_gpr(a1, op, true);
+                args.push_back(a1);
+                if (op.size == 8)
+                {
+                    args.push_back(a2);
+                }
+            }
+        }
+        else
+        {
+            if (is_fl)
+            {
+                // Store in stack
+            }
+            else
+            {
+                if (gpr_map[a2].is_free())
+                {
+                    load_gpr(a2, op, true);
+                    args.push_back(a2);
+                    if (op.size == 8)
+                    {
+                        args.push_back(a3);
+                    }
+                }
+                else if (gpr_map[a3].is_free())
+                {
+                    if (op.size == 8)
+                    {
+                        // push to stack
+                    }
+                    else
+                    {
+                        load_gpr(a3, op, true);
+                        args.push_back(a3);
+                    }
+                }
+                else
+                {
+                    CodeGen::stack_pushed += op.size;
+                    CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(op.size) + "\n", true);
+                    store_gpr(a2, op.name);
+                }
+            }
+        }
+
+        for (auto i : args)
+        {
+            gpr_map[i].value = 1;
+            gpr_map[i].name = "param";
+        }
+    }
+
+    void dump_all_regs()
+    {
+        // Dump all regs to dump_map
+        std::vector<Register> dump;
+        for (int i = 0; i < 10; ++i)
+        {
+            dump.push_back(gpr_map[temps[i]]);
+        }
+        CodeGen::add_to_asm("addi $sp, $sp, -40 \n");
+        CodeGen::add_to_asm("sw $t0, 0($sp) \n");
+        CodeGen::add_to_asm("sw $t1, 4($sp) \n");
+        CodeGen::add_to_asm("sw $t2, 8($sp) \n");
+        CodeGen::add_to_asm("sw $t3, 12($sp) \n");
+        CodeGen::add_to_asm("sw $t4, 16($sp) \n");
+        CodeGen::add_to_asm("sw $t5, 20($sp) \n");
+        CodeGen::add_to_asm("sw $t6, 24($sp) \n");
+        CodeGen::add_to_asm("sw $t7, 28($sp) \n");
+        CodeGen::add_to_asm("sw $t8, 32($sp) \n");
+        CodeGen::add_to_asm("sw $t9, 36($sp) \n");
+        CodeGen::dump_map.push_back(dump);
+
+        // TODO: add floats
+    }
+
+    void free_all_regs()
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            gpr_map[temps[i]].free_reg();
+        }
+    }
+
+    void restore_all_regs()
+    {
+        // Restore all regs from dump_map
+        if (CodeGen::dump_map.empty())
+        {
+            return;
+        }
+        std::vector<Register> dump = CodeGen::dump_map.back();
+        CodeGen::dump_map.pop_back();
+        for (int i = 0; i < 10; ++i)
+        {
+            gpr_map[temps[i]] = dump[i];
+            if (gpr_map[temps[i]].value == 1)
+            {
+                CodeGen::add_to_asm("lw " + gpr_map[temps[i]].reg_name + ", " + std::to_string(i * 4) + "($sp) \n");
+            }
+        }
+        CodeGen::add_to_asm("addi $sp, $sp, 40 \n");
     }
 
     void set_gpr(GPR reg, std::string name)
@@ -562,6 +750,20 @@ namespace backend
         return true;
     }
 
+    void MMU::add_to_func_map(std::string name, std::string index)
+    {
+        Symbol symbol = SymbolTable::get_symbol_by_index(std::stoi(index));
+        if (symbol.identifier.type->type_tag == FUNCTION_TYPE)
+        {
+            GlobalType type = GlobalType(*symbol.identifier.type);
+            function_map[name] = type;
+        }
+        else
+        {
+            error_msg("Invalid function type");
+        }
+    }
+
     bool MMU::is_symbol_present(std::string name)
     {
         return symbol_map.find(name) != symbol_map.end();
@@ -596,162 +798,7 @@ namespace backend
         return nullptr; // Not found
     }
 
-    // ================== Quad Functions ==================
-
     // ================== CodeGen Functions =================
-
-    std::stringstream CodeGen::generate_asm(const TACStatement &statement, std::vector<GPR> &used_gprs)
-    {
-        std::stringstream asm_stream;
-        // if (statement.get_type() == VARIABLE) {
-        //     const VariableStatement* var_statement = dynamic_cast<const VariableStatement*>(&statement);
-        //     switch (var_statement->type) {
-        //     case LOCAL_St:
-        //     {
-        //         if (statement.operands.size() == 2) {
-        //             // Fetch the operands
-
-        //             if (MMU::add_symbol(statement.operands[0].name, std::stoi(statement.operands[1].name))) {
-        //                 Operand op = Operand();
-        //                 op.name = statement.operands[0].name;
-        //                 op.size = MMU::get_symbol_size(statement.operands[0].name);
-        //                 op.type = MMU::get_symbol_type(statement.operands[0].name);
-        //                 MMU::push(op);
-        //                 asm_stream << generate_asm_str("addi $sp, $sp, -" + std::to_string(op.size) + '\n');
-        //             }
-        //             else {
-        //                 error_msg("Failed to add symbol to stack");
-        //             }
-        //         }
-        //         else if (statement.operands.size() == 3) {
-        //             if (MMU::add_symbol(statement.operands[0].name, std::stoi(statement.operands[2].name))) {
-        //                 Operand op = Operand();
-        //                 op.name = statement.operands[0].name;
-        //                 op.size = MMU::get_symbol_size(statement.operands[0].name);
-        //                 op.type = MMU::get_symbol_type(statement.operands[0].name);
-        //                 MMU::push(op);
-        //                 asm_stream << generate_asm_str("addi $sp, $sp, -" + std::to_string(op.size) + '\n');
-        //             }
-        //             else {
-        //                 error_msg("Failed to add symbol to stack");
-        //             }
-        //         }
-        //         else {
-        //             error_msg("Invalid number of operands for LOCAL statement");
-        //             return asm_stream;
-        //         }
-        //         break;
-        //     }
-        //     default:
-        //         asm_stream << "Not yet generated assembly for \n";
-        //         break;
-        //     }
-        // case GLOBAL_St:
-        // {
-        //     if (statement.operands.size() != 2)
-        //     {
-        //         error_msg("Invalid number of operands for LOCAL statement");
-        //         return asm_stream;
-        //     }
-        //     // Fetch the operands
-        //     if (MMU::add_symbol(statement.operands[0].name, std::stoi(statement.operands[1].name)))
-        //     {
-        //         Operand op = Operand();
-        //         op.name = statement.operands[0].name;
-        //         op.size = MMU::get_symbol_size(statement.operands[0].name);
-        //         op.type = MMU::get_symbol_type(statement.operands[0].name);
-        //         MMU::push(op);
-        //         asm_stream << "addi $sp, $sp, -" << op.size << "\n";
-        //     }
-        //     else
-        //     {
-        //         error_msg("Failed to add symbol to stack");
-        //     }
-        //     break;
-        // }
-        // }
-        // }
-        // else {
-        //     asm_stream << "Not yet generated assembly for " << get_type_name(statement.get_type()) << "\n";
-        // }
-
-        return asm_stream;
-    }
-
-    std::string generate_asm_str(std::string txt, bool indent)
-    {
-        if (indent)
-        {
-            return "\t\t" + txt;
-        }
-        return txt;
-    }
-
-    std::string data_str(std::string name, int size, bool is_assigned, long long val)
-    {
-        std::string data = name + ":\t";
-        // Add padding to create consistent column alignment
-        if (name.length() < 8)
-            data += "\t";
-
-        if (!is_assigned)
-        {
-            // If not assigned, just allocate space
-            data += ".space " + std::to_string(size);
-            return data;
-        }
-
-        // Handle initialized values
-        switch (size)
-        {
-        case 1:
-            data += ".byte\t" + std::to_string(val);
-            break;
-        case 2:
-            data += ".half\t" + std::to_string(val);
-            break;
-        case 4:
-            data += ".word\t" + std::to_string(val);
-            break;
-        case 8:
-            data += ".dword\t" + std::to_string(val);
-            break;
-        default:
-            data += ".space\t" + std::to_string(size);
-            break;
-        }
-        return data;
-    }
-
-    std::string data_str_float(std::string name, int size, bool is_assigned, long double val)
-    {
-        std::string data = name + ":\t";
-        // Add padding to create consistent column alignment
-        if (name.length() < 8)
-            data += "\t";
-
-        if (!is_assigned)
-        {
-            // If not assigned, just allocate space
-            data += ".space " + std::to_string(size);
-            return data;
-        }
-
-        // Handle initialized values
-        switch (size)
-        {
-        case 4:
-            data += ".float\t" + std::to_string(val);
-            break;
-        case 8:
-            data += ".double\t" + std::to_string(val);
-            break;
-        default:
-            data += ".space\t" + std::to_string(size);
-            break;
-        }
-        return data;
-    }
 
     void CodeGen::add_to_asm(std::string txt, bool indent)
     {
@@ -817,14 +864,6 @@ namespace backend
 
         // Add the data to the data stream
         CodeGen::data_stream << txt + "\n";
-    }
-    static std::stringstream &get_asm_stream()
-    {
-        return CodeGen::asm_stream;
-    }
-    static std::stringstream &get_data_stream()
-    {
-        return CodeGen::data_stream;
     }
 
     std::pair<std::string, std::string> getHighLowBytes(const std::string &decimalStr)

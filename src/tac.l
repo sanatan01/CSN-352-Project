@@ -25,6 +25,7 @@ IS          (u|U|l|L|ll|LL|ul|uL|Ul|UL|lu|lU|Lu|LU|ull|uLL|Ull|ULL|llu|llU|LLu|L
 
 %%
 
+".arg"      { displayLexer("ARG", yytext); tac_lval.string = strdup("ARG"); return ARG; }
 ".call"     { displayLexer("CALL", yytext); tac_lval.string = strdup("CALL"); return CALL; }
 ".return"   { displayLexer("RETURN", yytext); tac_lval.string = strdup("RETURN"); return RETURN; }
 ".param"    { displayLexer("PARAM", yytext); tac_lval.string = strdup("PARAM"); return PARAM; }

@@ -432,6 +432,15 @@ namespace backend
                 continue;
             }
 
+            if (type == CALL_St)
+            {
+                if (operands.size() != 1)
+                {
+                    error_msg("Invalid number of operands for CALL statement");
+                    return;
+                }
+                operands[0].type = MMU::function_map[labels[0].name];
+            }
             error_msg("Invalid TAC code, because lval should be declared before being used");
         }
     }
@@ -465,6 +474,9 @@ namespace backend
             CodeGen::add_to_asm("sw $ra, 12($sp)\n");
             CodeGen::add_to_asm("sw $fp, 8($sp)\n");
             CodeGen::add_to_asm("add $fp, $sp, 16\n");
+
+            // TODO: load params
+
             break;
         }
         case LABEL_St:
@@ -499,33 +511,40 @@ namespace backend
         break;
         case RETURN_St:
         {
-            // TODO
-            // Do type checking here
-            // if 64 byte return value use v0 v1 else use v0
-            // if
             if (operands.size() == 1)
             {
                 if (operands[0].is_constant)
                 {
-                    CodeGen::add_to_asm("li $v0, " + operands[0].name + '\n');
+                    // get type from return type of function
+                    
                 }
                 else
                 {
                     GPR reg = get_gpr(operands[0]);
+
                     CodeGen::add_to_asm("move $v0, " + get_gpr_name(reg) + '\n');
                     free_gpr(reg);
                 }
             }
             // Function Epilogue
-            CodeGen::add_to_asm("move, $sp, $fp\n");
+            CodeGen::add_to_asm("mov $sp, $fp\n");
             CodeGen::add_to_asm("lw $fp, 8($sp)\n");
             CodeGen::add_to_asm("lw $ra, 12($sp)\n");
             CodeGen::add_to_asm("jr $ra\n");
         }
         case CALL_St:
+            free_all_regs();
             CodeGen::add_to_asm("need to implement call\n");
+            // Remove parameters from stack
+            restore_all_regs();
+            CodeGen::first_param = true;
             break;
         case PARAM_St:
+            if (CodeGen::first_param)
+            {
+                dump_all_regs();
+                CodeGen::first_param = false;
+            }
             CodeGen::add_to_asm("need to implement param\n");
             break;
         default:
@@ -610,7 +629,7 @@ namespace backend
                     if (is_float(operands[1].type))
                     {
                         GPR float_reg = get_gpr(operands[1], false);
-                        if (operands[1].size == 4)
+                        if (operands.back().size == 4)
                         {
                             auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
                             CodeGen::add_to_asm("li " + get_gpr_name(reg) + ", " + hi + '\n');
@@ -633,7 +652,7 @@ namespace backend
                     }
                     else
                     {
-                        if (operands[1].size <= 4)
+                        if (operands.back().size <= 4)
                         {
                             CodeGen::add_to_asm("li " + get_gpr_name(reg) + ", " + operands[1].name + '\n');
                             CodeGen::add_to_asm("sw " + get_gpr_name(reg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)\n");
@@ -835,7 +854,7 @@ namespace backend
         curr_line++;
     }
 
-    void create_func_statement(std::string function_name)
+    void create_func_statement(std::string function_name, std::string index)
     {
         if (function_name[function_name.length() - 1] == ':')
         {
@@ -858,6 +877,7 @@ namespace backend
         _statement.line_number = curr_line;
         statements.push_back(std::make_unique<CommonStatement>(_statement));
 
+        MMU::add_to_func_map(function_name, index);
         curr_line++;
     }
 

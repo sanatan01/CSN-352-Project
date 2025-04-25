@@ -226,6 +226,7 @@ namespace backend {
         STATIC_St,
         LOCAL_St,
         DATA_St,
+        ARG_St,
     };
 
     class VariableStatement: public TACStatement {
@@ -257,7 +258,7 @@ namespace backend {
 
     void create_label_statement(std::string label);
 
-    void create_func_statement(std::string function_name);
+    void create_func_statement(std::string function_name, std::string index);
 
     void create_if_statement(std::string op1, std::string op2, BinaryOp op, std::string label, bool left_const, bool right_const);
 
