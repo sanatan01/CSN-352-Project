@@ -26,7 +26,7 @@ using namespace backend;
 %define parse.error verbose
 
 %token <string> IDENTIFIER TEMP STRING_LITERAL CONSTANT_LITERAL LABEL REFERENCE LPAREN RPAREN
-%token <string> CALL RETURN PARAM PUSH POP GOTO STATIC COPY IF FUNC ENTER EXIT DATA GLOBAL
+%token <string> CALL RETURN PARAM PUSH POP GOTO STATIC IF FUNC ENTER EXIT DATA GLOBAL
 %token <string> COMMA ASSIGN AMPERSAND EXCLAMATION
 %token <string> TILDE MINUS PLUS ASTERISK SLASH PERCENT DOT
 %token <string> LESS_THAN GREATER_THAN CARET PIPE LE_OP GE_OP
@@ -98,7 +98,6 @@ statement
     | param_statement
     | pop_statement
     | goto_statement
-    | copy_statement
     | cast_statement
     | ENTER { create_enter_statement(); }
     | EXIT { create_exit_statement(); }
@@ -106,6 +105,7 @@ statement
 
 cast_statement
     : variable ASSIGN LPAREN IDENTIFIER RPAREN variable
+    | variable ASSIGN LPAREN IDENTIFIER RPAREN CONSTANT_LITERAL
     ; 
 
 quad_statement
@@ -125,10 +125,10 @@ quad_statement
 
 triple_statement
     : variable ASSIGN unary_operator variable {
-        create_triple(std::string($1), false, static_cast<UnaryOp>($3), NONE, std::string($4));
+        create_triple(std::string($1), false, static_cast<UnaryOp>($3), NONE_SP, std::string($4));
     }
     | variable ASSIGN unary_operator CONSTANT_LITERAL {
-        create_triple(std::string($1), true, static_cast<UnaryOp>($3), NONE, std::string($4));
+        create_triple(std::string($1), true, static_cast<UnaryOp>($3), NONE_SP, std::string($4));
     }
     | special_operator variable ASSIGN variable {
         create_triple(std::string($2), false, NOP, static_cast<SpecialOp>($1), std::string($4));
@@ -233,7 +233,7 @@ add_variable_statement
     | GLOBAL variable ASSIGN CONSTANT_LITERAL CONSTANT_LITERAL {
         create_variable_statement_assign(GLOBAL_St, std::string($2), std::string($4), true, std::string($5));
     }
-    | DATA variable CONSTANT_LITERAL {
+    | DATA variable STRING_LITERAL {
         create_variable_statement(DATA_St, std::string($2), std::string($3));
     }
     ;
@@ -247,12 +247,6 @@ pop_statement
 goto_statement
     : GOTO IDENTIFIER {
         create_goto_statement(std::string($2));
-    }
-    ;
-
-copy_statement
-    : COPY variable COMMA variable {
-        create_copy_statement(std::string($2), std::string($4));
     }
     ;
 

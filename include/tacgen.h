@@ -6,16 +6,16 @@
 #include <sstream>
 #include <memory>
 #include <fstream>
+#include <types.h>
+#include <codegen.h>
 
 extern std::fstream assembly_file;
 
-namespace backend
-{
+namespace backend {
 
     extern std::map<std::string, int> last_used;
 
-    class Label
-    {
+    class Label {
     public:
         std::string name;
         int location;
@@ -24,34 +24,32 @@ namespace backend
             : name(name), location(location) {}
 
         // copy constructor
-        Label(const Label &other)
+        Label(const Label& other)
             : name(other.name), location(other.location) {}
     };
 
-    enum OpType
-    {
-        SIGNED,
-        FLOAT,
-        UNSIGNED,
-        STRUCT,
-        UNION,
-        POINTER,
-        CONSTANT,
+    enum StorageLoc {
+        TEMP,
+        STACK,
+        DATA,
     };
 
-    class Operand
-    {
+    class Operand {
     public:
         std::string name;
         size_t size;
-        OpType type;
+        GlobalType type;
+        bool is_constant;
+        StorageLoc storage_loc;
 
         Operand() = default;
         Operand(std::string name, bool is_const);
+        Operand(const Operand& other)
+            : name(other.name), size(other.size), type(other.type),
+            is_constant(other.is_constant), storage_loc(other.storage_loc) {}
     };
 
-    enum TACType
-    {
+    enum TACType {
         QUAD,
         TRIPLE,
         DOUBLE,
@@ -59,21 +57,15 @@ namespace backend
         VARIABLE
     };
 
-    class TACStatement
-    {
+    class TACStatement {
     public:
         std::vector<Operand> operands;
         std::vector<Label> labels;
-        std::stringstream asm_stream;
-        std::stringstream data_stream;
         int line_number;
 
         // Explicitly define a copy constructor
-        TACStatement(const TACStatement &other)
-            : operands(other.operands), labels(other.labels), line_number(other.line_number)
-        {
-            asm_stream << other.asm_stream.str();
-        }
+        TACStatement(const TACStatement& other)
+            : operands(other.operands), labels(other.labels), line_number(other.line_number) {}
 
         // Default constructor
         TACStatement() = default;
@@ -81,11 +73,21 @@ namespace backend
         // Default destructor
         virtual ~TACStatement() = default;
 
+        // Virtual functions to be implemented by derived classes
         virtual TACType get_type() const = 0;
+
+        virtual void set_operands() = 0;
+        virtual void generate_asm() const = 0;
+
+        virtual void generate_assembly() {
+            set_operands();
+            generate_asm();
+        }
+
+
     };
 
-    enum BinaryOp
-    {
+    enum BinaryOp {
         ADD,         // PLUS
         SUB,         // MINUS
         MUL,         // ASTERISK
@@ -106,15 +108,13 @@ namespace backend
         LE           // LE_OP
     };
 
-    enum SpecialOp
-    {
-        NONE,
+    enum SpecialOp {
+        NONE_SP,
         AMPERSAND_SP,
         ASTERISK_SP,
     };
 
-    enum UnaryOp
-    {
+    enum UnaryOp {
         NOP,
         REF_OP,
         DEREF_OP,
@@ -124,68 +124,69 @@ namespace backend
         NEG_OP,
     };
 
-    class Quad : public TACStatement
-    { // This also includes conditional statements
+    class Quad: public TACStatement { // This also includes conditional statements
     public:
         bool is_conditional;
         BinaryOp op;
 
         // Explicitly define a copy constructor
-        Quad(const Quad &other) : TACStatement(other), is_conditional(other.is_conditional), op(other.op) {}
+        Quad(const Quad& other): TACStatement(other), is_conditional(other.is_conditional), op(other.op) {}
 
         // Default constructor
-        Quad() : is_conditional(false), op() {}
+        Quad(): is_conditional(false), op() {}
 
         // Override get_type to return QUAD
-        TACType get_type() const override
-        {
+        TACType get_type() const override {
             return QUAD;
         }
+
+        void set_operands() override;
+        void generate_asm() const override;
     };
 
-    class Triple : public TACStatement
-    {
+    class Triple: public TACStatement {
     public:
         UnaryOp op;
         SpecialOp special_op;
 
         // Explicitly define a copy constructor
-        Triple(const Triple &other)
+        Triple(const Triple& other)
             : TACStatement(other), op(other.op), special_op(other.special_op) {}
 
         // Default constructor
-        Triple() : op(), special_op() {}
+        Triple(): op(), special_op() {}
 
         // Override get_type to return TRIPLE
-        TACType get_type() const override
-        {
+        TACType get_type() const override {
             return TRIPLE;
         }
+
+        void set_operands() override;
+        void generate_asm() const override;
     };
 
-    class Double : public TACStatement
-    {
+    class Double: public TACStatement {
     public:
         bool string_lit;
         std::string str;
 
         // Explicitly define a copy constructor
-        Double(const Double &other)
+        Double(const Double& other)
             : TACStatement(other), string_lit(other.string_lit), str(other.str) {}
 
         // Default constructor
-        Double() : string_lit(false), str() {}
+        Double(): string_lit(false), str() {}
 
         // Override get_type to return DOUBLE
-        TACType get_type() const override
-        {
+        TACType get_type() const override {
             return DOUBLE;
         }
+
+        void set_operands() override;
+        void generate_asm() const override;
     };
 
-    enum StatementType
-    {
-        COPY_St,
+    enum StatementType {
         GOTO_St, // No register
         POP_St,  // No register
         PARAM_St,
@@ -201,45 +202,46 @@ namespace backend
 
     std::string get_type_name(TACType type);
 
-    class CommonStatement : public TACStatement
-    {
+    class CommonStatement: public TACStatement {
     public:
         StatementType type;
 
         // Explicitly define a copy constructor
-        CommonStatement(const CommonStatement &other) : TACStatement(other), type(other.type) {}
+        CommonStatement(const CommonStatement& other): TACStatement(other), type(other.type) {}
 
         // Default constructor
-        CommonStatement() : type() {}
+        CommonStatement(): type() {}
 
         // Override get_type to return COMMON
-        TACType get_type() const override
-        {
+        TACType get_type() const override {
             return COMMON;
         }
+
+        void set_operands() override;
+        void generate_asm() const override;
     };
 
-    enum VariableType
-    {
+    enum VariableType {
         GLOBAL_St,
         STATIC_St,
         LOCAL_St,
         DATA_St,
     };
 
-    class VariableStatement : public TACStatement
-    {
+    class VariableStatement: public TACStatement {
     public:
         VariableType type;
 
-        VariableStatement(const VariableStatement &other) : TACStatement(other), type(other.type) {}
+        VariableStatement(const VariableStatement& other): TACStatement(other), type(other.type) {}
 
-        VariableStatement() : type() {}
+        VariableStatement(): type() {}
 
-        TACType get_type() const override
-        {
+        TACType get_type() const override {
             return VARIABLE;
         }
+
+        void set_operands() override;
+        void generate_asm() const override;
     };
 
     extern std::vector<std::unique_ptr<TACStatement>>
@@ -272,8 +274,6 @@ namespace backend
     void create_variable_statement(VariableType type, std::string var, std::string ind);
 
     void create_variable_statement_assign(VariableType type, std::string var, std::string rval, bool is_constant, std::string ind);
-
-    void create_copy_statement(std::string result, std::string op1);
 
     void create_enter_statement();
 

@@ -1,6 +1,7 @@
 #include <tacgen.h>
 #include <utils.h>
 #include <codegen.h>
+#include <climits>
 
 namespace backend {
     // Extern variables
@@ -11,7 +12,7 @@ namespace backend {
     int curr_line = 1;
 
     void add_operand(Operand op) {
-        if (op.type == CONSTANT) {
+        if (op.is_constant) {
             return;
         }
 
@@ -22,8 +23,6 @@ namespace backend {
 
     std::string get_type_name(StatementType type) {
         switch (type) {
-        case COPY_St:
-            return "COPY";
         case GOTO_St:
             return "GOTO";
         case POP_St:
@@ -63,29 +62,444 @@ namespace backend {
     }
 
     // Class Constructors
-    size_t get_size_const(std::string name) {
-        // Placeholder function to get size of a variable
-        // In a real implementation, this would look up the variable's type and return its size
-        return 4; // Assuming 4 bytes for simplicity
-    }
-
-    size_t get_size(std::string name) {
-        // Placeholder function to get size of a variable
-        // In a real implementation, this would look up the variable's type and return its size
-        return 4; // Assuming 4 bytes for simplicity
-    }
-
-    // TODO
-    Operand::Operand(std::string name, bool is_const): name(name) {
-        if (is_const) {
-            type = CONSTANT;
-            size = get_size_const(name);
+    size_t get_const_size(std::string value) {
+        if (value.find("0x") == 0) {
+            return 4; // Assuming 4 bytes for hex constants
+        }
+        else if (value.find(".") != std::string::npos ||
+                 value.find("e") != std::string::npos ||
+                 value.find("E") != std::string::npos) {
+            // This is a floating point number
+            try {
+                long double num = std::stold(value);
+                float float_val = static_cast<float>(num);
+                // Check if conversion to float caused loss of precision
+                if (static_cast<long double>(float_val) != num) {
+                    return 8; // Need double precision (8 bytes)
+                }
+                return 4; // Float precision is sufficient (4 bytes)
+            } catch (...) {
+                return 4; // Default to float if conversion fails
+            }
         }
         else {
-            type = SIGNED;         // Assuming signed for non-constant
-            size = get_size(name); // These need to be assigend later
+            // This is an integer number
+            try {
+                long long val = std::stoll(value);
+                if (val >= INT_MIN && val <= INT_MAX) {
+                    return 4; // int (4 bytes)
+                }
+                else {
+                    return 8; // long long (8 bytes)
+                }
+            } catch (...) {
+                return 4; // Default to int if conversion fails
+            }
         }
     }
+
+    Operand::Operand(std::string name, bool is_const): name(name), is_constant(is_const), size(4), storage_loc(TEMP) {
+        if (is_const) {
+            size = get_const_size(name);
+
+            // Set the type based on the value
+            if (name.find(".") != std::string::npos ||
+                name.find("e") != std::string::npos ||
+                name.find("E") != std::string::npos) {
+                if (size == 4) {
+                    type = *(create_primitive_type(FLOAT_T));
+                }
+                else {
+                    type = *(create_primitive_type(DOUBLE_T));
+                }
+            }
+            else {
+                if (size == 4) {
+                    type = *(create_primitive_type(INT_T));
+                }
+                else if (size == 8) {
+                    type = *(create_primitive_type(LLONG_T));
+                }
+                else if (size == 2) {
+                    type = *(create_primitive_type(SHORT_T));
+                }
+                else {
+                    type = *(create_primitive_type(CHAR_T));
+                }
+            }
+        }
+    }
+
+
+    // =================== Quad Functions =================== 
+
+    void Quad::set_operands() {
+        // Set the operands for the Quad statement
+        for (auto& operand : operands) {
+            if (operand.is_constant) {
+                continue;
+            }
+
+            if (MMU::is_symbol_present(operand.name)) {
+                operand = Operand(MMU::get_symbol(operand.name));
+                continue;
+            }
+
+            switch (op) {
+            case ADD:
+            {
+                Operand old_op = Operand(operands[0]);
+                if (old_op.type.type_tag == STRUCT_TYPE) {
+                    Operand op = Operand();
+                    GlobalType* typ = old_op.type.struct_type->get_member(std::stoi(operands[1].name));
+                    op.type = GlobalType(*typ);
+                    op.name = operands.back().name;
+                    op.is_constant = false;
+                    op.size = typ->getSize();
+                }
+            }
+            case SUB:
+            case MUL:
+            case DIV:
+            case MOD:
+            case BITWISE_AND:
+            case BITWISE_OR:
+            case BITWISE_XOR:
+            {
+                if (!operands[0].is_constant) {
+                    std::string name = operands.back().name;
+                    operands.back() = Operand(operands[0]);
+                    operands.back().name = name;
+                    operands.back().is_constant = false;
+                    MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                }
+                else {
+                    std::string name = operands.back().name;
+                    operands.back() = Operand(operands[1]);
+                    operands.back().name = name;
+                    operands.back().is_constant = false;
+                    MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                }
+            }
+            break;
+            case SHL:
+            case SHR:
+            {
+                std::string name = operands.back().name;
+                operands.back() = Operand(operands[0]);
+                operands.back().name = name;
+                operands.back().is_constant = false;
+                MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+            }
+            break;
+            case EQ:
+            case NE:
+            case LT:
+            case GT:
+            case GE:
+            case LE:
+            {
+                Operand op = Operand();
+                op.name = operands.back().name;
+                op.is_constant = false;
+                op.type = *(create_primitive_type(CHAR_T));
+                operands.back() = Operand(op);
+                MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+            }
+            break;
+            default:
+                break;
+
+            }
+        }
+
+
+
+    }
+
+    void Quad::generate_asm() const {
+        return;
+    };
+
+
+    // =================== Triple Functions ===================
+
+    void Triple::set_operands() {
+        // Set the operands for the Triple statement
+        for (auto& operand : operands) {
+            if (operand.is_constant) {
+                continue;
+            }
+
+            if (MMU::is_symbol_present(operand.name)) {
+                operand = Operand(MMU::get_symbol(operand.name));
+                continue;
+            }
+
+            switch (special_op) {
+            case NONE_SP:
+            {
+                switch (op) {
+                case TILDE_OP:
+                case EXCLAMATION_OP:
+                case POS_OP:
+                case NEG_OP:
+                {
+                    std::string name = operands.back().name;
+                    operands.back() = Operand(operands[0]);
+                    operands.back().name = name;
+                    operands.back().is_constant = false;
+                    MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                }
+                break;
+                case REF_OP:
+                {
+                    Operand old_op = Operand(operands[0]);
+                    if (old_op.type.type_tag == POINTER_TYPE) {
+                        Operand op = Operand(old_op);
+                        op.name = operands.back().name;
+                        op.is_constant = false;
+                        op.type.pointer_type->ptr_level++;
+                        operands.back() = Operand(op);
+                        MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                    }
+                    else if (old_op.type.type_tag == ARRAY_TYPE) {
+                        output_msg("Converting array to pointer");
+                        Operand op = Operand();
+                        op.name = operands.back().name;
+                        op.is_constant = false;
+                        op.type = *create_pointer_type(old_op.type.array_type->return_type, old_op.type.array_type->dim, old_op.type.getSpecifiers());
+                        op.type.pointer_type->ptr_level++;
+                        operands.back() = Operand(op);
+                        MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                    }
+                    else {
+                        Operand op = Operand();
+                        op.name = operands.back().name;
+                        op.is_constant = false;
+                        op.type = *(create_pointer_type(&old_op.type));
+                        operands.back() = Operand(op);
+                        MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                    }
+                }
+                case ASTERISK_SP: {
+                    Operand old_op = Operand(operands[0]);
+                    if (old_op.type.type_tag == POINTER_TYPE) {
+                        Operand op = Operand(old_op);
+                        op.name = operands.back().name;
+                        op.is_constant = false;
+                        op.type.pointer_type->ptr_level--;
+
+                        if (op.type.pointer_type->ptr_level == 0) {
+                            op.type = *(op.type.pointer_type->return_type);
+                        }
+
+                        operands.back() = Operand(op);
+                        MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                    }
+                    else if (old_op.type.type_tag == ARRAY_TYPE) {
+                        Operand op = Operand();
+                        op.name = operands.back().name;
+                        op.is_constant = false;
+                        op.type = *create_pointer_type(old_op.type.array_type->return_type, old_op.type.array_type->dim, old_op.type.getSpecifiers());
+                        op.type.pointer_type->ptr_level--;
+                        if (op.type.pointer_type->ptr_level == 0) {
+                            op.type = *(op.type.pointer_type->return_type);
+                        }
+
+                        operands.back() = Operand(op);
+                        MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                    }
+                    else {
+                        error_msg("Invalid TAC, cannot dereference a non-pointer type");
+                    }
+                }
+                }
+            }
+            break;
+            default:
+                error_msg("Incorrect TAC code, because lval should be declared before being used");
+                break;
+            }
+        }
+    }
+
+    void Triple::generate_asm() const {
+        return;
+    };
+
+
+    // =================== Double Functions ===================
+
+    void Double::set_operands() {
+        // Set the operands for the Double statement
+        for (auto& operand : operands) {
+            if (operand.is_constant) {
+                continue;
+            }
+
+            if (MMU::is_symbol_present(operand.name)) {
+                operand = Operand(MMU::get_symbol(operand.name));
+                continue;
+            }
+            if (string_lit) {
+                output_msg("Need to handle string literals");
+
+            }
+            else {
+                std::string name = operands.back().name;
+                operands.back() = Operand(operands[0]);
+                operands.back().name = name;
+                operands.back().is_constant = false;
+                MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+            }
+
+        }
+    }
+
+    void Double::generate_asm() const {
+        return;
+    };
+
+    // ================ Common Functions ======================
+
+    void CommonStatement::set_operands() {
+        // Set the operands for the CommonStatement
+        for (auto& operand : operands) {
+            if (operand.is_constant) {
+                continue;
+            }
+
+            if (MMU::is_symbol_present(operand.name)) {
+                operand = Operand(MMU::get_symbol(operand.name));
+                continue;
+            }
+
+            error_msg("Invalid TAC code, because lval should be declared before being used");
+        }
+    }
+
+    // ================ Variable Functions ======================
+
+    void VariableStatement::set_operands() {
+        // Set the operands for the VariableStatement
+        for (auto& operand : operands) {
+            if (operand.is_constant) {
+                continue;
+            }
+
+            if (MMU::is_symbol_present(operand.name)) {
+                operand = Operand(MMU::get_symbol(operand.name));
+                continue;
+            }
+
+            switch (type) {
+            case LOCAL_St:
+            case GLOBAL_St:
+            case STATIC_St:
+            {
+                MMU::add_symbol(operands.back().name, std::stoi(operands[0].name));
+                Operand op = MMU::get_symbol(operands.back().name);
+                operands.back() = Operand(op);
+                operands.back().is_constant = false;
+                MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+            }
+            case DATA_St: {
+                //Nothing to do here, sed
+            }
+            }
+            break;
+        }
+    }
+
+    void VariableStatement::generate_asm() const {
+        switch (type) {
+        case LOCAL_St:
+        {
+            if (operands.size() == 2) {
+                // Fetch the operands
+
+                MMU::push(operands.back());
+                CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string((operands.back()).size) + '\n');
+            }
+            else if (operands.size() == 3) {
+
+                MMU::push(operands.back());
+                CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string((operands.back()).size) + '\n');
+
+                GPR reg = get_gpr(operands.back().name);
+
+                if (operands[1].is_constant) {
+                    if (is_float(operands[1].type)) {
+                        GPR float_reg = get_gpr(operands[1]);
+                        if(operands[1].size==4){
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
+                            CodeGen::add_to_asm("li " + get_gpr_name(reg) + ", " + hi + '\n');
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(reg) + ", " + get_gpr_name(float_reg) + '\n');
+                            CodeGen::add_to_asm("s.s " + get_gpr_name(float_reg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)\n");
+                            gpr_map[float_reg].name = operands.back().name;  
+                        }
+                        else{
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
+                            CodeGen::add_to_asm("li " + get_gpr_name(reg) + ", " + hi + '\n');
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(reg) + ", " + get_gpr_name(float_reg) + '\n');
+                            CodeGen::add_to_asm("li " + get_gpr_name(reg) + ", " + lo + '\n');
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(reg) + ", " + get_gpr_name(static_cast<GPR>((int)float_reg+1)) + '\n');
+                            CodeGen::add_to_asm("s.d " + get_gpr_name(float_reg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)\n"); 
+                            gpr_map[float_reg].name = operands.back().name;
+                            gpr_map[static_cast<GPR>((int)float_reg+1)].name = operands.back().name;
+                        }
+                        free_gpr(reg);
+                    }
+                    else {
+                        if (operands[1].size <= 4) {
+                            CodeGen::add_to_asm("li " + get_gpr_name(reg) + ", " + operands[1].name + '\n');
+                            CodeGen::add_to_asm("sw " + get_gpr_name(reg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)\n");
+                        }
+                        else {
+                            auto [hi, lo] = getHighLowBytes(operands[1].name);
+                            CodeGen::add_to_asm("li " + get_gpr_name(reg) + ", " + hi + '\n');
+                            CodeGen::add_to_asm("sw " + get_gpr_name(reg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)\n");
+                            CodeGen::add_to_asm("li " + get_gpr_name(reg) + ", " + lo + '\n');
+                            CodeGen::add_to_asm("sw " + get_gpr_name(reg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)\n");
+                            free_gpr(reg);
+                        }
+                    }
+
+                }
+                else {
+                    if(operands[1].type.type_tag == STANDARD_TYPE && operands.back().type.type_tag == STANDARD_TYPE) {
+                        if (operands[1].type.standard_type->name == operands.back().type.standard_type->name) {
+                            if (operands[1].size <= 4) {
+                                
+                                CodeGen::add_to_asm("sw " + get_gpr_name(reg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)\n");
+                            }
+                        }
+                        else {
+                            output_msg("Need to handle type conversion");
+                        }
+                    }
+                }
+            }
+            else {
+                error_msg("Invalid number of operands for LOCAL statement");
+                return;
+            }
+            break;
+        }
+        break;
+        case GLOBAL_St:
+        case STATIC_St:
+        case DATA_St:
+        {
+            
+        }
+        break;
+        default: {
+            error_msg("Invalid VariableStatement type");
+        }
+        }
+    };
 
     // Function implementations
 
@@ -350,8 +764,8 @@ namespace backend {
     void create_variable_statement(VariableType type, std::string var, std::string ind) {
         VariableStatement _statement = VariableStatement();
         _statement.type = type;
-        _statement.operands.push_back(Operand(var, false));
         _statement.operands.push_back(Operand(ind, true));
+        _statement.operands.push_back(Operand(var, false));
         _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<VariableStatement>(_statement));
@@ -366,28 +780,12 @@ namespace backend {
     void create_variable_statement_assign(VariableType type, std::string var, std::string rval, bool is_constant, std::string ind) {
         VariableStatement _statement = VariableStatement();
         _statement.type = type;
-        _statement.operands.push_back(Operand(var, false));
-        _statement.operands.push_back(Operand(rval, is_constant));
         _statement.operands.push_back(Operand(ind, true));
+        _statement.operands.push_back(Operand(rval, is_constant));
+        _statement.operands.push_back(Operand(var, false));
         _statement.line_number = curr_line;
 
         statements.push_back(std::make_unique<VariableStatement>(_statement));
-
-        // Add operands to map
-        for (const auto& operand : _statement.operands) {
-            add_operand(operand);
-        }
-        curr_line++;
-    }
-
-    void create_copy_statement(std::string result, std::string op1) {
-        CommonStatement _statement = CommonStatement();
-        _statement.type = COPY_St;
-        _statement.operands.push_back(Operand(result, false));
-        _statement.operands.push_back(Operand(op1, false));
-        _statement.line_number = curr_line;
-
-        statements.push_back(std::make_unique<CommonStatement>(_statement));
 
         // Add operands to map
         for (const auto& operand : _statement.operands) {
@@ -420,39 +818,42 @@ namespace backend {
         output_msg("Optimising TAC...");
 
         for (const auto& statement : statements) {
-            // Get the registers being used
-            std::vector<GPR> used_gprs = CodeGen::get_used_gprs(*statement);
-            statement->asm_stream = CodeGen::generate_asm(*statement, used_gprs);
-            statement->data_stream = CodeGen::generate_data(*statement);
 
-            // Free unused register
-            for (const auto& operand : statement->operands) {
-                if (operand.type == CONSTANT) {
-                    continue;
-                }
+            statement->generate_assembly();
+            // // Get the registers being used
+            // statement->operands = CodeGen::set_operands(*statement);
+            // std::vector<GPR> used_gprs = CodeGen::get_used_gprs(*statement);
+            // statement->asm_stream = CodeGen::generate_asm(*statement, used_gprs);
+            // statement->data_stream = CodeGen::generate_data(*statement);
 
-                if (last_used[operand.name] <= statement->line_number) {
-                    GPR reg = get_assigned_gpr(operand.name);
-                    if (reg != empty) {
-                        free_gpr(reg);
-                        output_msg("Freed " + operand.name + " from " + get_gpr_name(reg));
-                    }
-                }
-            }
+            // // Free unused register
+            // for (const auto& operand : statement->operands) {
+            //     if (operand.is_constant) {
+            //         continue;
+            //     }
+
+            //     if (last_used[operand.name] <= statement->line_number) {
+            //         GPR reg = get_assigned_gpr(operand.name);
+            //         if (reg != empty) {
+            //             free_gpr(reg);
+            //             output_msg("Freed " + operand.name + " from " + get_gpr_name(reg));
+            //         }
+            //     }
+            // }
         }
     }
 
     void print_assembly() {
         output_msg("Printing assembly...");
 
-        assembly_file <<  ".data\n";
+        assembly_file << ".data\n";
         for (const auto& statement : statements) {
-            assembly_file << statement->data_stream.str();
+            assembly_file << CodeGen::data_stream.str();
         }
 
-        assembly_file <<  "\n\n.text\n";
+        assembly_file << "\n\n.text\n";
         for (const auto& statement : statements) {
-            assembly_file << statement->asm_stream.str();
+            assembly_file << CodeGen::asm_stream.str();
         }
     }
 

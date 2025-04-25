@@ -73,7 +73,7 @@ PrimitiveTypes greater_type(PrimitiveTypes op1, PrimitiveTypes op2) {
 void change_type(Expression* expr, Expression* new_type) {
     expr->prim_type = new_type->prim_type;
     std::string new_temp = TAC::get_temp();
-    TAC::print_tac(new_temp + " = (" + typeName(new_type->prim_type) + ")" + expr->name);
+    TAC::print_tac(new_temp + " = (" + typeName(new_type->prim_type) + ") " + expr->name);
     expr->name = new_temp;
     prim_to_type(expr);
 }
@@ -218,7 +218,8 @@ PrimitiveTypes deduceType(const std::string& input) {
                 }
                 else {
                     // Otherwise, use long double.
-                    ret_type = LONG_DOUBLE_T;
+                    error_msg("Our compiler is 8 byte compiler, so this big value is not supported");
+                    ret_type = DOUBLE_T;
                 }
             }
         } catch (...) {
@@ -1168,7 +1169,7 @@ Expression* create_cast_expression_typename(OpExpression* oe) {
     }
     // 3AC or AST
     std::string temp = TAC::get_temp();
-    TAC::print_tac(temp + std::string(" = (") + oe->op1.exp_type->getType() + std::string(")") + std::to_string(oe->op2.exp_type->getSize()));
+    TAC::print_tac(temp + std::string(" = (") + oe->op1.exp_type->getType() + std::string(") ") + std::to_string(oe->op2.exp_type->getSize()));
     oe->name = temp;
     // P->add_children({tn, ce});
     return oe;
@@ -2137,10 +2138,7 @@ Expression* create_expression_simple(ExpressionType exp_type, std::string token)
         e->prim_type = ERROR_T;
         debug_msg("String: " + token);
         std::string new_temp = TAC::get_temp();
-        TAC::print_tac(".data " + new_temp + " " + std::to_string(sizeof(char) * (token.length() - 1)));
-        std::string str_temp = TAC::get_temp();
-        TAC::print_tac(str_temp + " = " + token);
-        TAC::print_tac(".copy " + str_temp + ", " + new_temp);
+        TAC::print_tac(".data " + new_temp + " " + token);
         e->name = new_temp;
         e->is_assignable = false;
         return e;

@@ -32,7 +32,6 @@ IS          (u|U|l|L|ll|LL|ul|uL|Ul|UL|lu|lU|Lu|LU|ull|uLL|Ull|ULL|llu|llU|LLu|L
 ".pop"      { displayLexer("POP", yytext); tac_lval.string = strdup("POP"); return POP; }
 ".goto"     { displayLexer("GOTO", yytext); tac_lval.string = strdup("GOTO"); return GOTO; }
 ".static"   { displayLexer("STATIC", yytext); tac_lval.string = strdup("STATIC"); return STATIC; }
-".copy"     { displayLexer("COPY", yytext); tac_lval.string = strdup("COPY"); return COPY; }
 ".if"       { displayLexer("IF", yytext); tac_lval.string = strdup("IF"); return IF; }
 ".func"     { displayLexer("FUNC", yytext); tac_lval.string = strdup("FUNC"); return FUNC; }
 ".enter"    { displayLexer("ENTER", yytext); tac_lval.string = strdup("ENTER"); return ENTER; }

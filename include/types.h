@@ -47,8 +47,6 @@ public:
 
 	Specifiers();
 	Specifiers(const Specifiers &other) = default;
-
-	class Specifiers *copy_type() const { return new Specifiers(*this); }
 };
 
 Specifiers *combine_specs(Specifiers *spec1, Specifiers *spec2);
@@ -82,7 +80,7 @@ public:
 		name = other.name;
 		size = other.size;
 		is_defined = other.is_defined;
-		specifiers = other.specifiers ? other.specifiers->copy_type() : nullptr;
+		specifiers = other.specifiers ? new Specifiers(*other.specifiers) : nullptr;
 	}
 
 	// Important: Always use references when creating the objects to prevent object slicing
@@ -91,13 +89,6 @@ public:
 	bool operator!=(const StandardType &obj) const { return !(*this == obj); };
 
 	std::string getSpecifierName() const;
-
-	class StandardType *copy_type() const
-	{
-		StandardType *type = new StandardType(*this);
-		type->specifiers = specifiers->copy_type();
-		return type;
-	}
 };
 
 extern std::unordered_map<PrimitiveTypes, StandardType *> type_specifiers;
@@ -138,6 +129,7 @@ public:
 
 	int get_offset(std::string member_name);
 	GlobalType *get_member_type(std::string member_name);
+	GlobalType *get_member(int offset);
 
 	size_t set_size();
 };
