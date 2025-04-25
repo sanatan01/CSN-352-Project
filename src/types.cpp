@@ -964,7 +964,7 @@ class GlobalType* combine_global_type(class GlobalType* left, class GlobalType* 
     {
         debug_msg("Combining standard types of right operand is:  " + right->standard_type->name);
         if (left->type_tag == STANDARD_TYPE) {
-            debug_msg("Combining standard types" + left->standard_type->name + " and " + right->standard_type->name);
+            error_msg("Combining standard types" + left->standard_type->name + " and " + right->standard_type->name);
         }
         else if (left->type_tag == ENUM_TYPE) {
             warning_msg("Converting enum type to int");

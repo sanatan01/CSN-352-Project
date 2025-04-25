@@ -572,7 +572,7 @@ init_declarator_list
 		}
  		$$ = $1;
 		if($$->type->type_tag == NONE) {
-			$$->type = $3->exp_type;
+			// $$->type = $3->exp_type;
 			debug_msg("Type created for identifier " + $$->name + " is " + $3->exp_type->getType());
 		}
 		else if ($$->type->type_tag == FUNCTION_TYPE) {

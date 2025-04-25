@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
-
+#include <cstring>
 namespace backend
 {
 
@@ -172,6 +172,7 @@ namespace backend
 
     void Register::free_reg()
     {
+        error_msg("Debugging: freeing register with name" + reg_name +", " + name);
         value = 0;
         name = "";
     }
@@ -323,12 +324,13 @@ namespace backend
                 else
                 {
                     // TODO, make sure that hi lo are set properly
-                    CodeGen::add_to_asm("la " + gpr_map[reg].reg_name + ", " + std::to_string(offset) + "($sp)\n", true);
+                    CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", " + std::to_string(offset) + "($sp)\n", true);
                     gpr_map[reg].value = 1;
                     gpr_map[reg].name = op.name;
+                    error_msg("Name of temp added  is : " + gpr_map[reg].name);
                     if (store_long && op.size == 8)
                     {
-                        CodeGen::add_to_asm("la " + gpr_map[static_cast<GPR>(int(reg) + 1)].reg_name + ", " + std::to_string(offset + 4) + "($sp)\n", true);
+                        CodeGen::add_to_asm("lw " + get_gpr_name(static_cast<GPR>(int(reg) + 1)) + ", " + std::to_string(offset + 4) + "($sp)\n", true);
                         gpr_map[static_cast<GPR>(int(reg) + 1)].value = 1;
                         gpr_map[static_cast<GPR>(int(reg) + 1)].name = op.name;
                     }
@@ -347,7 +349,7 @@ namespace backend
             {
                 if (op.size == 8)
                 {
-                    CodeGen::add_to_asm("la " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(op.name) + "\n", true);
+                    CodeGen::add_to_asm("lw " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(op.name) + "\n", true);
                     CodeGen::add_to_asm("ldc1 " + get_gpr_name(reg) + ", 0(" + get_gpr_name(s0) + ")\n", true);
                     gpr_map[reg].value = 1;
                     gpr_map[reg].name = op.name;
@@ -357,7 +359,7 @@ namespace backend
                 }
                 else if (op.size == 4)
                 {
-                    CodeGen::add_to_asm("la " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(op.name) + "\n", true);
+                    CodeGen::add_to_asm("lw " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(op.name) + "\n", true);
                     CodeGen::add_to_asm("lwc1 " + get_gpr_name(reg) + ", 0(" + get_gpr_name(s0) + ")\n", true);
                     gpr_map[reg].value = 1;
                     gpr_map[reg].name = op.name;
@@ -366,12 +368,12 @@ namespace backend
             }
             else
             {
-                CodeGen::add_to_asm("la " + gpr_map[reg].reg_name + ", " + CodeGen::convert_to_valid(op.name) + "\n", true);
+                CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", " + CodeGen::convert_to_valid(op.name) + "\n", true);
                 gpr_map[reg].value = 1;
                 gpr_map[reg].name = op.name;
                 if (store_long && op.size == 8)
                 {
-                    CodeGen::add_to_asm("la " + gpr_map[static_cast<GPR>(int(reg) + 1)].reg_name + ", 4(" + CodeGen::convert_to_valid(op.name) + ")\n", true);
+                    CodeGen::add_to_asm("lw " + get_gpr_name(static_cast<GPR>(int(reg) + 1)) + ", 4(" + CodeGen::convert_to_valid(op.name) + ")\n", true);
                     gpr_map[static_cast<GPR>(int(reg) + 1)].value = 1;
                     gpr_map[static_cast<GPR>(int(reg) + 1)].name = op.name;
                 }
@@ -619,7 +621,7 @@ namespace backend
             int offset = MMU::get_offset(name);
             if (offset != -1)
             {
-                CodeGen::add_to_asm("sw " + gpr_map[reg].reg_name + ", " + std::to_string(offset) + "($sp)\n", true);
+                CodeGen::add_to_asm("sw " + get_gpr_name(reg) + ", " + std::to_string(offset) + "($sp)\n", true);
             }
             else
             {
@@ -630,7 +632,7 @@ namespace backend
         break;
         case DATA:
         {
-            CodeGen::add_to_asm("sw " + gpr_map[reg].reg_name + ", " + CodeGen::convert_to_valid(gpr_map[reg].name) + "\n", true);
+            CodeGen::add_to_asm("sw " + get_gpr_name(reg) + ", " + CodeGen::convert_to_valid(gpr_map[reg].name) + "\n", true);
         }
         break;
         }
@@ -657,7 +659,9 @@ namespace backend
                 return (GPR)i;
             }
         }
-        return get_free_gpr(op, load);
+        error_msg("This was called variable not found in register");
+        GPR temp = get_free_gpr(op,load);
+        return temp;
     }
 
     // ================== MMU Variables ==================
@@ -716,6 +720,9 @@ namespace backend
             return false;
         }
         op.size = symbol.identifier.type->getSize();
+
+        error_msg("Debugging message: type  of symbol  is" + symbol.identifier.type->getType()+ "Name of symbol is" + symbol.identifier.name);
+        error_msg("Debugging message: operand  of size"+ std::to_string(op.size)+" added as symbol in codegen 3ac map");
         op.type = GlobalType(*symbol.identifier.type);
         op.is_constant = false;
         op.storage_loc = StorageLoc(loc);
@@ -835,7 +842,7 @@ namespace backend
                 // TODO make sure this is correct
                 auto [hi, lo] = getHighLowBytes(val);
                 txt += ".word\t" + lo + "\n";
-                txt += "\t\t.word\t" + hi;
+                txt += "\t\t\t.word\t" + hi;
             }
             else
                 txt += ".space\t" + std::to_string(size);
@@ -850,7 +857,7 @@ namespace backend
             {
                 auto [hi, lo] = floatToIEEEHex(val, true);
                 txt += ".word\t" + lo + "\n";
-                txt += "\t\t.word\t" + hi;
+                txt += "\t\t\t.word\t" + hi;
             }
             break;
         case 2:
@@ -886,39 +893,36 @@ namespace backend
         return {highStream.str(), lowStream.str()};
     }
 
-    std::pair<std::string, std::string> floatToIEEEHex(const std::string &inputStr, bool isDouble)
+    std::pair<std::string, std::string>
+    floatToIEEEHex(const std::string &inputStr, bool isDouble)
     {
-        // Check if the input string is a valid float or double
-        double num = std::stod(inputStr); // Convert string to double first (handles floats and doubles)
-
         if (isDouble)
         {
-            // Double precision (64-bit) IEEE 754
-            uint64_t ieeeRepresentation = *reinterpret_cast<uint64_t *>(&num); // Cast the double to its IEEE 754 representation
-
-            // Extract the high and low parts (64-bit -> two 32-bit parts)
-            uint32_t highPart = static_cast<uint32_t>((ieeeRepresentation >> 32) & 0xFFFFFFFF); // Upper 32 bits
-            uint32_t lowPart = static_cast<uint32_t>(ieeeRepresentation & 0xFFFFFFFF);          // Lower 32 bits
-
-            // Convert to hex
+            // Double precision (64-bit)
+            double num = std::stod(inputStr);
+            uint64_t repr;
+            std::memcpy(&repr, &num, sizeof(repr));
+    
+            uint32_t highPart = static_cast<uint32_t>((repr >> 32) & 0xFFFFFFFF);
+            uint32_t lowPart  = static_cast<uint32_t>( repr        & 0xFFFFFFFF);
+    
             std::stringstream highStream, lowStream;
             highStream << std::hex << std::setw(8) << std::setfill('0') << highPart;
-            lowStream << std::hex << std::setw(8) << std::setfill('0') << lowPart;
-
-            // Return the high and low parts
+            lowStream  << std::hex << std::setw(8) << std::setfill('0') << lowPart;
+    
             return {highStream.str(), lowStream.str()};
         }
         else
         {
-            // Single precision (32-bit) IEEE 754
-            uint32_t ieeeRepresentation = *reinterpret_cast<uint32_t *>(&num); // Cast the float to its IEEE 754 representation
-
-            // Convert to hex
+            // Single precision (32-bit)
+            float numf = std::stof(inputStr);
+            uint32_t repr;
+            std::memcpy(&repr, &numf, sizeof(repr));
+    
             std::stringstream singleStream;
-            singleStream << std::hex << std::setw(8) << std::setfill('0') << ieeeRepresentation;
-
-            // Return the single precision hex representation
-            return {singleStream.str(), ""}; // Only return the high part for single precision
+            singleStream << std::hex << std::setw(8) << std::setfill('0') << repr;
+    
+            return {singleStream.str(), ""};
         }
     }
 }

@@ -187,15 +187,15 @@ namespace backend {
     };
 
     enum StatementType {
-        GOTO_St, // No register Done
-        POP_St,  // No register Done
-        PARAM_St, // Done
-        CALL_St, // Done
-        RETURN_St, // Done
-        FUNC_St,  // No Register Done
-        LABEL_St, // No Register Done
-        ENTER_St, // No Register Done
-        EXIT_St,  // No Register Done
+        GOTO_St, // No register
+        POP_St,  // No register
+        PARAM_St,
+        CALL_St,
+        RETURN_St,
+        FUNC_St,  // No Register
+        LABEL_St, // No Register
+        ENTER_St, // No Register
+        EXIT_St,  // No Register
     };
 
     std::string get_type_name(StatementType type);
