@@ -9,6 +9,10 @@ int main() {
     else
     {
         b = 20 * 3 - 79;
+        float f2 = 0.5*1e4;
+        float cd =  f2*2;
+
+        b = 50 && 0.000;
         b=b+3;
         b = (float)a;
     }

@@ -73,7 +73,7 @@ PrimitiveTypes greater_type(PrimitiveTypes op1, PrimitiveTypes op2) {
 void change_type(Expression* expr, Expression* new_type) {
     expr->prim_type = new_type->prim_type;
     std::string new_temp = TAC::get_temp();
-    TAC::print_tac(std::string("new_temp = (") + typeName(expr->prim_type) + ")" + expr->name);
+    TAC::print_tac(new_temp + " = (" + typeName(new_type->prim_type) + ")" + expr->name);
     expr->name = new_temp;
     prim_to_type(expr);
 }
@@ -162,6 +162,8 @@ std::string operation_relational(std::string op, std::string op1, PrimitiveTypes
     else if (op == ">=") result = val1 >= val2;
     else  if(op == "==") result = val1 == val2;
     else if (op == "!=") result = val1 != val2;
+    else if  (op == "&&") result = val1 && val2;
+    else if (op == "||") result = val1 || val2;
     else return "0"; // Default for unrecognized operator
     
     return std::to_string(result);
@@ -306,15 +308,17 @@ Expression* multiplicative_expression(OpExpression* oe) {
     if (oe->op == "*" || oe->op == "/") {
 
         if (isFloat(op1Type) && !isFloat(op2Type)) {
-            change_type(&(oe->op1), &(oe->op2));
+            change_type(&(oe->op2), &(oe->op1));
         }
         else if (isFloat(op2Type) && !isFloat(op1Type)) {
-            change_type(&(oe->op2), &(oe->op1));
+            change_type(&(oe->op1), &(oe->op2));
         }
 
         oe->prim_type = greater_type(op1Type, op2Type);
+        op1Type = PrimitiveTypes(oe->op1.prim_type);
+        op2Type = PrimitiveTypes(oe->op2.prim_type);
         if (op1Type != op2Type) {
-            if (op1Type == greater_type(op1Type, op2Type)) {
+            if (op1Type != greater_type(op1Type, op2Type)) {
                 change_type(&(oe->op1), &(oe->op2));
             }
             else {
@@ -375,15 +379,17 @@ Expression* additive_expression(OpExpression* oe) {
 
     if(oe->op1.exp_type->type_tag == STANDARD_TYPE && oe->op2.exp_type->type_tag == STANDARD_TYPE ) {
         if (isFloat(op1Type) && !isFloat(op2Type)) {
-            change_type(&(oe->op1), &(oe->op2));
+            change_type(&(oe->op2), &(oe->op1));
         }
         else if (isFloat(op2Type) && !isFloat(op1Type)) {
-            change_type(&(oe->op2), &(oe->op1));
+            change_type(&(oe->op1), &(oe->op2));
         }
 
         oe->prim_type = greater_type(op1Type, op2Type);
+        op1Type = PrimitiveTypes(oe->op1.prim_type);
+        op2Type = PrimitiveTypes(oe->op2.prim_type);
         if (op1Type != op2Type) {
-            if (op1Type == greater_type(op1Type, op2Type)) {
+            if (op1Type != greater_type(op1Type, op2Type)) {
                 change_type(&(oe->op1), &(oe->op2));
             }
             else {
@@ -436,10 +442,24 @@ Expression* relational_expression(OpExpression* oe) {
             oe->prim_type = PrimitiveTypes(BOOL_T);
 
             // Add warning for signed/unsigned mismatch
-            bool op1Unsigned = isUnsigned(op1Type);
-            bool op2Unsigned = isUnsigned(op2Type);
-            if (op1Unsigned != op2Unsigned) {
-                warning_msg("Comparison " + oe->op + " between signed and unsigned values", line_num, column);
+
+            if (isFloat(op1Type) && !isFloat(op2Type)) {
+                change_type(&(oe->op2), &(oe->op1));
+            }
+            else if (isFloat(op2Type) && !isFloat(op1Type)) {
+                change_type(&(oe->op1), &(oe->op2));
+            }
+    
+            oe->prim_type = greater_type(op1Type, op2Type);
+            op1Type = PrimitiveTypes(oe->op1.prim_type);
+            op2Type = PrimitiveTypes(oe->op2.prim_type);
+            if (op1Type != op2Type) {
+                if (op1Type != greater_type(op1Type, op2Type)) {
+                    change_type(&(oe->op1), &(oe->op2));
+                }
+                else {
+                    change_type(&(oe->op2), &(oe->op1));
+                }
             }
 
             if(oe->op1.is_constant && oe->op2.is_constant) {
@@ -476,7 +496,7 @@ Expression* shift_expression(OpExpression* oe) {
 
             // If first operand is unsigned, mark operation as unsigned
             if (isUnsigned(op1Type)) {
-                oe->op += "u";
+                // oe->op += "u";
             }
         }
         else {
@@ -523,11 +543,23 @@ Expression* equality_expression(OpExpression* oe) {
                 return oe;
             }
 
-            // Add warning for signed/unsigned mismatch
-            bool op1Unsigned = isUnsigned(op1Type);
-            bool op2Unsigned = isUnsigned(op2Type);
-            if (op1Unsigned != op2Unsigned) {
-                warning_msg("Comparison " + oe->op + " between signed and unsigned values", line_num, column);
+            if (isFloat(op1Type) && !isFloat(op2Type)) {
+                change_type(&(oe->op2), &(oe->op1));
+            }
+            else if (isFloat(op2Type) && !isFloat(op1Type)) {
+                change_type(&(oe->op1), &(oe->op2));
+            }
+    
+            oe->prim_type = greater_type(op1Type, op2Type);
+            op1Type = PrimitiveTypes(oe->op1.prim_type);
+            op2Type = PrimitiveTypes(oe->op2.prim_type);
+            if (op1Type != op2Type) {
+                if (op1Type != greater_type(op1Type, op2Type)) {
+                    change_type(&(oe->op1), &(oe->op2));
+                }
+                else {
+                    change_type(&(oe->op2), &(oe->op1));
+                }
             }
         }
         else {
@@ -558,17 +590,15 @@ Expression* and_expression(OpExpression* oe) {
     if (oe->op == "&") {
         if (isInt(op1Type) && isInt(op2Type)) {
             // Determine the result type (using the "wider" of the two types)
-            oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
 
-            // Handle unsigned/signed issues
-            bool op1Unsigned = isUnsigned(op1Type);
-            bool op2Unsigned = isUnsigned(op2Type);
-
-            if (!(op1Unsigned && op2Unsigned)) {
-                // upgrade unsigned to signed for safety
-                PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
-                make_signed(tmp);
-                oe->prim_type = tmp;
+            oe->prim_type = greater_type(op1Type, op2Type);
+            if (op1Type != op2Type) {
+                if (op1Type != greater_type(op1Type, op2Type)) {
+                    change_type(&(oe->op1), &(oe->op2));
+                }
+                else {
+                    change_type(&(oe->op2), &(oe->op1));
+                }
             }
 
             // 3AC code would be added here
@@ -601,19 +631,15 @@ Expression* xor_expression(OpExpression* oe) {
     if (oe->op == "^") {
         if (isInt(op1Type) && isInt(op2Type)) {
             // Determine the result type (using the "wider" of the two types)
-            oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
-
-            // Handle unsigned/signed issues
-            bool op1Unsigned = isUnsigned(op1Type);
-            bool op2Unsigned = isUnsigned(op2Type);
-
-            if (!(op1Unsigned && op2Unsigned)) {
-                // upgrade unsigned to signed for safety
-                PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
-                make_signed(tmp);
-                oe->prim_type = tmp;
+            oe->prim_type = greater_type(op1Type, op2Type);
+            if (op1Type != op2Type) {
+                if (op1Type != greater_type(op1Type, op2Type)) {
+                    change_type(&(oe->op1), &(oe->op2));
+                }
+                else {
+                    change_type(&(oe->op2), &(oe->op1));
+                }
             }
-
             // 3AC code would be added here
         }
         else {
@@ -645,17 +671,14 @@ Expression* or_expression(OpExpression* oe) {
     if (oe->op == "|") {
         if (isInt(op1Type) && isInt(op2Type)) {
             // Determine the result type (using the "wider" of the two types)
-            oe->prim_type = op1Type > op2Type ? op1Type : op2Type;
-
-            // Handle unsigned/signed issues
-            bool op1Unsigned = isUnsigned(op1Type);
-            bool op2Unsigned = isUnsigned(op2Type);
-
-            if (!(op1Unsigned && op2Unsigned)) {
-                // upgrade unsigned to signed for safety
-                PrimitiveTypes tmp = static_cast<PrimitiveTypes>(oe->prim_type);
-                make_signed(tmp);
-                oe->prim_type = tmp;
+            oe->prim_type = greater_type(op1Type, op2Type);
+            if (op1Type != op2Type) {
+                if (op1Type != greater_type(op1Type, op2Type)) {
+                    change_type(&(oe->op1), &(oe->op2));
+                }
+                else {
+                    change_type(&(oe->op2), &(oe->op1));
+                }
             }
 
             // 3AC code would be added here
@@ -687,9 +710,15 @@ Expression* logical_and_expression(OpExpression* oe) {
     }
 
     if (oe->op == "&&") {
-        if (isInt(op1Type) && isInt(op2Type)) {
+        if ((isInt(op1Type)|| isFloat(op1Type)) && (isInt(op2Type)|| isFloat(op2Type))) {
             // Result type is boolean
             oe->prim_type = PrimitiveTypes(BOOL_T);
+
+            if(oe->op1.is_constant && oe->op2.is_constant) {
+                oe->is_constant = true;
+                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);  
+                return oe;
+            }
         }
         else {
             error_msg("Invalid types for logical AND operation " + oe->op, line_num, column);
@@ -718,9 +747,15 @@ Expression* logical_or_expression(OpExpression* oe) {
     }
 
     if (oe->op == "||") {
-        if (isInt(op1Type) && isInt(op2Type)) {
+        if ((isInt(op1Type)|| isFloat(op1Type)) && (isInt(op2Type)|| isFloat(op2Type))) {
             // Result type is boolean
             oe->prim_type = PrimitiveTypes(BOOL_T);
+
+            if(oe->op1.is_constant && oe->op2.is_constant) {
+                oe->is_constant = true;
+                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);  
+                return oe;
+            }
         }
         else {
             error_msg("Invalid types for logical OR operation " + oe->op, line_num, column);
