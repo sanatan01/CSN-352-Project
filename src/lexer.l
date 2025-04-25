@@ -32,21 +32,6 @@ UNTERMINATED_STRING   L?\"([^"\\\n]|\\.)*$
 "//".* { /* Single-line comment: ignore */ }
 "/*" { comment(); }
 
-
-{INVALID_IDENTIFIER} {
-    lexicalError("Invalid identifier '%s' - cannot start with digit", yytext);
-    displayLexer(INVALID_ID, yytext);
-    yylval.nice = strdup(yytext);
-    yycolumn += yyleng; return ERROR;
-}
-
-{INVALID_CHARACTER} {
-    lexicalError("Invalid character '%s' in input", yytext);
-    displayLexer(INVALID_CHAR, yytext);
-    yylval.nice = strdup("INVALID CHARACTER");
-    yycolumn += yyleng; return ERROR;
-}
-
 "auto"      { displayLexer(AUTO, yytext);      yylval.nice = strdup(getTokenName(AUTO));      yycolumn += yyleng; return AUTO; }
 "break"     { displayLexer(BREAK, yytext);     yylval.nice = strdup(getTokenName(BREAK));     yycolumn += yyleng; return BREAK; }
 "case"      { displayLexer(CASE, yytext);      yylval.nice = strdup(getTokenName(CASE));      yycolumn += yyleng; return CASE; }
@@ -112,6 +97,20 @@ L?\"(\\.|[^\\"])*\"              { displayLexer(STRING_LITERAL, yytext); yylval.
     lexicalError("Unterminated string literal '%s'", yytext);
     displayLexer(UNTERM_STRING, yytext);
     yylval.nice = strdup("UNTERMINATED STRING");
+    yycolumn += yyleng; return ERROR;
+}
+
+{INVALID_IDENTIFIER} {
+    lexicalError("Invalid identifier '%s' - cannot start with digit", yytext);
+    displayLexer(INVALID_ID, yytext);
+    yylval.nice = strdup(yytext);
+    yycolumn += yyleng; return ERROR;
+}
+
+{INVALID_CHARACTER} {
+    lexicalError("Invalid character '%s' in input", yytext);
+    displayLexer(INVALID_CHAR, yytext);
+    yylval.nice = strdup("INVALID CHARACTER");
     yycolumn += yyleng; return ERROR;
 }
 

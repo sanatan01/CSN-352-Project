@@ -25,7 +25,7 @@ using namespace backend;
 
 %define parse.error verbose
 
-%token <string> IDENTIFIER TEMP STRING_LITERAL CONSTANT_LITERAL LABEL REFERENCE EQU
+%token <string> IDENTIFIER TEMP STRING_LITERAL CONSTANT_LITERAL LABEL REFERENCE LPAREN RPAREN
 %token <string> CALL RETURN PARAM PUSH POP GOTO STATIC COPY IF FUNC ENTER EXIT DATA GLOBAL
 %token <string> COMMA ASSIGN AMPERSAND EXCLAMATION
 %token <string> TILDE MINUS PLUS ASTERISK SLASH PERCENT DOT
@@ -99,9 +99,14 @@ statement
     | pop_statement
     | goto_statement
     | copy_statement
+    | cast_statement
     | ENTER { create_enter_statement(); }
     | EXIT { create_exit_statement(); }
     ;
+
+cast_statement
+    : variable ASSIGN LPAREN IDENTIFIER RPAREN variable
+    ; 
 
 quad_statement
     : variable ASSIGN variable binary_operator variable {

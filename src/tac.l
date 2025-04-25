@@ -58,7 +58,8 @@ L?'(\\.|[^\\'])+\'               { displayLexer("CONSTANT_LITERAL", yytext); tac
 
 L?\"(\\.|[^\\"])*\"              { displayLexer("STRING_LITERAL", yytext); tac_lval.string = strdup(yytext); return STRING_LITERAL; }
 
-
+"("         { displayLexer("LPAREN", yytext); tac_lval.string = strdup(yytext); return LPAREN; }
+")"         { displayLexer("RPAREN", yytext); tac_lval.string = strdup(yytext); return RPAREN; }
 ">>"        { displayLexer("RIGHT_OP", yytext); tac_lval.string = strdup(yytext); return RIGHT_OP; }
 "<<"        { displayLexer("LEFT_OP", yytext); tac_lval.string = strdup(yytext); return LEFT_OP; }
 "&&"        { displayLexer("AND_OP", yytext); tac_lval.string = strdup(yytext); return AND_OP; }

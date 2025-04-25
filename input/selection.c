@@ -4,11 +4,17 @@ int main() {
     int b = 10;
     
     if (a > b) {
-        a=10;
+        a=10<1;
     }
     else
     {
         b = 20 * 3 - 79;
+        float f2 = 0.5*1e4;
+        float cd =  f2*2;
+
+        b = 50 && 0.000;
+        b=b+3;
+        b = (float)a;
     }
 
     if (b >= a) {
