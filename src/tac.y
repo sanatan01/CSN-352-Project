@@ -145,9 +145,6 @@ double_statement
     | variable ASSIGN CONSTANT_LITERAL {
         create_double(std::string($1), std::string($3), true, false);
     }
-    | variable ASSIGN STRING_LITERAL {
-        create_double(std::string($1), std::string($3), false, true);
-    }
     ;
 
 labeled_statement
@@ -192,7 +189,8 @@ assignment_statement
     : quad_statement
     | triple_statement
     | double_statement
-    | variable ASSIGN CALL IDENTIFIER COMMA CONSTANT_LITERAL { // TODO 
+    | variable ASSIGN CALL IDENTIFIER COMMA CONSTANT_LITERAL { 
+        create_call_statement(std::string($1), std::string($4), std::string($6));
     }
     ;
 
