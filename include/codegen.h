@@ -161,7 +161,7 @@ namespace backend
 
         static std::string convert_to_valid(std::string str);
 
-        static void add_to_asm(std::string txt, bool indent = true);
+        static void add_to_asm(std::string txt, std::string comment, bool indent = true);
         static void add_to_data(std::string name, int size, std::string val, int type);
     };
 
