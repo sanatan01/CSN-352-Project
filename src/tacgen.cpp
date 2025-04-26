@@ -151,10 +151,13 @@ namespace backend {
                 if (old_op.type.type_tag == STRUCT_TYPE) {
                     Operand op = Operand();
                     GlobalType* typ = old_op.type.struct_type->get_member(std::stoi(operands[1].name));
-                    op.type = GlobalType(*typ);
+                    op.type = *(create_pointer_type(typ));
                     op.name = operands.back().name;
                     op.is_constant = false;
                     op.size = typ->getSize();
+                    operands.back() = Operand(op);
+                    operands.back().storage_loc = TEMP;
+                    break;
                 }
             }
             case SUB:
@@ -188,6 +191,7 @@ namespace backend {
                 operands.back() = Operand(operands[0]);
                 operands.back().name = name;
                 operands.back().is_constant = false;
+                operands.back().storage_loc = TEMP;
                 MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
             }
             break;
@@ -203,6 +207,7 @@ namespace backend {
                 op.is_constant = false;
                 op.type = *(create_primitive_type(CHAR_T));
                 operands.back() = Operand(op);
+                operands.back().storage_loc = TEMP;
                 MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
             }
             break;
@@ -266,6 +271,7 @@ namespace backend {
                     operands.back() = Operand(operands[0]);
                     operands.back().name = name;
                     operands.back().is_constant = false;
+                    operands.back().storage_loc = TEMP;
                     MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
                 }
                 break;
@@ -278,6 +284,7 @@ namespace backend {
                         op.is_constant = false;
                         op.type.pointer_type->ptr_level++;
                         operands.back() = Operand(op);
+                        operands.back().storage_loc = TEMP;
                         MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
                     }
                     else if (old_op.type.type_tag == ARRAY_TYPE) {
@@ -288,6 +295,7 @@ namespace backend {
                         op.type = *create_pointer_type(old_op.type.array_type->return_type, old_op.type.array_type->dim, old_op.type.getSpecifiers());
                         op.type.pointer_type->ptr_level++;
                         operands.back() = Operand(op);
+                        operands.back().storage_loc = TEMP;
                         MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
                     }
                     else {
@@ -296,9 +304,11 @@ namespace backend {
                         op.is_constant = false;
                         op.type = *(create_pointer_type(&old_op.type));
                         operands.back() = Operand(op);
+                        operands.back().storage_loc = TEMP;
                         MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
                     }
                 }
+                break;
                 case DEREF_OP:
                 {
                     Operand old_op = Operand(operands[0]);
@@ -313,6 +323,7 @@ namespace backend {
                         }
 
                         operands.back() = Operand(op);
+                        operands.back().storage_loc = TEMP;
                         MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
                     }
                     else if (old_op.type.type_tag == ARRAY_TYPE) {
@@ -326,12 +337,16 @@ namespace backend {
                         }
 
                         operands.back() = Operand(op);
+                        operands.back().storage_loc = TEMP;
                         MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
                     }
                     else {
                         error_msg("Invalid TAC, cannot dereference a non-pointer type");
                     }
                 }
+                break;
+                default:
+                    break;
                 }
             }
             break;
@@ -491,6 +506,7 @@ namespace backend {
                 operands.back() = Operand(operands[0]);
                 operands.back().name = name;
                 operands.back().is_constant = false;
+                operands.back().storage_loc = TEMP;
                 MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
             }
         }
@@ -536,6 +552,7 @@ namespace backend {
         }
         else {
             if ((operands[0].type.type_tag != operands.back().type.type_tag) || operands[0].type.type_tag == FUNCTION_TYPE) {
+                error_msg("Types of operands are" + operands[0].type.getType() + " and " + operands.back().type.getType());
                 error_msg("Incompatible types for variable assignment");
                 return;
             }
@@ -616,7 +633,7 @@ namespace backend {
             else {
                 // We perform a shallow copy of the pointers for any other type
                 GPR lvalue = get_gpr(operands[0]);
-                CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands[0].name)), "Shallow copy of pointer");
+                CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(lvalue), "Shallow copy of pointer");
                 check_last_use(lvalue, line_number);
             }
         }
@@ -1325,7 +1342,7 @@ namespace backend {
 
     bool check_last_use(int reg, int line_number) {
         ///debug last used
-        CodeGen::add_to_asm("# Last used: " + get_gpr_name(static_cast<GPR>(reg)) +" "+ std::to_string(last_used[gpr_map[static_cast<GPR>(reg)].name]) +" curr line " + std::to_string(line_number), "Debug last used");
+        CodeGen::add_to_asm("# Last used: " + get_gpr_name(static_cast<GPR>(reg)) + " " + std::to_string(last_used[gpr_map[static_cast<GPR>(reg)].name]) + " curr line " + std::to_string(line_number), "Debug last used");
         if (last_used[gpr_map[static_cast<GPR>(reg)].name] == line_number) {
             free_gpr(static_cast<GPR>(reg));
             return 1;

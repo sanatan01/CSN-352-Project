@@ -628,6 +628,10 @@ namespace backend {
         op.is_constant = false;
         op.storage_loc = StorageLoc(loc);
 
+        if (symbol.identifier.type->type_tag == ARRAY_TYPE) {
+            op.type = *create_pointer_type(symbol.identifier.type->array_type->return_type, symbol.identifier.type->array_type->dim, symbol.identifier.type->getSpecifiers());
+        }
+
         switch (op.type.type_tag) {
         case STANDARD_TYPE:
         case ARRAY_TYPE:
@@ -648,7 +652,7 @@ namespace backend {
         Operand op = Operand();
         op.name = name;
         op.size = sz;
-        op.type = type;
+        op.type = GlobalType(type);
         op.is_constant = false;
         op.storage_loc = StorageLoc(loc);
 
