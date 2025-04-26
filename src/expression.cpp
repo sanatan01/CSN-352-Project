@@ -1899,6 +1899,7 @@ Expression* create_unary_expression(OpExpression* oe) {
             case POINTER_TYPE:
             {
                 oe->prim_type = ERROR_T;
+                oe->exp_type = oe->op1.exp_type;
                 oe->exp_type->pointer_type->ptr_level++;
                 new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = .addr " + oe->op1.name);
