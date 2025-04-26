@@ -4,7 +4,7 @@ int main(){
     int *a;
     *a = b;
     int **c;
-    // c = &a;
+    c = &a;
 
 
     return 0;

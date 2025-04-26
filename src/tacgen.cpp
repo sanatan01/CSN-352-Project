@@ -344,6 +344,7 @@ namespace backend {
 
     void Triple::generate_asm() const {
         GPR lvalue = get_gpr(operands.back());
+        CodeGen::add_to_asm("# " + operands.back().name + " is in " + get_gpr_name(lvalue), "");
         switch (special_op) {
         case NONE_SP:
         {
@@ -496,7 +497,7 @@ namespace backend {
     }
 
     void Double::generate_asm() const {
-        GPR resultReg = get_gpr(operands.back(), true);
+        GPR resultReg = get_gpr(operands.back());
 
         if (operands[0].is_constant) {
             if (is_float(operands.back().type)) {
@@ -534,8 +535,8 @@ namespace backend {
             }
         }
         else {
-            if (operands[0].type.type_tag != operands.back().type.type_tag) {
-                error_msg("Incompatible types for variable assignment (different types)");
+            if ((operands[0].type.type_tag != operands.back().type.type_tag) || operands[0].type.type_tag == FUNCTION_TYPE) {
+                error_msg("Incompatible types for variable assignment");
                 return;
             }
             if (operands[0].type.type_tag == STANDARD_TYPE) {
@@ -543,7 +544,7 @@ namespace backend {
                 if (operands[0].type.standard_type->name == operands.back().type.standard_type->name) {
 
                     //get rvalue register
-                    GPR secondReg = get_gpr(operands[0], true);
+                    GPR secondReg = get_gpr(operands[0]);
 
                     if (operands.back().size <= 4) {
                         if (!is_float(operands[0].type)) {
@@ -572,7 +573,7 @@ namespace backend {
                     // TODO: currently this one is for float not double
 
                     // Get register for rvalue  operand
-                    GPR secondReg = get_gpr(operands[0], true);
+                    GPR secondReg = get_gpr(operands[0]);
 
 
                     if (!is_float(operands[0].type) && is_float(operands.back().type)) {
@@ -612,8 +613,12 @@ namespace backend {
 
                 }
             }
-            else if (operands[0].type.type_tag == ARRAY_TYPE) {}
-            else if (operands[0].type.type_tag == POINTER_TYPE) {}
+            else {
+                // We perform a shallow copy of the pointers for any other type
+                GPR lvalue = get_gpr(operands[0]);
+                CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands[0].name)), "Shallow copy of pointer");
+                check_last_use(lvalue, line_number);
+            }
         }
         check_last_use(resultReg, line_number);
     };
@@ -808,7 +813,7 @@ namespace backend {
                 MMU::push(operands.back());
                 CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string((operands.back()).size), "Allocating space for " + operands.back().name);
 
-                GPR resultReg = get_gpr(operands.back(), true);
+                GPR resultReg = get_gpr(operands.back(), false);
 
                 if (operands[1].is_constant) {
                     if (is_float(operands.back().type)) {
@@ -846,8 +851,8 @@ namespace backend {
                     }
                 }
                 else {
-                    if (operands[1].type.type_tag != operands.back().type.type_tag) {
-                        error_msg("Incompatible types for variable assignment (different types)");
+                    if ((operands[1].type.type_tag != operands.back().type.type_tag) || operands[1].type.type_tag == FUNCTION_TYPE) {
+                        error_msg("Incompatible types for variable assignment");
                         return;
                     }
                     if (operands[1].type.type_tag == STANDARD_TYPE) {
@@ -855,7 +860,7 @@ namespace backend {
                         if (operands[1].type.standard_type->name == operands.back().type.standard_type->name) {
 
                             //get rvalue register
-                            GPR secondReg = get_gpr(operands[1], true);
+                            GPR secondReg = get_gpr(operands[1]);
 
                             if (operands.back().size <= 4) {
                                 if (!is_float(operands[1].type)) {
@@ -884,7 +889,7 @@ namespace backend {
                             // TODO: currently this one is for float not double
 
                             // Get register for rvalue  operand
-                            GPR secondReg = get_gpr(operands[1], true);
+                            GPR secondReg = get_gpr(operands[1]);
 
 
                             if (!is_float(operands[1].type) && is_float(operands.back().type)) {
@@ -924,8 +929,13 @@ namespace backend {
 
                         }
                     }
-                    else if (operands[1].type.type_tag == ARRAY_TYPE) {}
-                    else if (operands[1].type.type_tag == POINTER_TYPE) {}
+                    else {
+                        // We perform a shallow copy of the pointers for any other type
+                        GPR lvalue = get_gpr(operands[1]);
+                        CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands[1].name)), "Shallow copy of pointer");
+                        check_last_use(lvalue, line_number);
+                    }
+
                 }
                 check_last_use(resultReg, line_number);
             }
