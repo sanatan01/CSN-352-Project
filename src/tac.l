@@ -47,6 +47,13 @@ IS          (u|U|l|L|ll|LL|ul|uL|Ul|UL|lu|lU|Lu|LU|ull|uLL|Ull|ULL|llu|llU|LLu|L
 
 
 
+"-"0[xX]{H}+{IS}?                { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+"-"0{D}+{IS}?                    { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+"-"{D}+{IS}?                     { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+"-"{D}+{E}{FS}?                  { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+"-"{D}*"."{D}+({E})?{FS}?        { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+"-"{D}+"."{D}*({E})?{FS}?        { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
+
 0[xX]{H}+{IS}?                   { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
 0{D}+{IS}?                       { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }
 {D}+{IS}?                        { displayLexer("CONSTANT_LITERAL", yytext); tac_lval.string = strdup(yytext); return CONSTANT_LITERAL; }

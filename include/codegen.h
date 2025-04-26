@@ -105,7 +105,7 @@ namespace backend
     void init_gpr_map();
 
     GPR get_free_gpr(Operand op, bool load);
-    void get_free_arg_gpr(Operand op);
+    void get_free_arg_gpr(std::vector<Operand> args, Operand ret);
 
     void set_gpr(GPR reg, std::string name);
 
