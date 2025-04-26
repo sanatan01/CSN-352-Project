@@ -966,7 +966,6 @@ Expression* assignment_expression(OpExpression* oe) {
         }
         else if (oe->op1.exp_type->type_tag == POINTER_TYPE && oe->op2.exp_type->type_tag == POINTER_TYPE) {
             // Pointer assignment
-            //  TODO: how to do level check
             PrimitiveTypes p1 = static_cast<PrimitiveTypes>(oe->op1.exp_type->pointer_type->return_type->type_tag);
             PrimitiveTypes p2 = static_cast<PrimitiveTypes>(oe->op2.exp_type->pointer_type->return_type->type_tag);
             int p1_ptr_level = oe->op1.exp_type->pointer_type->ptr_level;
@@ -978,7 +977,6 @@ Expression* assignment_expression(OpExpression* oe) {
         }
         else if (oe->op1.exp_type->type_tag == POINTER_TYPE && oe->op2.exp_type->type_tag == ARRAY_TYPE) {
             // Pointer assignment
-            //  TODO: how to do level check
             PrimitiveTypes p1 = static_cast<PrimitiveTypes>(oe->op1.exp_type->pointer_type->return_type->type_tag);
             PrimitiveTypes p2 = static_cast<PrimitiveTypes>(oe->op2.exp_type->array_type->return_type->type_tag);
             int p1_ptr_level = oe->op1.exp_type->pointer_type->ptr_level;
@@ -990,7 +988,6 @@ Expression* assignment_expression(OpExpression* oe) {
         }
         else if (oe->op1.exp_type->type_tag == ARRAY_TYPE && oe->op2.exp_type->type_tag == POINTER_TYPE) {
             // Pointer assignment
-            //  TODO: how to do level check
             PrimitiveTypes p1 = static_cast<PrimitiveTypes>(oe->op1.exp_type->array_type->return_type->type_tag);
             PrimitiveTypes p2 = static_cast<PrimitiveTypes>(oe->op2.exp_type->pointer_type->return_type->type_tag);
             int p1_ptr_level = oe->op1.exp_type->array_type->dim;
@@ -1002,7 +999,6 @@ Expression* assignment_expression(OpExpression* oe) {
         }
         else if (oe->op1.exp_type->type_tag == ARRAY_TYPE && oe->op2.exp_type->type_tag == ARRAY_TYPE) {
             // Pointer assignment
-            //  TODO: how to do level check
             PrimitiveTypes p1 = static_cast<PrimitiveTypes>(oe->op1.exp_type->array_type->return_type->type_tag);
             PrimitiveTypes p2 = static_cast<PrimitiveTypes>(oe->op2.exp_type->array_type->return_type->type_tag);
             int p1_ptr_level = oe->op1.exp_type->array_type->dim;

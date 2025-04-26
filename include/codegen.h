@@ -107,6 +107,11 @@ namespace backend
 
     GPR get_free_gpr(Operand op, bool load);
     void get_free_arg_gpr(std::vector<Operand> args, Operand ret);
+    void set_arg_type(Operand& op);
+
+    void set_gpr(Operand op);
+
+    void load_gpr(GPR reg, Operand op, bool store_long = false);
 
     void set_gpr(GPR reg, std::string name);
 
@@ -140,6 +145,12 @@ namespace backend
 
         static bool add_symbol(std::string name, int size, GlobalType type, int loc = 0);
 
+        // Functions for function call
+        static GlobalType get_symbol_type(std::string name, int index);
+        static void rename_symbol(std::string new_name);
+        static int get_offset_relative(std::string name);
+        static void rename_top();
+
         static int get_symbol_size(std::string name);
         static Operand get_symbol(std::string name);
         static GlobalType *get_symbol_type(std::string name);
@@ -152,10 +163,11 @@ namespace backend
     public:
         static int current_scope;
         static int stack_pushed;
-        static bool first_param;
+        static std::string current_func;
 
         // Making things work
         static std::vector<std::vector<Register>> dump_map;
+        static std::vector<std::string> fp_names;
 
         static std::stringstream asm_stream;
         static std::stringstream data_stream;

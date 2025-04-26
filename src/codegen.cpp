@@ -12,9 +12,10 @@ namespace backend {
 
     int CodeGen::current_scope = 0;
     int CodeGen::stack_pushed = 0;
-    bool CodeGen::first_param = true;
+    std::string CodeGen::current_func = "";
 
     std::vector<std::vector<Register>> CodeGen::dump_map;
+    std::vector<std::string> CodeGen::fp_names;
     std::map<std::string, GlobalType> MMU::function_map;
 
     std::stringstream CodeGen::asm_stream;
@@ -275,25 +276,45 @@ namespace backend {
             break;
         case STACK:
         {
+            std::string ptr = "$sp";
+            for (auto n : CodeGen::fp_names)
+            {
+                if (n == op.name)
+                {
+                    ptr = "$fp";
+                    break;
+                }
+            }
+
             int offset = MMU::get_offset(op.name);
-            if (offset != -1) {
-                if (is_float(op.type)) {
-                    if (op.size == 8) {
-                        CodeGen::add_to_asm("ldc1 " + get_gpr_name(reg) + ", " + std::to_string(offset) + "($sp)", "Loading double into " + get_gpr_name(reg), true);
+            if (ptr == "$fp")
+            {
+                offset = MMU::get_offset_relative(op.name);
+            }
+            if (offset != -1)
+            {
+                if (is_float(op.type))
+                {
+                    if (op.size == 8)
+                    {
+                        CodeGen::add_to_asm("ldc1 " + get_gpr_name(reg) + ", " + std::to_string(offset) + "(" + ptr + ")", "Loading double into " + get_gpr_name(reg), true);
                         set_gpr(reg, op.name);
                         set_gpr(static_cast<GPR>(int(reg) + 1), op.name);
                     }
-                    else if (op.size == 4) {
-                        CodeGen::add_to_asm("lwc1 " + get_gpr_name(reg) + ", " + std::to_string(offset) + "($sp)", "Loading float into " + get_gpr_name(reg), true);
+                    else if (op.size == 4)
+                    {
+                        CodeGen::add_to_asm("lwc1 " + get_gpr_name(reg) + ", " + std::to_string(offset) + "(" + ptr + ")", "Loading float into " + get_gpr_name(reg), true);
                         set_gpr(reg, op.name);
                     }
                 }
                 else {
                     // TODO, make sure that hi lo are set properly
-                    CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", " + std::to_string(offset) + "($sp)", "Loading into " + get_gpr_name(reg) + " from stack with name " + op.name, true);
+                    CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", " + std::to_string(offset) + "(" + ptr + ")", "Loading into " + get_gpr_name(reg) + " from stack with name " + op.name, true);
                     set_gpr(reg, op.name);
-                    if (store_long && op.size == 8) {
-                        CodeGen::add_to_asm("lw " + get_gpr_name(static_cast<GPR>(int(reg) + 1)) + ", " + std::to_string(offset + 4) + "($sp)", "Loading long long into " + get_gpr_name(reg), true);
+                    error_msg("Name of temp added  is : " + gpr_map[reg].name);
+                    if (store_long && op.size == 8)
+                    {
+                        CodeGen::add_to_asm("lw " + get_gpr_name(static_cast<GPR>(int(reg) + 1)) + ", " + std::to_string(offset + 4) + "(" + ptr + ")", "Loading long long into " + get_gpr_name(reg), true);
                         set_gpr(static_cast<GPR>(int(reg) + 1), op.name);
                     }
                 }
@@ -412,8 +433,79 @@ namespace backend {
             set_gpr(a0, ret.name);
         }
 
-        for (int i = 0; i < args.size(); ++i) {
-            if (args[i].is_constant) {
+        dump_all_regs();
+
+        for (int i = 0; i < args.size(); ++i)
+        {
+            if (args[i].is_constant)
+            {
+                // Get size
+                if (is_float(args[i].type))
+                {
+                    for (GPR j : float_args)
+                    {
+                        if (gpr_map[j].is_free())
+                        {
+                            load_gpr(j, args[i], true);
+                            set_gpr(j, args[i].name);
+                            gpr_map[j].name = "param";
+                            if (args[i].size == 8)
+                                gpr_map[GPR(int(j) + 1)].name = "param";
+                            break;
+                        }
+                    }
+
+                    // Pushing to stack if no free registers
+                    CodeGen::stack_pushed += args[i].size;
+                    MMU::push(args[i]);
+                    MMU::rename_top();
+                    CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing constant argument to stack");
+                    auto [hi, lo] = floatToIEEEHex(args[i].name, args[i].size == 8);
+                    CodeGen::add_to_asm("li " + get_gpr_name(f0) + ", " + hi, "Loading constant argument");
+                    CodeGen::add_to_asm("sw " + get_gpr_name(f0) + ", " + std::to_string(MMU::get_offset("param")) + "($sp)", "Moving constant argument");
+                    if (args[i].size == 8)
+                    {
+                        CodeGen::add_to_asm("li " + get_gpr_name(f0) + ", " + lo, "Loading constant argument");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(f0) + ", " + std::to_string(MMU::get_offset("param") + 4) + "($sp)", "Moving constant argument");
+                    }
+                    free_gpr(f0);
+                }
+                else
+                {
+                    for (GPR j : int_args)
+                    {
+                        if (gpr_map[j].is_free())
+                        {
+                            load_gpr(j, args[i], true);
+                            set_gpr(j, args[i].name);
+                            gpr_map[j].name = "param";
+                            if (args[i].size == 8)
+                                gpr_map[GPR(int(j) + 1)].name = "param";
+                            break;
+                        }
+                    }
+
+                    // Pushing to stack if no free registers
+                    CodeGen::stack_pushed += args[i].size;
+                    MMU::push(args[i]);
+                    MMU::rename_top();
+                    CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing constant argument to stack");
+                    if (args[i].size <= 4)
+                    {
+                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + args[i].name, "Loading constant argument");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset("param")) + "($sp)", "Moving constant argument");
+                    }
+                    else
+                    {
+                        auto [hi, lo] = getHighLowBytes(args[i].name);
+                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant argument");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset("param")) + "($sp)", "Moving constant argument");
+                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant argument");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset("param") + 4) + "($sp)", "Moving constant argument");
+                    }
+
+                    free_gpr(s0);
+                }
             }
             else {
                 if (is_float(args[i].type)) {
@@ -421,29 +513,50 @@ namespace backend {
                         if (gpr_map[j].is_free()) {
                             load_gpr(j, args[i], true);
                             set_gpr(j, args[i].name);
+                            gpr_map[j].name = "param";
+                            if (args[i].size == 8)
+                                gpr_map[GPR(int(j) + 1)].name = "param";
                             break;
                         }
                     }
 
                     // Pushing to stack if no free registers
                     GPR temp = get_assigned_gpr(args[i].name);
-                    if (temp != empty) {
+                    if (temp != empty)
+                    {
                         store_gpr(temp, args[i].name);
                     }
 
-
+                    CodeGen::stack_pushed += args[i].size;
+                    MMU::push(args[i]);
+                    MMU::rename_top();
+                    // TODO
+                    CodeGen::add_to_asm("Need to add assembly for storing known float into stack pointer", "Pushing float argument to stack");
+                    error_msg("Pushing to stack not implemented for float args");
                 }
-                else {
-                    for (GPR j : int_args) {
-                        if (gpr_map[j].is_free()) {
+                else
+                {
+                    for (GPR j : int_args)
+                    {
+                        if (gpr_map[j].is_free())
+                        {
+                            if ((8 - j) * 4 < args[i].size)
+                            {
+                                continue;
+                            }
+
                             load_gpr(j, args[i], true);
                             set_gpr(j, args[i].name);
+                            gpr_map[j].name = "param";
+                            if (args[i].size == 8)
+                                gpr_map[GPR(int(j) + 1)].name = "param";
                             break;
                         }
                     }
 
                     GPR temp = get_assigned_gpr(args[i].name);
-                    if (temp != empty) {
+                    if (temp != empty)
+                    {
                         store_gpr(temp, args[i].name);
                     }
 
@@ -455,8 +568,12 @@ namespace backend {
                     }
                     CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing argument to stack");
                     MMU::push(args[i]);
-                    for (int j = 0; j < args[i].size; j += 4) {
-                        switch (args[i].storage_loc) {
+                    MMU::rename_top();
+                    CodeGen::stack_pushed += args[i].size;
+                    for (int j = 0; j < args[i].size; j += 4)
+                    {
+                        switch (args[i].storage_loc)
+                        {
                         case STACK:
                             CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset(args[i].name) + j) + "($sp)", "Pushing argument to stack");
                             break;
@@ -473,6 +590,96 @@ namespace backend {
                     free_gpr(s0);
                 }
             }
+        }
+    }
+
+    void set_arg_type(Operand &op)
+    {
+        GPR float_temps[2] = {f12, f14};
+        GPR int_temps[4] = {a0, a1, a2, a3};
+
+        if (is_float(op.type))
+        {
+            for (GPR j : float_temps)
+            {
+                if (gpr_map[j].name == "param")
+                {
+                    gpr_map[j].name = op.name;
+                    if (op.size == 8)
+                        gpr_map[GPR(int(j) + 1)].name = op.name;
+                    op.storage_loc = TEMP;
+                    MMU::add_symbol(op.name, op.size, op.type, static_cast<int>(TEMP));
+                    break;
+                }
+            }
+
+            MMU::rename_symbol(op.name);
+            CodeGen::fp_names.push_back(op.name);
+            MMU::add_symbol(op.name, op.size, op.type, static_cast<int>(STACK));
+        }
+        else
+        {
+            for (GPR j : int_temps)
+            {
+                if (gpr_map[j].name == "param")
+                {
+                    gpr_map[j].name = op.name;
+                    if (op.size == 8)
+                        gpr_map[GPR(int(j) + 1)].name = op.name;
+                    op.storage_loc = TEMP;
+                    MMU::add_symbol(op.name, op.size, op.type, static_cast<int>(TEMP));
+                    break;
+                }
+            }
+
+            MMU::rename_symbol(op.name);
+            CodeGen::fp_names.push_back(op.name);
+            MMU::add_symbol(op.name, op.size, op.type, static_cast<int>(STACK));
+        }
+    }
+
+    void set_arg_type(Operand &op)
+    {
+        GPR float_temps[2] = {f12, f14};
+        GPR int_temps[4] = {a0, a1, a2, a3};
+
+        if (is_float(op.type))
+        {
+            for (GPR j : float_temps)
+            {
+                if (gpr_map[j].name == "param")
+                {
+                    gpr_map[j].name = op.name;
+                    if (op.size == 8)
+                        gpr_map[GPR(int(j) + 1)].name = op.name;
+                    op.storage_loc = TEMP;
+                    MMU::add_symbol(op.name, op.size, op.type, static_cast<int>(TEMP));
+                    break;
+                }
+            }
+
+            MMU::rename_symbol(op.name);
+            CodeGen::fp_names.push_back(op.name);
+            MMU::add_symbol(op.name, op.size, op.type, static_cast<int>(STACK));
+        }
+        else
+        {
+            for (GPR j : int_temps)
+            {
+                if (gpr_map[j].name == "param")
+                {
+                    gpr_map[j].name = op.name;
+                    if (op.size == 8)
+                        gpr_map[GPR(int(j) + 1)].name = op.name;
+                    op.storage_loc = TEMP;
+                    MMU::add_symbol(op.name, op.size, op.type, static_cast<int>(TEMP));
+                    break;
+                }
+            }
+
+            MMU::rename_symbol(op.name);
+            CodeGen::fp_names.push_back(op.name);
+            MMU::add_symbol(op.name, op.size, op.type, static_cast<int>(STACK));
         }
     }
 
@@ -509,6 +716,7 @@ namespace backend {
         if (CodeGen::dump_map.empty()) {
             return;
         }
+
         std::vector<Register> dump = CodeGen::dump_map.back();
         CodeGen::dump_map.pop_back();
         for (int i = 0; i < 10; ++i) {
@@ -647,20 +855,85 @@ namespace backend {
                 op.type = *create_pointer_type(symbol.identifier.type->array_type->return_type, symbol.identifier.type->array_type->dim, symbol.identifier.type->getSpecifiers());
             }
 
-            switch (op.type.type_tag) {
-            case STANDARD_TYPE:
-            case ARRAY_TYPE:
-            case STRUCT_TYPE:
-            case UNION_TYPE:
-            case ENUM_TYPE:
-            case POINTER_TYPE:
-                symbol_map[name] = op;
-                return true;
-            default:
-                error_msg("Invalid symbol type");
-                return false;
+        switch (op.type.type_tag)
+        {
+        case STANDARD_TYPE:
+        case ARRAY_TYPE:
+        case STRUCT_TYPE:
+        case UNION_TYPE:
+        case ENUM_TYPE:
+        case POINTER_TYPE:
+            symbol_map[name] = op;
+            return true;
+        default:
+            error_msg("Invalid symbol type");
+            return false;
+        }
+    }
+
+    GlobalType MMU::get_symbol_type(std::string name, int index)
+    {
+        Symbol symbol = SymbolTable::get_symbol_by_index(index);
+        if (symbol.identifier.name == name)
+        {
+            return GlobalType(*symbol.identifier.type);
+        }
+        error_msg("Symbol name mismatch");
+        return GlobalType(); // Not found
+    }
+
+    void MMU::rename_symbol(std::string new_name)
+    {
+        int ind = -1;
+        int first_pass = 0;
+        for (int i = stack.size() - 1; i >= 0; --i)
+        {
+            if (first_pass == CodeGen::stack_pushed)
+            {
+                ind = i;
+                break;
+            }
+            first_pass += stack[i].size;
+        }
+
+        for (int i = ind; i < stack.size(); ++i)
+        {
+            if (stack[i].name == "param")
+            {
+                stack[i].name = new_name;
             }
         }
+    }
+
+    int MMU::get_offset_relative(std::string name)
+    {
+        int ind = -1;
+        int first_pass = 0;
+        for (int i = stack.size() - 1; i >= 0; --i)
+        {
+            if (first_pass == CodeGen::stack_pushed)
+            {
+                ind = i;
+                break;
+            }
+            first_pass += stack[i].size;
+        }
+
+        int offset = 0;
+        for (int i = ind; i < stack.size(); ++i)
+        {
+            if (stack[i].name == name)
+            {
+                return offset;
+            }
+            offset += stack[i].size;
+        }
+    }
+
+    void MMU::rename_top()
+    {
+        stack.back().name = "param";
+    }
 
         // Add a temporary into the symbol table
         bool MMU::add_symbol(std::string name, int sz, GlobalType type, int loc) {
@@ -706,12 +979,16 @@ namespace backend {
             return -1; // Not found
         }
 
-        GlobalType* MMU::get_symbol_type(std::string name) {
-            if (symbol_map.find(name) != symbol_map.end()) {
-                return &symbol_map[name].type;
-            }
-            return nullptr; // Not found
+    GlobalType *MMU::get_symbol_type(std::string index)
+    {
+        Symbol symbol = SymbolTable::get_symbol_by_index(std::stoi(index));
+        if (symbol.identifier.type != nullptr)
+        {
+            return symbol.identifier.type;
         }
+        error_msg("Symbol type not found");
+        return nullptr; // Not found
+    }
 
         // ================== CodeGen Functions =================
 
@@ -741,38 +1018,41 @@ namespace backend {
             if (name.length() < 8)
                 txt += "\t";
 
-            // Handle initialized values
-            switch (type) {
-            case 0:
-                if (size == 1)
-                    txt += ".byte\t" + val;
-                else if (size == 2)
-                    txt += ".half\t" + val;
-                else if (size == 4)
-                    txt += ".word\t" + val;
-                else if (size == 8) {
-                    // TODO make sure this is correct
-                    auto [hi, lo] = getHighLowBytes(val);
-                    txt += ".word\t" + lo + "\n";
-                    txt += "\t\t\t.word\t" + hi;
-                }
-                else
-                    txt += ".space\t" + std::to_string(size);
-                break;
-            case 1:
-                if (size == 4) {
-                    auto [hi, lo] = floatToIEEEHex(val, false);
-                    txt += ".float\t" + hi;
-                }
-                else if (size == 8) {
-                    auto [hi, lo] = floatToIEEEHex(val, true);
-                    txt += ".word\t" + lo + "\n";
-                    txt += "\t\t\t.word\t" + hi;
-                }
-                break;
-            case 2:
-                txt += ".asciiz\t" + val;
-                break;
+        // Handle initialized values
+        switch (type)
+        {
+        case 0:
+            if (size == 1)
+                txt += ".byte\t" + val;
+            else if (size == 2)
+                txt += ".half\t" + val;
+            else if (size == 4)
+                txt += ".word\t" + val;
+            else if (size == 8)
+            {
+                auto [hi, lo] = getHighLowBytes(val);
+                txt += ".word\t" + hi + "\n";
+                txt += "\t\t\t.word\t" + lo;
+            }
+            else
+                txt += ".space\t" + std::to_string(size);
+            break;
+        case 1:
+            if (size == 4)
+            {
+                auto [hi, lo] = floatToIEEEHex(val, false);
+                txt += ".float\t" + hi;
+            }
+            else if (size == 8)
+            {
+                auto [hi, lo] = floatToIEEEHex(val, true);
+                txt += ".word\t" + hi + "\n";
+                txt += "\t\t\t.word\t" + lo;
+            }
+            break;
+        case 2:
+            txt += ".asciiz\t" + val;
+            break;
 
             default:
                 error_msg("Invalid type for data");
