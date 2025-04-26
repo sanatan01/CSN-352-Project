@@ -213,8 +213,31 @@ namespace backend {
     }
 
     void Quad::generate_asm() const {
-        return;
+        switch(op){
+        case ADD:
+        {
+            GPR rvalue1 = get_gpr(operands[0]);
+            GPR rvalue2 = get_gpr(operands[1]);
+            GPR lvalue = get_gpr(operands[2]);
+
+            if(operands[1].is_constant){
+
+            }
+            else{
+                CodeGen::add_to_asm("add " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation");
+            }
+        }
+        break;
+        case SUB:
+        {
+            GPR rvalue = get_gpr(operands[0]);
+            GPR lvalue = get_gpr(operands[1]);
+            CodeGen::add_to_asm("sub " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue) + ", " + get_gpr_name(lvalue), "Subtraction operation");
+        }
+        break;
+
     };
+}
 
     // =================== Triple Functions ===================
 
@@ -351,18 +374,14 @@ namespace backend {
             {
                 GPR rvalue = get_gpr(operands[0]);
                 CodeGen::add_to_asm("lw " + get_gpr_name(lvalue) + ", " + "0(" + get_gpr_name(rvalue) + ")", "Loading value of " + operands[0].name);
-                if (check_last_use(rvalue, line_number)) {
-                    return;
-                }
+                check_last_use(rvalue, line_number);
             }
             break;
             case EXCLAMATION_OP:
             {
                 GPR rvalue = get_gpr(operands[0]);
                 CodeGen::add_to_asm("sltiu " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue) + ", 1", "Loading value of " + operands[0].name);
-                if (check_last_use(rvalue, line_number)) {
-                    return;
-                }
+                check_last_use(rvalue, line_number);
             }
             break;
             case TILDE_OP:
@@ -396,9 +415,7 @@ namespace backend {
                     error_msg("Not supported yet");
                 }
                 }
-                if (check_last_use(rvalue, line_number)) {
-                    return;
-                }
+                check_last_use(rvalue, line_number);
                 if (operands[0].is_constant) {
                     free_gpr(rvalue);
                 }
@@ -408,18 +425,14 @@ namespace backend {
             {
                 GPR rvalue = get_gpr(operands[0]);
                 CodeGen::add_to_asm("move " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
-                if (check_last_use(rvalue, line_number)) {
-                    return;
-                }
+                check_last_use(rvalue, line_number);
             }
             break;
             case NEG_OP:
             {
                 GPR rvalue = get_gpr(operands[0]);
                 CodeGen::add_to_asm("neg " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
-                if (check_last_use(rvalue, line_number)) {
-                    return;
-                }
+                check_last_use(rvalue, line_number);
             }
             break;
             default:
@@ -437,9 +450,7 @@ namespace backend {
             }
 
             CodeGen::add_to_asm("sw " + get_gpr_name(rvalue) + ", 0(" + get_gpr_name(lvalue) + ")", "Storing value of " + operands[0].name);
-            if (check_last_use(rvalue, line_number)) {
-                return;
-            }
+            check_last_use(rvalue, line_number);
             if (operands[0].is_constant) {
                 free_gpr(rvalue);
             }
@@ -455,9 +466,7 @@ namespace backend {
         }
 
         }
-        if (check_last_use(lvalue, line_number)) {
-            return;
-        }
+        check_last_use(lvalue, line_number);
     };
 
     // =================== Double Functions ===================
@@ -488,23 +497,18 @@ namespace backend {
 
     void Double::generate_asm() const {
         GPR resultReg = get_gpr(operands.back(), true);
-        if (last_used[gpr_map[resultReg].name] == line_number) {
-            free_gpr(resultReg);
-            return;
-        }
 
         if (operands[0].is_constant) {
             if (is_float(operands.back().type)) {
                 GPR float_reg = get_gpr(operands[0], false);
-                if (operands[0].size == 4) {
+                if (operands.back().size == 4) {
                     auto [hi, lo] = floatToIEEEHex(operands[0].name, false);
                     CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading float constant");
                     CodeGen::add_to_asm("mtc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(float_reg) , "Moving float constant");
 
                     gpr_map[float_reg].name = operands.back().name;
-                    if (last_used[gpr_map[float_reg].name] == line_number) {
-                        free_gpr(float_reg);
-                    }
+                    free_gpr(resultReg);
+                    check_last_use(float_reg, line_number);
                 }
                 else {
                     auto [hi, lo] = floatToIEEEHex(operands[0].name, true);
@@ -516,9 +520,8 @@ namespace backend {
 
                     gpr_map[float_reg].name = operands.back().name;
                     gpr_map[static_cast<GPR>((int)float_reg + 1)].name = operands.back().name;
-
-                    if (last_used[gpr_map[float_reg].name] == line_number) {
-                        free_gpr(float_reg);
+                    free_gpr(resultReg);
+                    if(check_last_use(float_reg, line_number)){
                         free_gpr(static_cast<GPR>((int)float_reg + 1));
                     }
                 }
@@ -549,6 +552,7 @@ namespace backend {
                         else {
                             CodeGen::add_to_asm("mov.s " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "Loading float constant");
                         }
+                        check_last_use(secondReg, line_number);
                     }
                     else {
                         if (!is_float(operands.back().type)) {
@@ -557,11 +561,10 @@ namespace backend {
                         }
                         else {
                             CodeGen::add_to_asm("mov.d " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "Loading double constant");
+                            if(check_last_use(secondReg, line_number)){
+                                free_gpr(static_cast<GPR>((int)secondReg + 1));
+                            }
                         }
-                    }
-
-                    if (last_used[gpr_map[secondReg].name] == line_number) {
-                        free_gpr(secondReg);
                     }
                 }
                 else {
@@ -600,11 +603,13 @@ namespace backend {
                         output_msg("Unsupported type conversion");
                     }
 
-                    if (last_used[gpr_map[secondReg].name] == line_number) {
-                        free_gpr(secondReg);
-                    }
+                    check_last_use(secondReg, line_number);
                 }
             }
+        }
+        check_last_use(resultReg, line_number);
+        if (operands[0].is_constant) {
+            free_gpr(resultReg);
         }
     };
 

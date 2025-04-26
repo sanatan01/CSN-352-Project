@@ -22,26 +22,31 @@ int main(){
     // static long long sll_static = 0x1234567890;
     // static float sf = 0.5;
 
+    int b=5;
+    int *a = &b;
+    int **c;
+    c = &a;
 
-    int nice;
-    nice = 10;
-    int nice1=nice;
-    nice1 = nice;
-    int nice2 =10;
-    nice2 =nice1;
 
-    int nice3 = a;
+    // int nice;
+    // nice = 10;
+    // int nice1=nice;
+    // nice1 = nice;
+    // int nice2 =10;
+    // nice2 =nice1;
 
-    int *c = &nice;
-    *c = 2;
-    *c = nice;
-    nice = -10;
-    nice = 10*100;
-    nice = !nice2;
-    nice = !100;
-    nice = ~nice2;
-    nice = ~0;
-    nice = *c;
+    // int nice3 = a;
+
+    // int *c = &nice;
+    // *c = 2;
+    // *c = nice;
+    // nice = -10;
+    // nice = 10*100;
+    // nice = !nice2;
+    // nice = !100;
+    // nice = ~nice2;
+    // nice = ~0;
+    // nice = *c;
 
 
 }
