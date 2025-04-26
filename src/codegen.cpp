@@ -172,7 +172,7 @@ namespace backend
 
     void Register::free_reg()
     {
-        error_msg("Debugging: freeing register with name" + reg_name +", " + name);
+        CodeGen::add_to_asm("# Debugging: freeing register with name: " + reg_name +", " + name+ "\n");
         value = 0;
         name = "";
     }
@@ -659,7 +659,7 @@ namespace backend
                 return (GPR)i;
             }
         }
-        error_msg("This was called variable not found in register");
+
         GPR temp = get_free_gpr(op,load);
         return temp;
     }
@@ -721,8 +721,7 @@ namespace backend
         }
         op.size = symbol.identifier.type->getSize();
 
-        error_msg("Debugging message: type  of symbol  is" + symbol.identifier.type->getType()+ "Name of symbol is" + symbol.identifier.name);
-        error_msg("Debugging message: operand  of size"+ std::to_string(op.size)+" added as symbol in codegen 3ac map");
+
         op.type = GlobalType(*symbol.identifier.type);
         op.is_constant = false;
         op.storage_loc = StorageLoc(loc);

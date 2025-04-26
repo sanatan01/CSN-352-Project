@@ -21,7 +21,7 @@ foreach(input_file IN LISTS INPUT_FILES)
     set(tac_file "${test_dir}/tac.txt")
     set(tac_lex_file "${test_dir}/tac_lex.txt")
     set(output_file "${test_dir}/debug.txt")
-    set(assembly_file "${test_dir}/assembly.asm")
+    set(assembly_file "${test_dir}/assembly.s")
 
     execute_process(
         COMMAND ${EXECUTABLE} ${input_file} ${lexer_file} ${symtab_file} ${tac_file} ${tac_lex_file} ${assembly_file}

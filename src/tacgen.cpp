@@ -320,39 +320,107 @@ namespace backend {
     }
 
     void Triple::generate_asm() const {
+        GPR lvalue =  get_gpr(operands.back());
         switch(special_op){
             case NONE_SP:
             {
-                GPR lvalue =  get_gpr(operands.back());
                 switch(op){
                     case REF_OP:
                     {
+                        StorageLoc loctype = operands[0].storage_loc;
 
+                        switch (loctype)
+                        {
+                        case STACK:
+                        {
+                            CodeGen::add_to_asm("lw " + get_gpr_name(lvalue) + ", " + std::to_string(MMU::get_offset(operands[0].name)) + "($sp)\n");
+
+                        }
+                        break;
+                        case DATA:
+                        {
+                            CodeGen::add_to_asm("la " + get_gpr_name(lvalue) + ", " + CodeGen::convert_to_valid(operands[0].name) + "\n");
+                        }
+                        break;
+                        default:
+                            error_msg("dereferencing a rvalue, need lvalue");
+                            break;
+                        }
                     }
                     break;
                     case DEREF_OP:
                     {
-
+                        GPR rvalue = get_gpr(operands[0]);
+                        CodeGen::add_to_asm("lw " + get_gpr_name(lvalue)+ ", " + "0(" + get_gpr_name(rvalue) +")\n");
+                        if(check_last_use(rvalue,line_number)){
+                            return;
+                        }
                     }
                     break;
                     case EXCLAMATION_OP:
                     {
-
+                        GPR rvalue = get_gpr(operands[0]);
+                        CodeGen::add_to_asm("sltiu " + get_gpr_name(lvalue)+ ", " + get_gpr_name(rvalue) + ", 1\n");
+                        if(check_last_use(rvalue,line_number)){
+                            return;
+                        }
                     }
                     break;
                     case TILDE_OP:
                     {
+                        // TODO: handle constant
+                        GPR rvalue = get_gpr(operands[0]);
+                        if(operands[0].is_constant){
+                            CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", "  + operands[0].name + "\n");
+                        }
 
+                        CodeGen::add_to_asm("nor " + get_gpr_name(lvalue)+ ", " + get_gpr_name(rvalue) + ", $zero\n");
+                        switch(operands.back().size){
+                            case 1:
+                            {
+                                CodeGen::add_to_asm("andi " + get_gpr_name(lvalue)+ ", " + get_gpr_name(lvalue) + ", 0xFF\n");
+                            }
+                            break;
+                            case 2:
+                            {
+                                CodeGen::add_to_asm("andi " + get_gpr_name(lvalue)+ ", " + get_gpr_name(lvalue) + ", 0xFFFF\n");
+                            }
+                            break;
+                            case 4:
+                            {
+                                
+                            }
+                            break;
+                            case 8:
+                            default:
+                            {
+                                error_msg("Not supported yet");
+                            }
+                        }
+                        if(check_last_use(rvalue,line_number)){
+                            return;
+                        }
+                        if(operands[0].is_constant){
+                            free_gpr(rvalue);
+                        }
                     }
                     break;
                     case POS_OP:
                     {
-
+                        GPR rvalue = get_gpr(operands[0]);
+                        CodeGen::add_to_asm("mov " + get_gpr_name(lvalue)+ ", " + get_gpr_name(rvalue) + "\n");
+                        if(check_last_use(rvalue,line_number)){
+                            return;
+                        }
                     }
                     break;
                     case NEG_OP:
                     {
-
+                        GPR rvalue = get_gpr(operands[0]);
+                        CodeGen::add_to_asm("neg " + get_gpr_name(lvalue)+ ", " + get_gpr_name(rvalue) + "\n");
+                        if(check_last_use(rvalue,line_number)){
+                            return;
+                        }
                     }
                     break;
                     default:
@@ -364,17 +432,32 @@ namespace backend {
             break;
             case ASTERISK_SP:
             {
+                GPR rvalue = get_gpr(operands[0]);
+                if(operands[0].is_constant){
+                    CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", "  + operands[0].name + "\n");
+                }
 
+                CodeGen::add_to_asm("sw " + get_gpr_name(rvalue)+ ", 0(" + get_gpr_name(lvalue) + ")\n");
+                if(check_last_use(rvalue,line_number)){
+                    return;
+                }
+                if(operands[0].is_constant){
+                    free_gpr(rvalue);
+                }
             }
             break;
             case AMPERSAND_SP:
             {
-
+                error_msg("& found  in lvalue, not possible");
             }
             break;
             default:{
                 error_msg("Incorrect special op, not found of  any type");
             }
+            
+        }
+        if(check_last_use(lvalue,line_number)){
+            return;
         }
     };
 
@@ -574,10 +657,10 @@ namespace backend {
             }
             // Function Prolouge
             CodeGen::add_to_asm(labels[0].name + ":\n", false);
-            CodeGen::add_to_asm("sub $sp, $sp, 16\n");
+            CodeGen::add_to_asm("addi $sp, $sp, -16\n");
             CodeGen::add_to_asm("sw $ra, 12($sp)\n");
             CodeGen::add_to_asm("sw $fp, 8($sp)\n");
-            CodeGen::add_to_asm("add $fp, $sp, 16\n");
+            CodeGen::add_to_asm("addi $fp, $sp, 16\n");
 
             // TODO: load params
 
@@ -1231,4 +1314,13 @@ namespace backend {
         assembly_file << "\n\n.text\n";
         assembly_file << CodeGen::asm_stream.str();
     }
+
+    bool check_last_use(int reg, int line_number){
+        if(last_used[get_gpr_name(static_cast<GPR>(reg))] == line_number){
+            free_gpr(static_cast<GPR>(reg));
+            return 1;
+        }
+        return 0;
+    }
+
 }

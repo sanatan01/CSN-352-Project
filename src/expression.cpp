@@ -126,6 +126,10 @@ std::string operation_integer_values(std::string op, std::string op1, std::strin
     else if (op == "%") {
         return std::to_string(std::stoll(op1) % std::stoll(op2));
     }
+    else if(op == "!"){
+        long long t = !std::stoll(op2);
+        return std::to_string(t);
+    }
     else {
         return "0";
     }
@@ -144,10 +148,15 @@ std::string operation_float_value(std::string op, std::string op1, std::string o
     else if (op == "/") {
         return std::to_string(std::stold(op1) / std::stold(op2));
     }
+    else if (op == "!"){
+        return std::to_string(!std::stold(op2));
+    }
     else {
         return "0";
     }
 }
+
+
 
 std::string operation_relational(std::string op, std::string op1, PrimitiveTypes opt1, std::string op2, PrimitiveTypes opt2) {
     // Convert operands based on their types
@@ -1556,7 +1565,7 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
                 std::string temp1 = TAC::get_temp();
-                TAC::print_tac(temp1 + " = .addr " + new_temp);
+                TAC::print_tac(temp1 + " = * " + new_temp);
                 P->name = temp1;
                 return P;
             }
@@ -1574,7 +1583,7 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
                 std::string temp1 = TAC::get_temp();
-                TAC::print_tac(temp1 + " = .addr " + new_temp);
+                TAC::print_tac(temp1 + " = * " + new_temp);
                 P->name = temp1;
                 return P;
             }
@@ -1698,10 +1707,23 @@ Expression* create_unary_expression(OpExpression* oe) {
         else {
 
             if (isInt(op1Type)) {
-
+                if(oe->op1.is_constant){
+                    oe->prim_type = op1Type;
+                    oe->is_constant = true;
+                    oe->is_assignable= false;
+                    oe->name = operation_integer_values(u_op.substr(1), oe->op1.name, "1");
+                    return oe;
+                }
                 // 3AC
             }
             else if (isFloat(op1Type)) {
+                if(oe->op1.is_constant){
+                    oe->prim_type = op1Type;
+                    oe->is_constant = true;
+                    oe->is_assignable= false;
+                    oe->name = operation_float_value(u_op.substr(1), oe->op1.name, "1");
+                    return oe;
+                }
                 // 3AC
             }
             else {
@@ -1980,6 +2002,19 @@ Expression* create_unary_expression(OpExpression* oe) {
     else if (u_op == "-") {
         std::string new_temp;
         if (isInt(op1Type) || isFloat(op1Type)) {
+
+            if(oe->op1.is_constant){
+                if(isInt(op1Type)){
+                    oe->name = operation_integer_values(u_op,"0",oe->op1.name);
+                }
+                else{
+                    oe->name = operation_float_value(u_op,"0",oe->op1.name);
+                }
+                oe->prim_type = op1Type;
+                oe->is_constant = true;
+                oe->is_assignable= false;
+                return oe;
+            }
             // 3AC
             oe->prim_type = op1Type;
             PrimitiveTypes temp = PrimitiveTypes(oe->op1.prim_type);
@@ -2005,6 +2040,13 @@ Expression* create_unary_expression(OpExpression* oe) {
         std::string new_temp;
         if (isInt(op1Type) || isFloat(op1Type)) {
             // 3AC
+            if(oe->op1.is_constant){
+                oe->name = oe->op1.name;
+                oe->prim_type = op1Type;
+                oe->is_constant = true;
+                oe->is_assignable= false;
+                return oe;
+            }
             oe->prim_type = op1Type;
             new_temp = TAC::get_temp();
             TAC::print_tac(new_temp + " = + " + oe->op1.name);
@@ -2022,10 +2064,18 @@ Expression* create_unary_expression(OpExpression* oe) {
         }
     }
     else if (u_op == "!") {
-        std::string new_temp;
+        std::string new_temp = TAC::get_temp();
         if (isInt(op1Type)) {
             // 3AC
+            if(oe->op1.is_constant){
+                oe->name = operation_integer_values(u_op,"0",oe->op1.name);
+                oe->prim_type = BOOL_T;
+                oe->is_constant = true;
+                oe->is_assignable= false;
+                return oe;
+            }
             oe->prim_type = BOOL_T;
+
             TAC::print_tac(new_temp + " = ! " + oe->op1.name);
             // TAC::print_tac(oe->op1.name + " = " + new_temp);
             oe->name = new_temp;

@@ -118,7 +118,6 @@ void SymbolTable::add_symbol_with_assign(Identifier* id, std::string assign, int
     symbol.identifier.name = symbol.identifier.name + "." + std::to_string(symbol.global_count);
     symbol_map[name].push_back(symbol);
     all_symbols.push_back(symbol);
-    error_msg("Debugging size of symbols : " + std::to_string(symbol.identifier.type->getSize()));
     SymbolTable::print_symbol(symbol);
 
 
