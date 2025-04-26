@@ -289,4 +289,6 @@ namespace backend {
     void print_assembly();
 
     bool check_last_use(int reg, int line_number);
+
+    std::string binaryOpToName(BinaryOp op);
 }
