@@ -2209,7 +2209,7 @@ Expression* create_expression(ExpressionOpType op_type, std::string op, VectorEx
     OpExpression* oe = new OpExpression();
     oe->op_type = op_type;
     oe->op = op;
-    if (op_type != ASSIGNMENT || op_type != UNARY) {
+    if (op_type != ASSIGNMENT && op_type != UNARY) {
         for (auto& expr : ve->operands) {
             if (expr.name[0] == '*') {
                 std::string temp = TAC::get_temp();
