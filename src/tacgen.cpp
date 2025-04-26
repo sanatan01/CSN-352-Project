@@ -213,17 +213,17 @@ namespace backend {
     }
 
     void Quad::generate_asm() const {
-        switch(op){
+        switch (op) {
         case ADD:
         {
             GPR rvalue1 = get_gpr(operands[0]);
             GPR rvalue2 = get_gpr(operands[1]);
             GPR lvalue = get_gpr(operands[2]);
 
-            if(operands[1].is_constant){
+            if (operands[1].is_constant) {
 
             }
-            else{
+            else {
                 CodeGen::add_to_asm("add " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation");
             }
         }
@@ -236,8 +236,8 @@ namespace backend {
         }
         break;
 
-    };
-}
+        };
+    }
 
     // =================== Triple Functions ===================
 
@@ -389,7 +389,7 @@ namespace backend {
                 // TODO: handle constant
                 GPR rvalue = get_gpr(operands[0]);
                 if (operands[0].is_constant) {
-                    CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", " + operands[0].name , "Loading value of " + operands[0].name);
+                    CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", " + operands[0].name, "Loading value of " + operands[0].name);
                 }
 
                 CodeGen::add_to_asm("nor " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue) + ", $zero", "Negation operation");
@@ -500,59 +500,59 @@ namespace backend {
 
         if (operands[0].is_constant) {
             if (is_float(operands.back().type)) {
-                GPR float_reg = get_gpr(operands[0], false);
                 if (operands.back().size == 4) {
                     auto [hi, lo] = floatToIEEEHex(operands[0].name, false);
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading float constant");
-                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(float_reg) , "Moving float constant");
+                    CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading float constant");
+                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(resultReg), "Moving float constant");
+                    CodeGen::add_to_asm("s.s " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing float constant");
 
-                    gpr_map[float_reg].name = operands.back().name;
-                    free_gpr(resultReg);
-                    check_last_use(float_reg, line_number);
                 }
                 else {
                     auto [hi, lo] = floatToIEEEHex(operands[0].name, true);
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading double constant high");
-                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(float_reg) , "Moving double constant high");
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo , "Loading double constant low");
-                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(static_cast<GPR>((int)float_reg + 1)) , "Moving double constant low");
+                    CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading double constant high");
+                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(resultReg), "Moving double constant high");
+                    CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading double constant low");
+                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>((int)resultReg + 1)), "Moving double constant low");
+                    CodeGen::add_to_asm("s.d " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing double constant");
 
-
-                    gpr_map[float_reg].name = operands.back().name;
-                    gpr_map[static_cast<GPR>((int)float_reg + 1)].name = operands.back().name;
-                    free_gpr(resultReg);
-                    if(check_last_use(float_reg, line_number)){
-                        free_gpr(static_cast<GPR>((int)float_reg + 1));
-                    }
                 }
             }
             else {
                 if (operands.back().size <= 4) {
                     CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + operands[0].name, "Loading int constant");
+                    //TODO: No need
+                    // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing int constant");
                 }
                 else {
+                    //TODO: handle  long long
                     auto [hi, lo] = getHighLowBytes(operands[0].name);
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi , "Loading high part of long long");
+                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading high part of long long");
                     CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)", "Storing high part of long long");
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo , "Loading low part of long long");
+                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo, "Loading low part of long long");
                     CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing low part of long long");
                 }
             }
         }
         else {
-            if (operands[0].type.type_tag == STANDARD_TYPE && operands.back().type.type_tag == STANDARD_TYPE) {
+            if (operands[0].type.type_tag != operands.back().type.type_tag) {
+                error_msg("Incompatible types for variable assignment (different types)");
+                return;
+            }
+            if (operands[0].type.type_tag == STANDARD_TYPE) {
 
                 if (operands[0].type.standard_type->name == operands.back().type.standard_type->name) {
+
+                    //get rvalue register
                     GPR secondReg = get_gpr(operands[0], true);
 
                     if (operands.back().size <= 4) {
                         if (!is_float(operands[0].type)) {
                             CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "Loading int constant");
+                            // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)");
                         }
                         else {
                             CodeGen::add_to_asm("mov.s " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "Loading float constant");
                         }
-                        check_last_use(secondReg, line_number);
                     }
                     else {
                         if (!is_float(operands.back().type)) {
@@ -561,11 +561,10 @@ namespace backend {
                         }
                         else {
                             CodeGen::add_to_asm("mov.d " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "Loading double constant");
-                            if(check_last_use(secondReg, line_number)){
-                                free_gpr(static_cast<GPR>((int)secondReg + 1));
-                            }
                         }
                     }
+
+                    check_last_use(secondReg, line_number);
                 }
                 else {
                     // Handle type conversion between standard types
@@ -574,7 +573,8 @@ namespace backend {
 
                     // Get register for rvalue  operand
                     GPR secondReg = get_gpr(operands[0], true);
-                    gpr_map[secondReg].name = operands[0].name;
+
+
                     if (!is_float(operands[0].type) && is_float(operands.back().type)) {
 
                         // allocate temporary FP register 
@@ -582,8 +582,10 @@ namespace backend {
 
                         // move to FP register
                         CodeGen::add_to_asm("mtc1 " + get_gpr_name(secondReg) + ", " + get_gpr_name(fpReg), "Move to FP register");
+
                         // Assign the value to result resultReg
                         CodeGen::add_to_asm("cvt.s.w " + get_gpr_name(resultReg) + ", " + get_gpr_name(fpReg), "Convert int to float");
+
 
                         free_gpr(fpReg);
                     }
@@ -591,26 +593,29 @@ namespace backend {
                     else if (is_float(operands[0].type) && !is_float(operands.back().type)) {
                         // allocate FP register
                         GPR fpReg = f0;
+
                         // Convert float to int
                         CodeGen::add_to_asm("cvt.w.s " + get_gpr_name(fpReg) + ", " + get_gpr_name(secondReg), "Convert float to int");
+
                         // Store result to resultReg
                         CodeGen::add_to_asm("mfc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(fpReg), "Move from FP register");
 
-                        free_gpr(fpReg);
 
+
+                        free_gpr(fpReg);
                     }
                     else {
                         output_msg("Unsupported type conversion");
                     }
 
-                    check_last_use(secondReg, line_number);
+                    check_last_use(resultReg, line_number);
+
                 }
             }
+            else if (operands[0].type.type_tag == ARRAY_TYPE) {}
+            else if (operands[0].type.type_tag == POINTER_TYPE) {}
         }
         check_last_use(resultReg, line_number);
-        if (operands[0].is_constant) {
-            free_gpr(resultReg);
-        }
     };
 
     // ================ Common Functions ======================
@@ -655,14 +660,14 @@ namespace backend {
         case FUNC_St:
         {
             if (CodeGen::current_scope == 0) {
-                CodeGen::add_to_asm("\n.globl " + labels[0].name ,  "",  false);
+                CodeGen::add_to_asm("\n.globl " + labels[0].name, "", false);
             }
             // Function Prolouge
-            // CodeGen::add_to_asm(labels[0].name + ":", "",false);
-            // CodeGen::add_to_asm("addi $sp, $sp, -16", "Allocate stack space for function");
-            // CodeGen::add_to_asm("sw $ra, 12($sp)", "Store return address");
-            // CodeGen::add_to_asm("sw $fp, 8($sp)", "Store frame pointer");
-            // CodeGen::add_to_asm("addi $fp, $sp, 16", "Set frame pointer");
+            CodeGen::add_to_asm(labels[0].name + ":", "", false);
+            CodeGen::add_to_asm("addi $sp, $sp, -16", "Allocate stack space for function");
+            CodeGen::add_to_asm("sw $ra, 12($sp)", "Store return address");
+            CodeGen::add_to_asm("sw $fp, 8($sp)", "Store frame pointer");
+            CodeGen::add_to_asm("addi $fp, $sp, 16", "Set frame pointer");
 
             // TODO: load params
 
@@ -694,7 +699,7 @@ namespace backend {
             }
             // Fetch the operands
             std::string label = labels[0].name;
-            CodeGen::add_to_asm("j " + label ,
+            CodeGen::add_to_asm("j " + label,
                                 "Jump to label " + label);
         }
         break;
@@ -724,7 +729,7 @@ namespace backend {
         break;
         case CALL_St:
             free_all_regs();
-            CodeGen::add_to_asm("need to implement call","");
+            CodeGen::add_to_asm("need to implement call", "");
             // Remove parameters from stack
             restore_all_regs();
             CodeGen::first_param = true;
@@ -734,7 +739,7 @@ namespace backend {
                 dump_all_regs();
                 CodeGen::first_param = false;
             }
-            CodeGen::add_to_asm("need to implement param","");
+            CodeGen::add_to_asm("need to implement param", "");
             break;
         default:
             break;
@@ -801,69 +806,64 @@ namespace backend {
             else if (operands.size() == 3) {
 
                 MMU::push(operands.back());
-                CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string((operands.back()).size),  "Allocating space for " + operands.back().name);
+                CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string((operands.back()).size), "Allocating space for " + operands.back().name);
 
                 GPR resultReg = get_gpr(operands.back(), true);
 
                 if (operands[1].is_constant) {
-                    if (is_float(operands[1].type)) {
-                        GPR float_reg = get_gpr(operands[1], false);
+                    if (is_float(operands.back().type)) {
                         if (operands.back().size == 4) {
                             auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
-                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi , "Loading float constant");
-                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(float_reg) , "Moving float constant");
-                            CodeGen::add_to_asm("s.s " + get_gpr_name(float_reg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)",  "Storing float constant");
-                            gpr_map[float_reg].name = operands.back().name;
-                            if (last_used[get_gpr_name(float_reg)] == line_number) {
-                                free_gpr(float_reg);
-                            }
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading float constant");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(resultReg), "Moving float constant");
+                            CodeGen::add_to_asm("s.s " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing float constant");
+
                         }
                         else {
                             auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
-                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi , "Loading double constant high");
-                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(float_reg) , "Moving double constant high");
-                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo ,  "Loading double constant low");
-                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(static_cast<GPR>((int)float_reg + 1)) , "Moving double constant low");
-                            CodeGen::add_to_asm("s.d " + get_gpr_name(float_reg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing double constant");
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading double constant high");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(resultReg), "Moving double constant high");
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading double constant low");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>((int)resultReg + 1)), "Moving double constant low");
+                            CodeGen::add_to_asm("s.d " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing double constant");
 
-                            gpr_map[float_reg].name = operands.back().name;
-                            gpr_map[static_cast<GPR>((int)float_reg + 1)].name = operands.back().name;
-                            if (last_used[get_gpr_name(float_reg)] == line_number) {
-                                free_gpr(float_reg);
-                                free_gpr(static_cast<GPR>((int)float_reg + 1));
-                            }
                         }
                     }
                     else {
                         if (operands.back().size <= 4) {
                             CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + operands[1].name, "Loading int constant");
-                            CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing int constant");
+                            //TODO: No need
+                            // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing int constant");
                         }
                         else {
+                            //TODO: handle  long long
                             auto [hi, lo] = getHighLowBytes(operands[1].name);
-                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi , "Loading high part of long long");
+                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading high part of long long");
                             CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)", "Storing high part of long long");
-                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo , "Loading low part of long long");
-                            CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)",  "Storing low part of long long");
+                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo, "Loading low part of long long");
+                            CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing low part of long long");
                         }
                     }
                 }
                 else {
-                    if (operands[1].type.type_tag == STANDARD_TYPE && operands.back().type.type_tag == STANDARD_TYPE) {
+                    if (operands[1].type.type_tag != operands.back().type.type_tag) {
+                        error_msg("Incompatible types for variable assignment (different types)");
+                        return;
+                    }
+                    if (operands[1].type.type_tag == STANDARD_TYPE) {
 
                         if (operands[1].type.standard_type->name == operands.back().type.standard_type->name) {
 
                             //get rvalue register
                             GPR secondReg = get_gpr(operands[1], true);
-                            gpr_map[secondReg].name = operands[1].name;
 
                             if (operands.back().size <= 4) {
                                 if (!is_float(operands[1].type)) {
-                                    CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg) , "Loading int constant");
+                                    CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "Loading int constant");
                                     // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)");
                                 }
                                 else {
-                                    CodeGen::add_to_asm("mov.s " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg) , "Loading float constant");
+                                    CodeGen::add_to_asm("mov.s " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "Loading float constant");
                                 }
                             }
                             else {
@@ -872,13 +872,11 @@ namespace backend {
                                     // CodeGen::add_to_asm("move "+ get_gpr_name(resultReg)+ ", "+ get_gpr_name(secondReg) );
                                 }
                                 else {
-                                    CodeGen::add_to_asm("mov.d " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg) , "Loading double constant");
+                                    CodeGen::add_to_asm("mov.d " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "Loading double constant");
                                 }
                             }
 
-                            if (last_used[gpr_map[secondReg].name] == line_number) {
-                                free_gpr(secondReg);
-                            }
+                            check_last_use(secondReg, line_number);
                         }
                         else {
                             // Handle type conversion between standard types
@@ -887,7 +885,6 @@ namespace backend {
 
                             // Get register for rvalue  operand
                             GPR secondReg = get_gpr(operands[1], true);
-                            gpr_map[secondReg].name = operands[1].name;
 
 
                             if (!is_float(operands[1].type) && is_float(operands.back().type)) {
@@ -896,10 +893,11 @@ namespace backend {
                                 GPR fpReg = f0;
 
                                 // move to FP register
-                                CodeGen::add_to_asm("mtc1 " + get_gpr_name(secondReg) + ", " + get_gpr_name(fpReg) , "Move to FP register");
+                                CodeGen::add_to_asm("mtc1 " + get_gpr_name(secondReg) + ", " + get_gpr_name(fpReg), "Move to FP register");
 
                                 // Assign the value to result resultReg
-                                CodeGen::add_to_asm("cvt.s.w " + get_gpr_name(resultReg) + ", " + get_gpr_name(fpReg) , "Convert int to float");
+                                CodeGen::add_to_asm("cvt.s.w " + get_gpr_name(resultReg) + ", " + get_gpr_name(fpReg), "Convert int to float");
+
 
                                 free_gpr(fpReg);
                             }
@@ -909,10 +907,12 @@ namespace backend {
                                 GPR fpReg = f0;
 
                                 // Convert float to int
-                                CodeGen::add_to_asm("cvt.w.s " + get_gpr_name(fpReg) + ", " + get_gpr_name(secondReg) , "Convert float to int");
+                                CodeGen::add_to_asm("cvt.w.s " + get_gpr_name(fpReg) + ", " + get_gpr_name(secondReg), "Convert float to int");
 
                                 // Store result to resultReg
-                                CodeGen::add_to_asm("mfc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(fpReg) , "Move from FP register");
+                                CodeGen::add_to_asm("mfc1 " + get_gpr_name(resultReg) + ", " + get_gpr_name(fpReg), "Move from FP register");
+
+
 
                                 free_gpr(fpReg);
                             }
@@ -920,17 +920,14 @@ namespace backend {
                                 output_msg("Unsupported type conversion");
                             }
 
-                            if (last_used[gpr_map[secondReg].name] == line_number) {
-                                free_gpr(secondReg);
-                            }
+                            check_last_use(resultReg, line_number);
 
                         }
                     }
+                    else if (operands[1].type.type_tag == ARRAY_TYPE) {}
+                    else if (operands[1].type.type_tag == POINTER_TYPE) {}
                 }
-                if (last_used[gpr_map[resultReg].name] == line_number) {
-                    free_gpr(resultReg);
-                    return;
-                }
+                check_last_use(resultReg, line_number);
             }
             else {
                 error_msg("Invalid number of operands for LOCAL statement");
@@ -941,7 +938,7 @@ namespace backend {
         break;
         case GLOBAL_St:
         {
-            CodeGen::add_to_asm(".globl " + CodeGen::convert_to_valid(operands.back().name) , "", false);
+            CodeGen::add_to_asm(".globl " + CodeGen::convert_to_valid(operands.back().name), "", false);
         }
         case STATIC_St:
         {
@@ -1317,7 +1314,9 @@ namespace backend {
     }
 
     bool check_last_use(int reg, int line_number) {
-        if (last_used[get_gpr_name(static_cast<GPR>(reg))] == line_number) {
+        ///debug last used
+        CodeGen::add_to_asm("# Last used: " + get_gpr_name(static_cast<GPR>(reg)) +" "+ std::to_string(last_used[gpr_map[static_cast<GPR>(reg)].name]) +" curr line " + std::to_string(line_number), "Debug last used");
+        if (last_used[gpr_map[static_cast<GPR>(reg)].name] == line_number) {
             free_gpr(static_cast<GPR>(reg));
             return 1;
         }

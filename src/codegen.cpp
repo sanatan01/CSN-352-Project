@@ -517,6 +517,7 @@ namespace backend {
     }
 
     void free_gpr(GPR reg) {
+        CodeGen::add_to_asm("", "Freeing gpr " + get_gpr_name(reg) + ", " + gpr_map[reg].name, true);
         gpr_map[reg].free_reg();
     }
 
