@@ -658,11 +658,11 @@ namespace backend {
                 CodeGen::add_to_asm("\n.globl " + labels[0].name ,  "",  false);
             }
             // Function Prolouge
-            CodeGen::add_to_asm(labels[0].name + ":", "",false);
-            CodeGen::add_to_asm("addi $sp, $sp, -16", "Allocate stack space for function");
-            CodeGen::add_to_asm("sw $ra, 12($sp)", "Store return address");
-            CodeGen::add_to_asm("sw $fp, 8($sp)", "Store frame pointer");
-            CodeGen::add_to_asm("addi $fp, $sp, 16", "Set frame pointer");
+            // CodeGen::add_to_asm(labels[0].name + ":", "",false);
+            // CodeGen::add_to_asm("addi $sp, $sp, -16", "Allocate stack space for function");
+            // CodeGen::add_to_asm("sw $ra, 12($sp)", "Store return address");
+            // CodeGen::add_to_asm("sw $fp, 8($sp)", "Store frame pointer");
+            // CodeGen::add_to_asm("addi $fp, $sp, 16", "Set frame pointer");
 
             // TODO: load params
 
@@ -716,11 +716,12 @@ namespace backend {
                 }
             }
             // Function Epilogue
-            CodeGen::add_to_asm("move $sp, $fp", "Restore stack pointer");
-            CodeGen::add_to_asm("lw $fp, 8($sp)", "Restore frame pointer");
-            CodeGen::add_to_asm("lw $ra, 12($sp)", "Restore return address");
-            CodeGen::add_to_asm("jr $ra", "Return to caller");
+            // CodeGen::add_to_asm("move $sp, $fp", "Restore stack pointer");
+            // CodeGen::add_to_asm("lw $fp, 8($sp)", "Restore frame pointer");
+            // CodeGen::add_to_asm("lw $ra, 12($sp)", "Restore return address");
+            // CodeGen::add_to_asm("jr $ra", "Return to caller");
         }
+        break;
         case CALL_St:
             free_all_regs();
             CodeGen::add_to_asm("need to implement call","");

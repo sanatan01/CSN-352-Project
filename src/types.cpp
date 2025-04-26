@@ -507,7 +507,7 @@ size_t GlobalType::getSize() const {
     case FUNCTION_TYPE:
         return 0;
     case POINTER_TYPE:
-        return pointer_type ? pointer_type->size : 0;
+        return 4;
     case ENUM_TYPE:
         return enum_type ? enum_type->size : 0;
     default:

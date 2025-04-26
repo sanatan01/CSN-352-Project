@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include <iomanip>
 namespace backend {
 
     int CodeGen::current_scope = 0;
@@ -166,7 +167,6 @@ namespace backend {
     }
 
     void Register::free_reg() {
-        CodeGen::add_to_asm("", "Debugging: freeing register with name: " + reg_name + ", " + name);
         value = 0;
         name = "";
     }
@@ -704,10 +704,10 @@ namespace backend {
         }
         
         if (indent) {
-            CodeGen::asm_stream << "\t\t" + txt + "\t# " + comment + "\n";
+            CodeGen::asm_stream << "\t\t" << std::left << std::setw(40) << txt << "# " << comment << "\n";
             return;
         }
-        CodeGen::asm_stream << txt + "\t# " + comment + "\n";
+        CodeGen::asm_stream << std::left << std::setw(40) << txt << "# " << comment << "\n";
     };
 
     // TODO make sure the hi lo are set correctly
