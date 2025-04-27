@@ -223,60 +223,203 @@ namespace backend
                 continue;
             }
 
-            switch (op)
-            {
-            case ADD:
-            {
-                Operand old_op = Operand(operands[0]);
-                if (old_op.type.type_tag == STRUCT_TYPE)
+            switch (op){
+                case ADD:
                 {
-                    Operand op = Operand();
-                    GlobalType *typ = old_op.type.struct_type->get_member(std::stoi(operands[1].name));
-                    op.type = *(create_pointer_type(typ));
-                    op.name = operands.back().name;
-                    op.is_constant = false;
-                    op.size = typ->getSize();
-                    operands.back() = Operand(op);
-                    operands.back().storage_loc = TEMP;
-                    break;
+                    Operand old_op = Operand(operands[0]);
+                    if (old_op.type.type_tag == STRUCT_TYPE){
+                        Operand op = Operand();
+                        GlobalType *typ = old_op.type.struct_type->get_member(std::stoi(operands[1].name));
+                        op.type = *(create_pointer_type(typ));
+                        op.name = operands.back().name;
+                        op.is_constant = false;
+                        op.size = typ->getSize();
+                        operands.back() = Operand(op);
+                        operands.back().storage_loc = TEMP;
+                        break;
+                    }
                 }
-            }
-            case SUB:
-            case MUL:
-            case DIV:
-            case MOD:
-            case BITWISE_AND:
-            case BITWISE_OR:
-            case BITWISE_XOR:
-            {
-                if (!operands[0].is_constant)
+                case SUB:
+                case MUL:
+                case DIV:
+                case MOD:
+                case BITWISE_AND:
+                case BITWISE_OR:
+                case BITWISE_XOR:
+                {
+                    if (!operands[0].is_constant)
+                    {
+                        std::string name = operands.back().name;
+                        operands.back() = Operand(operands[0]);
+                        operands.back().name = name;
+                        operands.back().is_constant = false;
+                        MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                    }
+                    else
+                    {
+                        std::string name = operands.back().name;
+                        operands.back() = Operand(operands[1]);
+                        operands.back().name = name;
+                        operands.back().is_constant = false;
+                        MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                    }
+                }
+                break;
+                case SHL:
+                case SHR:
                 {
                     std::string name = operands.back().name;
                     operands.back() = Operand(operands[0]);
                     operands.back().name = name;
                     operands.back().is_constant = false;
+                    operands.back().storage_loc = TEMP;
                     MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
                 }
-                else
+                break;
+                case EQ:
+                case NE:
+                case LT:
+                case GT:
+                case GE:
+                case LE:
                 {
-                    std::string name = operands.back().name;
-                    operands.back() = Operand(operands[1]);
-                    operands.back().name = name;
-                    operands.back().is_constant = false;
+                    Operand op = Operand();
+                    op.name = operands.back().name;
+                    op.is_constant = false;
+                    op.type = *(create_primitive_type(CHAR_T));
+                    operands.back() = Operand(op);
+                    operands.back().storage_loc = TEMP;
                     MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
                 }
+                break;
+                default:
+                    break;
+                }
+        }
+    }
+
+    void Quad::generate_asm() const
+    {
+        if (!is_conditional) {
+            switch (op)
+            {
+            case ADD:
+            {
+                GPR rvalue1 = get_gpr(operands[0]);
+                GPR rvalue2 = get_gpr(operands[1]);
+                GPR lvalue = get_gpr(operands[2]);
+
+                if (operands[1].is_constant) {
+                    if (is_float(operands.back().type)) {
+                        if (operands.back().size == 4) {
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
+                            CodeGen::add_to_asm("add.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad float constant");
+                        }
+                        else {
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
+                            CodeGen::add_to_asm("add.d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad double constant");
+                        }
+                    }
+                    else {
+                        if (operands.back().size <= 4) {
+                            CodeGen::add_to_asm("addi " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Addition operation in Quad constant size<=4");
+                        }
+                        else {
+                            //TODO: long long to be handled
+                            // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                        }
+                    }
+
+                }
+                else {
+                    if (is_float(operands.back().type)) {
+                        if (operands.back().size == 4) {
+                            CodeGen::add_to_asm("add.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad float variable");
+                        }
+                        else {
+                            CodeGen::add_to_asm("add.d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad double variable");
+                        }
+                    }
+                    else {
+                        if (operands.back().size <= 4) {
+                            CodeGen::add_to_asm("add " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad size<=4 variable");
+                        }
+                        else {
+                            //TODO: long long to be handled
+                        }
+                    }
+                }
+                check_last_use(rvalue1, line_number);
+                check_last_use(rvalue2, line_number);
+                check_last_use(lvalue, line_number);
+                
             }
             break;
-            case SHL:
-            case SHR:
+            case SUB:
+            case MUL:
+            case DIV:
             {
-                std::string name = operands.back().name;
-                operands.back() = Operand(operands[0]);
-                operands.back().name = name;
-                operands.back().is_constant = false;
-                operands.back().storage_loc = TEMP;
-                MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                GPR rvalue1 = get_gpr(operands[0]);
+                GPR rvalue2 = get_gpr(operands[1]);
+                GPR lvalue = get_gpr(operands[2]);
+
+                if (operands[1].is_constant) {
+                    if (is_float(operands.back().type)) {
+                        if (operands.back().size == 4) {
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
+                            CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float constant");
+                        }
+                        else {
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
+                            CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad double constant");
+                        }
+                    }
+                    else {
+                        if (operands.back().size <= 4) {
+                            CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                            CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad constant size<=4");
+                        }
+                        else {
+                            //TODO: long long to be handled
+                            // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                        }
+                    }
+                }
+                else {
+                    if (is_float(operands.back().type)) {
+                        if (operands.back().size == 4) {
+                            CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float variable");
+                        }
+                        else {
+                            CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad double variable");
+                        }
+                    }
+                    else {
+                        if (operands.back().size <= 4) {
+                            CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad size<=4 variable");
+                        }
+                        else {
+                            //TODO: long long to be handled
+                        }
+                    }
+                }
+                check_last_use(rvalue1, line_number);
+                check_last_use(rvalue2, line_number);
+                check_last_use(lvalue, line_number);
             }
+
             break;
             case EQ:
             case NE:
@@ -285,245 +428,62 @@ namespace backend
             case GE:
             case LE:
             {
-                Operand op = Operand();
-                op.name = operands.back().name;
-                op.is_constant = false;
-                op.type = *(create_primitive_type(CHAR_T));
-                operands.back() = Operand(op);
-                operands.back().storage_loc = TEMP;
-                MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                GPR rvalue1 = get_gpr(operands[0]);
+                GPR rvalue2 = get_gpr(operands[1]);
+                GPR lvalue = get_gpr(operands[2]);
+
+                if (operands[1].is_constant) {
+                    if (is_float(operands.back().type)) {
+                        if (operands.back().size == 4) {
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
+                            CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float constant");
+                        }
+                        else {
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
+                            CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad double constant");
+                        }
+                    }
+                    else {
+                        if (operands.back().size <= 4) {
+                            CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                            CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad constant size<=4");
+                        }
+                        else {
+                            //TODO: long long to be handled
+                            // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                        }
+                    }
+                }
+                else {
+                    if (is_float(operands.back().type)) {
+                        if (operands.back().size == 4) {
+                            CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad float variable");
+                        }
+                        else {
+                            CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad double variable");
+                        }
+                    }
+                    else {
+                        if (operands.back().size <= 4) {
+                            CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad size<=4 variable");
+                        }
+                        else {
+                            //TODO: long long to be handled
+                        }
+                    }
+                }
+                check_last_use(rvalue1, line_number);
+                check_last_use(rvalue2, line_number);
+                check_last_use(lvalue, line_number);
             }
             break;
-            default:
-                break;
-            }
-        }
-    }
-
-    void Quad::generate_asm() const
-    {
-        switch (op)
-        {
-        case ADD:
-        {
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
-            GPR lvalue = get_gpr(operands[2]);
-
-            if (operands[1].is_constant) {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
-                        CodeGen::add_to_asm("add.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad float constant");
-                    }
-                    else {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm("add.d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad double constant");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("addi " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Addition operation in Quad constant size<=4");
-                    }
-                    else {
-                        //TODO: long long to be handled
-                        // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                    }
-                }
-
-            }
-            else {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        CodeGen::add_to_asm("add.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad float variable");
-                    }
-                    else {
-                        CodeGen::add_to_asm("add.d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad double variable");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("add " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad size<=4 variable");
-                    }
-                    else {
-                        //TODO: long long to be handled
-                    }
-                }
-            }
-            check_last_use(rvalue1, line_number);
-            check_last_use(rvalue2, line_number);
-            check_last_use(lvalue, line_number);
-            
-        }
-        break;
-        case SUB:
-        case MUL:
-        case DIV:
-        {
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
-            GPR lvalue = get_gpr(operands[2]);
-
-            if (operands[1].is_constant) {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float constant");
-                    }
-                    else {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad double constant");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad constant size<=4");
-                    }
-                    else {
-                        //TODO: long long to be handled
-                        // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                    }
-                }
-            }
-            else {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float variable");
-                    }
-                    else {
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad double variable");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad size<=4 variable");
-                    }
-                    else {
-                        //TODO: long long to be handled
-                    }
-                }
-            }
-            check_last_use(rvalue1, line_number);
-            check_last_use(rvalue2, line_number);
-            check_last_use(lvalue, line_number);
-        }
-
-        break;
-        case EQ:
-        case NE:
-        case LT:
-        case GT:
-        case GE:
-        case LE:
-        {
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
-            GPR lvalue = get_gpr(operands[2]);
-
-            if (operands[1].is_constant) {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float constant");
-                    }
-                    else {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad double constant");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad constant size<=4");
-                    }
-                    else {
-                        //TODO: long long to be handled
-                        // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                    }
-                }
-            }
-            else {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad float variable");
-                    }
-                    else {
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad double variable");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad size<=4 variable");
-                    }
-                    else {
-                        //TODO: long long to be handled
-                    }
-                }
-            }
-            check_last_use(rvalue1, line_number);
-            check_last_use(rvalue2, line_number);
-            check_last_use(lvalue, line_number);
-        }
-        break;
-        case MOD:
-        {
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
-            GPR lvalue = get_gpr(operands[2]);
-
-            if (is_float(operands.back().type)) {
-                error_msg("Modulus operation not supported for float found in codegen ");
-                break;
-            }
-
-            if (operands[1].is_constant) {
-
-                if (operands.back().size <= 4) {
-                    CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                }
-                else {
-                    //TODO: long long to be handled
-                    // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                }
-            }
-
-
-            if (operands.back().size <= 4) {
-                CodeGen::add_to_asm("div " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "division for modulus operation in Quad constant size<=4");
-                CodeGen::add_to_asm("mfhi " + get_gpr_name(lvalue), "Moving remainder for Modulus operation in Quad variable size<=4");
-            }
-            else {
-                //TODO: long long to be handled
-            }
-
-            check_last_use(rvalue1, line_number);
-            check_last_use(rvalue2, line_number);
-            check_last_use(lvalue, line_number);
-        }
-        break;
-        case BITWISE_AND:
-        case BITWISE_OR:
-        case BITWISE_XOR:
-        {
+            case MOD:
             {
                 GPR rvalue1 = get_gpr(operands[0]);
                 GPR rvalue2 = get_gpr(operands[1]);
@@ -535,29 +495,20 @@ namespace backend
                 }
 
                 if (operands[1].is_constant) {
+
                     if (operands.back().size <= 4) {
                         CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
                     }
                     else {
                         //TODO: long long to be handled
                         // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                    }   
+                    }
                 }
 
 
-
                 if (operands.back().size <= 4) {
-                    CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "bitwise operation in Quad constant size<=4");
-                    switch (operands.back().size) {
-                    case 1:
-                        CodeGen::add_to_asm("andi " + get_gpr_name(lvalue) + ", " + get_gpr_name(lvalue) + ", 0xFF", "char bitwise op in Quad constant size<=4");
-                        break;
-                    case 2:
-                        CodeGen::add_to_asm("andi " + get_gpr_name(lvalue) + ", " + get_gpr_name(lvalue) + ", 0xFFFF", "short bitwise op operation in Quad constant size<=4");
-                        break;
-                    default:
-                        break;
-                    }
+                    CodeGen::add_to_asm("div " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "division for modulus operation in Quad constant size<=4");
+                    CodeGen::add_to_asm("mfhi " + get_gpr_name(lvalue), "Moving remainder for Modulus operation in Quad variable size<=4");
                 }
                 else {
                     //TODO: long long to be handled
@@ -567,20 +518,161 @@ namespace backend
                 check_last_use(rvalue2, line_number);
                 check_last_use(lvalue, line_number);
             }
-        }
-        break;
-        case LOGICAL_AND:
-        case LOGICAL_OR:
-        {
+            break;
+            case BITWISE_AND:
+            case BITWISE_OR:
+            case BITWISE_XOR:
+            {
+                {
+                    GPR rvalue1 = get_gpr(operands[0]);
+                    GPR rvalue2 = get_gpr(operands[1]);
+                    GPR lvalue = get_gpr(operands[2]);
 
+                    if (is_float(operands.back().type)) {
+                        error_msg("Modulus operation not supported for float found in codegen ");
+                        break;
+                    }
+
+                    if (operands[1].is_constant) {
+                        if (operands.back().size <= 4) {
+                            CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                        }
+                        else {
+                            //TODO: long long to be handled
+                            // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                        }   
+                    }
+
+
+
+                    if (operands.back().size <= 4) {
+                        CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "bitwise operation in Quad constant size<=4");
+                        switch (operands.back().size) {
+                        case 1:
+                            CodeGen::add_to_asm("andi " + get_gpr_name(lvalue) + ", " + get_gpr_name(lvalue) + ", 0xFF", "char bitwise op in Quad constant size<=4");
+                            break;
+                        case 2:
+                            CodeGen::add_to_asm("andi " + get_gpr_name(lvalue) + ", " + get_gpr_name(lvalue) + ", 0xFFFF", "short bitwise op operation in Quad constant size<=4");
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    else {
+                        //TODO: long long to be handled
+                    }
+
+                    check_last_use(rvalue1, line_number);
+                    check_last_use(rvalue2, line_number);
+                    check_last_use(lvalue, line_number);
+                }
+            }
+            break;
+            case LOGICAL_AND:
+            case LOGICAL_OR:
+            {
+
+            }
+            break;
+            default:
+            {
+                error_msg("Reached default case in Quad generation");
+            }
+            break;
+            };
+        }else{
+            switch (op) {
+                case EQ:
+                case NE:
+                case LT:
+                case GT:
+                case GE:
+                case LE:
+                {
+                    GPR rvalue1 = get_gpr(operands[0]);
+                    GPR rvalue2 = get_gpr(operands[1]);
+                    Label label = labels.back();
+                    if (operands[1].is_constant) {
+                        if (is_float(operands.back().type)) {
+                            if (operands.back().size == 4) {
+                                auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
+                                CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
+                                CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
+                            }
+                            else {
+                                auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
+                                CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
+                                CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
+                                CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
+                                CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
+                            }
+                        }
+                        else {
+                            if (operands.back().size <= 4) {
+                                CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                            }
+                            else {
+                                //TODO: long long to be handled
+                                // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                            }
+                        }
+                    }
+                    else {
+                        if (operands[0].is_constant) {
+                            if (is_float(operands[0].type)) {
+                                if (operands[0].size == 4) {
+                                    auto [hi, lo] = floatToIEEEHex(operands[0].name, false);
+                                    CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Conditional Relational operation in Quad");
+                                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue1), "Transferring constant to float Conditional Relational operation in Quad");
+                                }
+                                else {
+                                    auto [hi, lo] = floatToIEEEHex(operands[0].name, true);
+                                    CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Conditional Relational operation in Quad");
+                                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue1), "Transferring constant to double Conditional Relational operation in Quad");
+                                    CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Conditional Relational operation in Quad");
+                                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue1) + 1)), "Transferring constant to double Conditional Relational operation in Quad");
+                                }
+                            }
+                            else {
+                                if (operands[0].size <= 4) {
+                                    CodeGen::add_to_asm("li " + get_gpr_name(rvalue1) + ", " + operands[0].name, "Loading constant for Conditional Relational operation in Quad");
+                                }
+                                else {
+                                //TODO: long long to be handled
+                                // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                            }
+                            }
+                        }
+                        else {
+                            if (is_float(operands.back().type)) {
+                                if (operands.back().size == 4) {
+                                    CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2) + ", " + label.name, "Conditional Relational operation in Quad float variable");
+                                }
+                                else {
+                                    CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2) + ", " + label.name, "Conditional Relational operation in Quad double variable");
+                                }
+                            }
+                            else {
+                                if (operands.back().size <= 4) {
+                                    CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2) + ", " + label.name, "Conditional Relational operation in Quad size<=4 variable");
+                                }
+                                else {
+                                    //TODO: long long to be handled
+                                }
+                            }
+                        }
+                    }
+                    check_last_use(rvalue1, line_number);
+                    check_last_use(rvalue2, line_number);
+                }
+                break;
+                default:
+                {
+                    error_msg("Reached default case in Quad generation");
+                }
+                break;
+            }
         }
-        break;
-        default:
-        {
-            error_msg("Reached default case in Quad generation");
-        }
-        break;
-        };
     }
 
     // =================== Triple Functions ===================
@@ -1614,23 +1706,12 @@ namespace backend
             return;
         }
 
-        if (left_const)
-        {
-            quad.operands.push_back(Operand(op1, true));
-        }
-        else
-        {
-            quad.operands.push_back(Operand(op1, false));
-        }
 
-        if (right_const)
-        {
-            quad.operands.push_back(Operand(op2, true));
-        }
-        else
-        {
-            quad.operands.push_back(Operand(op2, false));
-        }
+        // op[0]=op1
+        quad.operands.push_back(Operand(op1, left_const));
+
+        // op[1]=op2
+        quad.operands.push_back(Operand(op2, right_const));
 
         if (tac_labels.find(label) == tac_labels.end())
         {

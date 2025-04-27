@@ -9,12 +9,12 @@ int main() {
     else
     {
         b = 20 * 3 - 79;
-        float f2 = 0.5*1E4;
-        float cd =  f2*2;
+        // float f2 = 0.5*1E4;
+        // float cd =  f2*2;
 
-        b = a * 4e30;
+        // b = a * 4e30;
         b=b+3;
-        b = (float)a;
+        // b = (float)a;
     }
 
     if (b >= a) {
