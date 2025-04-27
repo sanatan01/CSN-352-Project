@@ -54,7 +54,8 @@ namespace backend {
         TRIPLE,
         DOUBLE,
         COMMON,
-        VARIABLE
+        VARIABLE,
+        CAST,
     };
 
     class TACStatement {
@@ -196,6 +197,7 @@ namespace backend {
         LABEL_St, // No Register
         ENTER_St, // No Register
         EXIT_St,  // No Register
+        CAST_St,
     };
 
     std::string get_type_name(StatementType type);
@@ -249,6 +251,22 @@ namespace backend {
         statements;
     extern std::map<std::string, Label> tac_labels;
 
+    class CastStatement: public TACStatement {
+    public:
+        PrimitiveTypes cast_type;
+        StatementType type;
+        CastStatement(const CastStatement& other): TACStatement(other), type(other.type), cast_type(other.cast_type) {}
+
+        CastStatement(): type(), cast_type(){}
+
+        TACType get_type() const override {
+            return CAST;
+        }
+
+        void set_operands() override;
+        void generate_asm() const override;
+    };
+
     // Function declarations
     void create_quad(std::string result, std::string op1, BinaryOp op, std::string op2, bool left_const, bool right_const);
 
@@ -281,6 +299,8 @@ namespace backend {
     void create_enter_statement();
 
     void create_exit_statement();
+
+    void create_cast_statement(std::string result, std::string cast_type1, std::string op1, bool is_constant);
 
     // Main function to make all changes to TAC
 

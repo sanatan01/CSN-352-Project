@@ -324,7 +324,6 @@ namespace backend
                     // TODO, make sure that hi lo are set properly
                     CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", " + std::to_string(offset) + "($sp)", "Loading into " + get_gpr_name(reg) + " from stack with name " + op.name, true);
                     set_gpr(reg, op.name);
-                    error_msg("Name of temp added  is : " + gpr_map[reg].name);
                     if (store_long && op.size == 8)
                     {
                         CodeGen::add_to_asm("lw " + get_gpr_name(static_cast<GPR>(int(reg) + 1)) + ", " + std::to_string(offset + 4) + "($sp)", "Loading long long into " + get_gpr_name(reg), true);
@@ -596,6 +595,11 @@ namespace backend
 
     void set_gpr(GPR reg, std::string name)
     {
+        if(name == "")
+        {
+            error_msg("Invalid gpr name received empty string");
+            return;
+        }
         gpr_map[reg].value = 1;
         gpr_map[reg].name = name;
         CodeGen::add_to_asm("# Setting gpr " + get_gpr_name(reg) + " to " + name, "");

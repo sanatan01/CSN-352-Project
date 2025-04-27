@@ -72,8 +72,8 @@ int main() {
     int bw_or = a | b;    // bitwise OR
     int bw_xor = a ^ b;    // bitwise XOR
     // bw_not = ~a;       // bitwise NOT
-    int shift_left = a << 2;
-    int shift_right = a >> 1;
+    // int shift_left = a << 2;
+    // int shift_right = a >> 1;
 
     // Logical expressions
     int logic_and = (a > b) && (b > 0);
@@ -127,7 +127,7 @@ int main() {
 
     za = ptr1[3];
 
-    int arr1[];
+    int arr1[100];
     zb = arr1[10];
     // Comma operator
     // int comma_expr = (a = 1, b = 2, a + b);

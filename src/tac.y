@@ -32,7 +32,7 @@ using namespace backend;
 %token <string> LESS_THAN GREATER_THAN CARET PIPE LE_OP GE_OP
 %token <string> RIGHT_OP LEFT_OP AND_OP OR_OP EQ_OP NE_OP
 
-%type <string> variable
+%type <string> variable cast_type
 %type <op_type> binary_operator unary_operator special_operator conditional_operator
 
 %start program
@@ -104,9 +104,18 @@ statement
     ;
 
 cast_statement
-    : variable ASSIGN LPAREN IDENTIFIER RPAREN variable
-    | variable ASSIGN LPAREN IDENTIFIER RPAREN CONSTANT_LITERAL
+    : variable ASSIGN LPAREN cast_type RPAREN variable { create_cast_statement(std::string($1), std::string($4), std::string($6), false); }
+    | variable ASSIGN LPAREN cast_type RPAREN CONSTANT_LITERAL { create_cast_statement(std::string($1), std::string($4), std::string($6), true); }
     ; 
+
+cast_type
+    : IDENTIFIER { $$ = $1; }
+    | cast_type IDENTIFIER {
+        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
+        strcpy(temp, $1);
+        strcat(temp, $2);
+        $$ = temp;
+    }
 
 quad_statement
     : variable ASSIGN variable binary_operator variable {

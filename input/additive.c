@@ -19,9 +19,9 @@ int main() {
     double dc = da - db;   // Subtraction
 
     // Long double operations
-    long double lda = 1.23456789L;
-    long double ldb = 9.87654321L;
-    lda = ldb + 2.5L;           // Addition
+    long double lda = 1.23456789;
+    long double ldb = 9.87654321;
+    lda = ldb + 2.5;           // Addition
     long double ldc = lda - ldb; // Subtraction
 
     // Short operations

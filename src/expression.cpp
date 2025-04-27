@@ -1230,7 +1230,8 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
             }
         }
         temp1 = TAC::get_temp();
-        TAC::print_tac(temp1 + " = " + exp->name + " * " + std::to_string(pe->exp_type->array_type->return_type->getSize()));
+        std::string constantFolded = operation_integer_values("*",exp->name,std::to_string(pe->exp_type->array_type->return_type->getSize()));
+        TAC::print_tac(temp1 + " = " + constantFolded);
         // oe->prim_type.is_const = false; //TODO: make it non-constant
     }
     else if (pe->exp_type->type_tag == POINTER_TYPE) {
@@ -1246,7 +1247,8 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
             }
         }
         temp1 = TAC::get_temp();
-        TAC::print_tac(temp1 + " = " + exp->name + " * " + std::to_string(pe->exp_type->pointer_type->return_type->getSize()));
+        std::string constantFolded = operation_integer_values("*",exp->name,std::to_string(pe->exp_type->pointer_type->return_type->getSize()));
+        TAC::print_tac(temp1 + " = " + constantFolded );
     }
     else {
         error_msg("Subscripted value is neither array nor pointer",
@@ -1562,11 +1564,13 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                         P->prim_type = ERROR_T;
                     }
                 }
-                std::string new_temp = TAC::get_temp();
-                TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
-                std::string temp1 = TAC::get_temp();
-                TAC::print_tac(temp1 + " = * " + new_temp);
-                P->name = temp1;
+                std::string temp_var1 = TAC::get_temp();
+                TAC::print_tac(temp_var1 + " =  *" + pe->name);
+                std::string temp_var2 = TAC::get_temp();
+                TAC::print_tac(temp_var2 + " = " + temp_var1 + " + " + std::to_string(offset));
+                std::string temp_var3 = TAC::get_temp();
+                TAC::print_tac(temp_var3 + " = * " + temp_var2);
+                P->name = temp_var3;
                 return P;
             }
             else if (pe->exp_type->pointer_type->return_type->type_tag == UNION_TYPE) {

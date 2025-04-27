@@ -8,7 +8,8 @@ int main(){
     int b =5;
     int d =10;
     int c = b+d;
-    // c = b*d;
+    c = b*d;
+    c = b*10;
     // int d = c*b;
     // int e = c*b + 10;
     // int f = e/c - 1;
@@ -20,6 +21,12 @@ int main(){
     // int l = k * 2;
     // int m = l / 2;
     // int n = m % 2;
+
+    int * ptr;
+
+    int f =5;
+
+    int * ptr2 = (f - ptr);
 
 
     return 0;

@@ -268,6 +268,10 @@ void TAC::print_goto_conditional(class Expression* expr, int _case) {
         return;
     }
 
+    if(expr->name == "empty"){
+        expr->name = "1";
+    }
+
     switch (_case) {
     case BREAK_C:
         TAC::print_tac(".if " + expr->name + " == 0 .goto " + TAC::get_label(BREAK_C));
@@ -293,7 +297,9 @@ void TAC::print_goto_conditional(class Expression* expr, int _case) {
     }
 }
 void TAC::print_goto_do_while(class Expression* expr) {
-    TAC::print_tac(".if " + expr->name + " != 0 .goto " + TAC::get_label(CONTINUE_C));
+    std::string new_temp = TAC::get_temp();
+    TAC::print_tac(new_temp + " = !" + expr->name);
+    TAC::print_tac(".if " + new_temp + " == 0 .goto " + TAC::get_label(CONTINUE_C));
 }
 void TAC::print_goto(int _case, bool remove) {
     switch (_case) {
