@@ -190,8 +190,8 @@ return_statement
     ;
 
 call_statement
-    : CALL IDENTIFIER COMMA CONSTANT_LITERAL {
-        create_call_statement(std::string($2), std::string($4));
+    : variable ASSIGN CALL IDENTIFIER COMMA CONSTANT_LITERAL { 
+        create_call_statement(std::string($1), std::string($4), std::string($6));
     }
     ;
 
@@ -199,9 +199,6 @@ assignment_statement
     : quad_statement
     | triple_statement
     | double_statement
-    | variable ASSIGN CALL IDENTIFIER COMMA CONSTANT_LITERAL { 
-        create_call_statement(std::string($1), std::string($4), std::string($6));
-    }
     ;
 
 param_statement

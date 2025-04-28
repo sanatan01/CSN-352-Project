@@ -290,7 +290,7 @@ namespace backend {
             {
                 Operand firstOp = Operand(operands[0]);
                 Operand secondOp = Operand(operands[1]);
-                if (firstOp.type.type_tag == STANDARD_TYPE) {
+                if (firstOp.is_constant) {
                     operands[0] = Operand(secondOp);
                     operands[1] = Operand(firstOp);
                 }
@@ -336,16 +336,19 @@ namespace backend {
             {
                 Operand firstOp = Operand(operands[0]);
                 Operand secondOp = Operand(operands[1]);
-                if (firstOp.is_constant){
+                if (firstOp.is_constant) {
                     operands[0] = Operand(secondOp);
                     operands[1] = Operand(firstOp);
-                    if(op == LT) {
+                    if (op == LT) {
                         op = GE;
-                    } else if (op == LE) {
+                    }
+                    else if (op == LE) {
                         op = GT;
-                    } else if (op == GE) {
+                    }
+                    else if (op == GE) {
                         op = LT;
-                    } else if (op == GT) {
+                    }
+                    else if (op == GT) {
                         op = LE;
                     }
                 }
@@ -447,11 +450,10 @@ namespace backend {
                         CodeGen::add_to_asm("addi " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + operands[1].name, "Addition operation in Quad constant size<=4");
                     }
                     else {
-                        //TODO: long long to be handled
-                        // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                        // TODO: long long to be handled
+                        //  CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
                     }
                 }
-
             }
             else {
                 if (is_float(operands.back().type)) {
@@ -467,7 +469,7 @@ namespace backend {
                         CodeGen::add_to_asm("add " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad size<=4 for variabls:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
                     }
                     else {
-                        //TODO: long long to be handled
+                        // TODO: long long to be handled
                     }
                 }
             }
@@ -504,12 +506,12 @@ namespace backend {
                 }
                 else {
                     if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("li " + get_gpr_name(rvalue1) + ", " + operands[0].name, "Loading constant for Quad");
+                        CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
                         CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad constant size<=4 for operands:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
                     }
                     else {
-                        //TODO: long long to be handled
-                        // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                        // TODO: long long to be handled
+                        //  CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
                     }
                 }
                 break;
@@ -544,8 +546,8 @@ namespace backend {
                         CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad constant size<=4 for operands:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
                     }
                     else {
-                        //TODO: long long to be handled
-                        // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                        // TODO: long long to be handled
+                        //  CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
                     }
                 }
             }
@@ -563,7 +565,7 @@ namespace backend {
                         CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad size<=4 for variables:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
                     }
                     else {
-                        //TODO: long long to be handled
+                        // TODO: long long to be handled
                     }
                 }
             }
@@ -651,7 +653,7 @@ namespace backend {
                         CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad size<=4 variable");
                     }
                     else {
-                        //TODO: long long to be handled
+                        // TODO: long long to be handled
                     }
                 }
             }
@@ -677,18 +679,17 @@ namespace backend {
                     CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
                 }
                 else {
-                    //TODO: long long to be handled
-                    // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                    // TODO: long long to be handled
+                    //  CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
                 }
             }
-
 
             if (operands.back().size <= 4) {
                 CodeGen::add_to_asm("div " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "division for modulus operation in Quad constant size<=4");
                 CodeGen::add_to_asm("mfhi " + get_gpr_name(lvalue), "Moving remainder for Modulus operation in Quad variable size<=4");
             }
             else {
-                //TODO: long long to be handled
+                // TODO: long long to be handled
             }
 
             check_last_use(rvalue1, line_number);
@@ -753,7 +754,6 @@ namespace backend {
         case LOGICAL_AND:
         case LOGICAL_OR:
         {
-
         }
         break;
         default:
@@ -1154,7 +1154,6 @@ namespace backend {
                 return;
             }
             if (operands[0].type.type_tag == STANDARD_TYPE) {
-
                 if (typeMask[operands[1].type.standard_type->name] == typeMask[operands.back().type.standard_type->name]) {
 
                     // get rvalue register
@@ -1284,16 +1283,25 @@ namespace backend {
             }
 
             if (type == CALL_St) {
-                if (operands.size() != 1) {
-                    error_msg("Invalid number of operands for CALL statement");
-                    return;
+                operands.back().type = GlobalType(*MMU::function_map[labels[0].name].function_type->return_type);
+                operands.back().storage_loc = TEMP;
+                if (operands.back().type.type_tag == STRUCT_TYPE || operands.back().type.type_tag == UNION_TYPE) {
+                    operands.back().type = *(create_pointer_type(&operands.back().type));
+                    operands.back().storage_loc = STACK;
                 }
-                operands[0].type = MMU::function_map[labels[0].name];
-                operands[0].storage_loc = TEMP;
-                operands[0].size = operands[0].type.getSize();
-                operands[0].is_constant = false;
+                operands.back().storage_loc = TEMP;
+                operands.back().size = operands.back().type.getSize();
+                operands.back().is_constant = false;
+                MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
             }
-            error_msg("Invalid TAC code, because lval should be declared before being used");
+            else {
+
+                error_msg("Invalid TAC code, because lval should be declared before being used");
+            }
+        }
+
+        if (type == CALL_St) {
+            output_msg("Operand " + operands.back().name + " is in " + std::to_string(operands.back().size) + " bytes , with type " + operands.back().type.getType());
         }
     }
 
@@ -1305,6 +1313,17 @@ namespace backend {
                 error_msg("Invalid number of operands for POP statement");
                 return;
             }
+
+            if (CodeGen::current_scope == 1) {
+                GPR arg_regs[] = { a0, a1, a2, a3, f0, f1 };
+                for (auto reg : arg_regs) {
+                    free_gpr(reg);
+                }
+
+                // Stack se pop
+
+            }
+
             // Fetch the operands
             int sz = std::stoi(operands[0].name);
             CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(sz), "Pop " + std::to_string(sz) + " bytes from stack");
@@ -1313,18 +1332,19 @@ namespace backend {
         break;
         case FUNC_St:
         {
+            CodeGen::current_func = labels[0].name;
             if (CodeGen::current_scope == 0) {
                 CodeGen::add_to_asm("\n.globl " + labels[0].name, "", false);
             }
-            // Function Prolouge
+
+            // Function prologue
             CodeGen::add_to_asm(labels[0].name + ":", "", false);
+            CodeGen::add_to_asm("# Function prologue", "");
             CodeGen::add_to_asm("addi $sp, $sp, -16", "Allocate stack space for function");
             CodeGen::add_to_asm("sw $ra, 12($sp)", "Store return address");
             CodeGen::add_to_asm("sw $fp, 8($sp)", "Store frame pointer");
             CodeGen::add_to_asm("addi $fp, $sp, 16", "Set frame pointer");
-
-            // TODO: load params
-
+            CodeGen::add_to_asm("# Finished Function prologue", "");
             break;
         }
         case LABEL_St:
@@ -1353,71 +1373,200 @@ namespace backend {
             }
             // Fetch the operands
             std::string label = labels[0].name;
-            CodeGen::add_to_asm("j " + label,
-                                "Jump to label " + label);
+            CodeGen::add_to_asm("j " + label, "Jump to label " + label);
         }
         break;
         case RETURN_St:
         {
-            // TODO
-            // Do type checking here
-            // if 64 byte return value use v0 v1 else use v0
-            // if
             if (operands.size() == 1) {
+
+                // Set return values
+                GlobalType ret = GlobalType(*MMU::function_map[CodeGen::current_func].function_type->return_type);
+
+
                 if (operands[0].is_constant) {
-                    CodeGen::add_to_asm("li $v0, " + operands[0].name, "Loading return value");
+                    if (is_float(ret)) {
+
+                        if (operands.back().size == 4) {
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading float constant");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(f0), "Moving float constant");
+                        }
+                        else {
+                            auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading double constant high");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(f0), "Moving double constant high");
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading double constant low");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>((int)f0 + 1)), "Moving double constant low");
+
+                        }
+                    }
+                    else {
+
+                        if (operands[0].size <= 4) {
+                            CodeGen::add_to_asm("li " + get_gpr_name(v0) + ", " + operands[0].name, "Loading constant for return value");
+                        }
+                        else {
+                            auto [hi, lo] = getHighLowBytes(operands[0].name);
+                            CodeGen::add_to_asm("li " + get_gpr_name(v0) + ", " + hi, "Loading high part of long long");
+                            CodeGen::add_to_asm("li " + get_gpr_name(v1) + ", " + lo, "Loading low part of long long");
+                        }
+                    }
                 }
                 else {
-                    GPR reg = get_gpr(operands[0]);
+                    if (is_float(ret)) {
+                        GPR ret_gpr = get_gpr(operands[0]);
+                        if (operands[0].size == 4) {
+                            CodeGen::add_to_asm("mov.s " + get_gpr_name(f0) + ", " + get_gpr_name(ret_gpr), "Loading float return value");
+                        }
+                        else {
+                            CodeGen::add_to_asm("mov.d " + get_gpr_name(f0) + ", " + get_gpr_name(ret_gpr), "Loading double return value");
+                        }
+                        check_last_use(ret_gpr, line_number);
+                    }
+                    else if (ret.type_tag == STRUCT_TYPE || ret.type_tag == UNION_TYPE) {
+                        GPR temp = get_assigned_gpr(operands[0].name);
+                        if (temp != empty) {
+                            store_gpr(temp, operands[0].name);
+                        }
 
-                    CodeGen::add_to_asm("move $v0, " + get_gpr_name(reg), "Loading return value");
-                    free_gpr(reg);
+                        // Pushing to stack if no free registers
+                        if (operands[0].storage_loc == DATA) {
+                            // use s1 register to store address of data location
+                            load_gpr(s1, operands[0], false);
+                            set_gpr(s1, operands[0].name);
+                        }
+                        for (int j = 0; j < operands[0].size; j += 4) {
+                            switch (operands[0].storage_loc) {
+                            case STACK:
+                                CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset(operands[0].name) + j) + "($sp)", "Getting return type from stack");
+                                break;
+                            case DATA:
+                                CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(j) + "(" + get_gpr_name(s1) + ")", "Getting return type from data section");
+                                break;
+                            default:
+                                error_msg("Invalid storage location for argument");
+                                break;
+                            }
+                            CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(j) + "($a0)", "Setting return type on stack");
+                        }
+                        free_gpr(s1);
+                        free_gpr(s0);
+                    }
+                    else {
+                        GPR ret_gpr = get_gpr(operands[0]);
+                        CodeGen::add_to_asm("move " + get_gpr_name(v0) + ", " + get_gpr_name(ret_gpr), "Loading int return value");
+                        check_last_use(ret_gpr, line_number);
+                    }
                 }
             }
             // Function Epilogue
-            // CodeGen::add_to_asm("move $sp, $fp", "Restore stack pointer");
-            // CodeGen::add_to_asm("lw $fp, 8($sp)", "Restore frame pointer");
-            // CodeGen::add_to_asm("lw $ra, 12($sp)", "Restore return address");
-            // CodeGen::add_to_asm("jr $ra", "Return to caller");
+            CodeGen::add_to_asm("# Function epilogue", "");
+            CodeGen::add_to_asm("move $sp, $fp", "Restore stack pointer");
+            CodeGen::add_to_asm("lw $ra, -4($fp)", "Restore return address");
+            CodeGen::add_to_asm("lw $fp, -8($fp)", "Restore frame pointer");
+            CodeGen::add_to_asm("jr $ra", "Return to caller");
+            CodeGen::add_to_asm("# Finished Function epilogue", "");
         }
         break;
         case CALL_St:
         {
 
-            Operand ret = Operand();
-            ret.name = labels[0].name;
-            ret.is_constant = false;
-            if (MMU::function_map[labels[0].name].function_type->return_type == nullptr) {
-                // Void function
-                ret.type = *(create_primitive_type(VOID_T));
-                ret.storage_loc = TEMP;
+            output_msg("Calling function " + labels[0].name + " with return type " + operands.back().type.getType() + " and size " + std::to_string(operands.back().size));
+
+            // Stpre all args
+            GPR arg_regs[] = { a0, a1, a2, a3};
+            std::vector<Register> para;
+            CodeGen::add_to_asm("addi, $sp, $sp, -16", "Pushing stack for args params");
+            int j = 0;
+            for (GPR reg : arg_regs) {
+                CodeGen::add_to_asm("sw " + get_gpr_name(reg) + ", " + std::to_string(12 - (j * 4)) + "($sp)", "Pushing arg reg to stack");
+                para.push_back(gpr_map[reg]);
+                free_gpr(reg);
+                j++;
             }
-            else {
-                GlobalType ret_type = GlobalType(*MMU::function_map[labels[0].name].function_type->return_type);
-                if (ret_type.type_tag == STANDARD_TYPE || ret_type.type_tag == ARRAY_TYPE || ret_type.type_tag == POINTER_TYPE) {
-                    ret.type = GlobalType(ret_type);
-                    ret.storage_loc = TEMP;
+
+            CodeGen::arg_map.push_back(para);
+
+            get_free_arg_gpr(params, operands.back());
+            free_all_regs();
+            CodeGen::add_to_asm("jal " + labels[0].name, "Jump to function");
+            // Clear the stack pushed by params
+            if (CodeGen::stack_pushed != 0) {
+                MMU::pop(CodeGen::stack_pushed);
+                CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(CodeGen::stack_pushed), "Clearing stack pushed params");
+                CodeGen::stack_pushed = 0;
+            }
+
+            restore_all_regs();
+
+            CodeGen::add_to_asm("addi $sp, $sp, 16", "Popping stack for args params");
+            int i = 0;
+            for (GPR reg : arg_regs) {
+                gpr_map[reg] = CodeGen::arg_map.back()[i];
+                CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", " + std::to_string(12 - (i * 4)) + "($sp)", "Pushing arg reg to stack");
+                i++;
+            }
+            CodeGen::arg_map.pop_back();
+            params.clear();
+
+            // Set return values
+            GlobalType ret = GlobalType(*MMU::function_map[CodeGen::current_func].function_type->return_type);
+
+
+
+            if (is_float(ret)) {
+                GPR ret_gpr = get_gpr(operands.back());
+                if (operands.back().size == 4) {
+                    CodeGen::add_to_asm("mov.s " + get_gpr_name(ret_gpr) + ", " + get_gpr_name(f0), "Loading float return value");
                 }
                 else {
-                    ret.type = *(create_pointer_type(&ret_type));
-                    ret.storage_loc = STACK;
+                    CodeGen::add_to_asm("mov.d " + get_gpr_name(ret_gpr) + ", " + get_gpr_name(f0), "Loading double return value");
                 }
+                check_last_use(ret_gpr, line_number);
+                check_last_use(f0, line_number);
             }
-            ret.size = ret.type.getSize();
+            else if (ret.type_tag == STRUCT_TYPE || ret.type_tag == UNION_TYPE) {
+                GPR temp = get_assigned_gpr(operands.back().name);
+                if (temp != empty) {
+                    store_gpr(temp, operands.back().name);
+                }
 
-            get_free_arg_gpr(params, ret);
-            free_all_regs();
-            CodeGen::add_to_asm("need to implement call", "");
-            restore_all_regs();
-            CodeGen::first_param = true;
-            params.clear();
+                // Pushing to stack if no free registers
+                if (operands.back().storage_loc == DATA) {
+                    // use s1 register to store address of data location
+                    load_gpr(s1, operands.back(), false);
+                    set_gpr(s1, operands.back().name);
+                }
+                for (int j = 0; j < operands.back().size; j += 4) {
+                    switch (operands.back().storage_loc) {
+                    case STACK:
+                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset(operands.back().name) + j) + "($sp)", "Getting return type from stack");
+                        break;
+                    case DATA:
+                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(j) + "(" + get_gpr_name(s1) + ")", "Getting return type from data section");
+                        break;
+                    default:
+                        error_msg("Invalid storage location for argument");
+                        break;
+                    }
+                    CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(j) + "($a0)", "Setting return type on stack");
+                }
+                free_gpr(s1);
+                free_gpr(s0);
+            }
+            else {
+                GPR ret_gpr = get_gpr(operands.back());
+                CodeGen::add_to_asm("move " + get_gpr_name(ret_gpr) + ", " + get_gpr_name(v0), "Loading int return value");
+                check_last_use(ret_gpr, line_number);
+                check_last_use(v0, line_number);
+            }
+
+            output_msg("Calling function " + labels[0].name + " with return type " + operands.back().type.getType() + " and size " + std::to_string(operands.back().size));
+
         }
         break;
         case PARAM_St:
-            if (CodeGen::first_param) {
-                dump_all_regs();
-                CodeGen::first_param = false;
-            }
             params.push_back(operands[0]);
             break;
         default:
@@ -1465,7 +1614,6 @@ namespace backend {
             break;
             case DATA_St:
             {
-                // Nothing to do here, sed
                 Operand op = Operand(operands.back());
                 op.type = *(create_pointer_type(create_primitive_type(CHAR_T)));
                 op.is_constant = false;
@@ -1473,8 +1621,24 @@ namespace backend {
                 operands.back() = Operand(op);
                 MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type, static_cast<int>(DATA));
             }
+            case ARG_St:
+            {
+                operands.back().is_constant = false;
+                operands.back().type = GlobalType(*MMU::get_symbol_type(operands[0].name));
+                operands.back().size = operands.back().type.getSize();
+                output_msg("Setting arg type to " + operands.back().type.getType());
             }
             break;
+            }
+        }
+    }
+
+    void VariableStatement::update_arg_count() {
+        if (type == ARG_St) {
+            operands.back().storage_loc = static_cast<StorageLoc>(set_arg_type(operands.back()));
+        }
+        else {
+            TACStatement::update_arg_count();
         }
     }
 
@@ -1536,7 +1700,6 @@ namespace backend {
                     if (operands[1].type.type_tag == STANDARD_TYPE) {
 
                         if (typeMask[operands[1].type.standard_type->name] == typeMask[operands.back().type.standard_type->name]) {
-
                             // get rvalue register
                             GPR secondReg = get_gpr(operands[1]);
 
@@ -2218,8 +2381,8 @@ namespace backend {
                 std::set<std::string> new_out;
                 for (int j : S.successors) {
                     if (j > 0 && j <= statements.size()) {
-                        new_out.insert(statements[j-1]->live_in.begin(),
-                                       statements[j-1]->live_in.end());
+                        new_out.insert(statements[j - 1]->live_in.begin(),
+                                       statements[j - 1]->live_in.end());
                     }
                 }
 
@@ -2258,7 +2421,7 @@ namespace backend {
         // Set last_used according to liveness analysis
         for (auto& statement : statements) {
             for (const auto& live : statement->live_in) {
-                last_used[live] = (statement->line_number+1);
+                last_used[live] = (statement->line_number + 1);
             }
         }
 
