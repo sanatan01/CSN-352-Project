@@ -1324,11 +1324,8 @@ namespace backend {
                 continue;
             }
 
-            if (type == CALL_St) {
-                if (operands.size() != 1) {
-                    error_msg("Invalid number of operands for CALL statement");
-                    return;
-                }
+            if (type == CALL_St)
+            {
                 operands[0].type = GlobalType(*MMU::function_map[labels[0].name].function_type->return_type);
                 operands[0].storage_loc = TEMP;
                 if (operands[0].type.type_tag == STRUCT_TYPE || UNION_TYPE)
@@ -1340,7 +1337,11 @@ namespace backend {
                 operands[0].size = operands[0].type.getSize();
                 operands[0].is_constant = false;
             }
-            error_msg("Invalid TAC code, because lval should be declared before being used");
+            else
+            {
+
+                error_msg("Invalid TAC code, because lval should be declared before being used");
+            }
         }
     }
 
@@ -1365,12 +1366,15 @@ namespace backend {
             {
                 CodeGen::add_to_asm("\n.globl " + labels[0].name, "", false);
             }
-            // Function Prolouge
+
+            // Function prologue
             CodeGen::add_to_asm(labels[0].name + ":", "", false);
+            CodeGen::add_to_asm("# Function prologue", "");
             CodeGen::add_to_asm("addi $sp, $sp, -16", "Allocate stack space for function");
             CodeGen::add_to_asm("sw $ra, 12($sp)", "Store return address");
             CodeGen::add_to_asm("sw $fp, 8($sp)", "Store frame pointer");
             CodeGen::add_to_asm("addi $fp, $sp, 16", "Set frame pointer");
+            CodeGen::add_to_asm("# Finished Function prologue", "");
             break;
         }
         case LABEL_St:
@@ -1463,10 +1467,12 @@ namespace backend {
                 }
             }
             // Function Epilogue
+            CodeGen::add_to_asm("# Function epilogue", "");
             CodeGen::add_to_asm("move $sp, $fp", "Restore stack pointer");
             CodeGen::add_to_asm("lw $fp, 8($sp)", "Restore frame pointer");
             CodeGen::add_to_asm("lw $ra, 12($sp)", "Restore return address");
             CodeGen::add_to_asm("jr $ra", "Return to caller");
+            CodeGen::add_to_asm("# Finished Function epilogue", "");
         }
         break;
         case CALL_St:
@@ -1492,9 +1498,11 @@ namespace backend {
             // Clear the stack pushed by params
             if (CodeGen::stack_pushed != 0)
             {
-                CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(CodeGen::stack_pushed), "Clearing stack space for params");
+                MMU::pop(CodeGen::stack_pushed);
+                CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(CodeGen::stack_pushed), "Clearing stack pushed params");
                 CodeGen::stack_pushed = 0;
             }
+            // TODO: clear all registers
             restore_all_regs();
             params.clear();
         }
@@ -1556,13 +1564,25 @@ namespace backend {
             }
             case ARG_St:
             {
-                Operand op = Operand(operands.back());
-                op.is_constant = false;
-                op.type = GlobalType(*MMU::get_symbol_type(operands[0].name));
-                set_arg_type(op);
+                operands.back().is_constant = false;
+                operands.back().type = GlobalType(*MMU::get_symbol_type(operands[0].name));
+                operands.back().size = operands.back().type.getSize();
+                output_msg("Setting arg type to " + operands.back().type.getType());
             }
             break;
             }
+        }
+    }
+
+    void VariableStatement::update_arg_count()
+    {
+        if (type == ARG_St)
+        {
+            operands.back().storage_loc = static_cast<StorageLoc>(set_arg_type(operands.back()));
+        }
+        else
+        {
+            TACStatement::update_arg_count();
         }
     }
 

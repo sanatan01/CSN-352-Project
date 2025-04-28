@@ -12,11 +12,12 @@
 
 extern std::fstream assembly_file;
 
-namespace backend {
-
+namespace backend
+{
     extern std::map<std::string, int> last_used;
 
-    class Label {
+    class Label
+    {
     public:
         std::string name;
         int location;
@@ -25,17 +26,19 @@ namespace backend {
             : name(name), location(location) {}
 
         // copy constructor
-        Label(const Label& other)
+        Label(const Label &other)
             : name(other.name), location(other.location) {}
     };
 
-    enum StorageLoc {
+    enum StorageLoc
+    {
         TEMP,
         STACK,
         DATA,
     };
 
-    class Operand {
+    class Operand
+    {
     public:
         std::string name;
         size_t size;
@@ -47,12 +50,13 @@ namespace backend {
         //TODO: plase review this
         Operand() = default;
         Operand(std::string name, bool is_const);
-        Operand(const Operand& other)
+        Operand(const Operand &other)
             : name(other.name), size(other.size), type(other.type),
-            is_constant(other.is_constant), storage_loc(other.storage_loc) {}
+              is_constant(other.is_constant), storage_loc(other.storage_loc) {}
     };
 
-    enum TACType {
+    enum TACType
+    {
         QUAD,
         TRIPLE,
         DOUBLE,
@@ -61,7 +65,8 @@ namespace backend {
         CAST,
     };
 
-    class TACStatement {
+    class TACStatement
+    {
     public:
         std::vector<Operand> operands;
         std::vector<Label> labels;
@@ -73,7 +78,7 @@ namespace backend {
         std::set<int> successors;
 
         // Explicitly define a copy constructor
-        TACStatement(const TACStatement& other)
+        TACStatement(const TACStatement &other)
             : operands(other.operands), labels(other.labels), line_number(other.line_number) {}
 
         // Default constructor
@@ -89,8 +94,18 @@ namespace backend {
         virtual void set_operands() = 0;
         virtual void generate_asm() const = 0;
 
-        virtual void generate_assembly() {
+        void reset_arg_count();
+
+        virtual void update_arg_count()
+        {
+            // Default implementation sets this to 0, if ARG_St we inc this
+            reset_arg_count();
+        }
+
+        virtual void generate_assembly()
+        {
             set_operands();
+            update_arg_count();
             generate_asm();
         }
 
@@ -129,7 +144,8 @@ namespace backend {
         NEG_OP,
     };
 
-    enum BinaryOp {
+    enum BinaryOp
+    {
         ADD,         // PLUS
         SUB,         // MINUS
         MUL,         // ASTERISK
@@ -156,13 +172,14 @@ namespace backend {
         BinaryOp op;
 
         // Explicitly define a copy constructor
-        Quad(const Quad& other): TACStatement(other), is_conditional(other.is_conditional), op(other.op) {}
+        Quad(const Quad &other) : TACStatement(other), is_conditional(other.is_conditional), op(other.op) {}
 
         // Default constructor
-        Quad(): is_conditional(false), op() {}
+        Quad() : is_conditional(false), op() {}
 
         // Override get_type to return QUAD
-        TACType get_type() const override {
+        TACType get_type() const override
+        {
             return QUAD;
         }
 
@@ -174,20 +191,22 @@ namespace backend {
         void calculate_def_use() override;
     };
 
-    class Triple: public TACStatement {
+    class Triple : public TACStatement
+    {
     public:
         UnaryOp op;
         SpecialOp special_op;
 
         // Explicitly define a copy constructor
-        Triple(const Triple& other)
+        Triple(const Triple &other)
             : TACStatement(other), op(other.op), special_op(other.special_op) {}
 
         // Default constructor
-        Triple(): op(), special_op() {}
+        Triple() : op(), special_op() {}
 
         // Override get_type to return TRIPLE
-        TACType get_type() const override {
+        TACType get_type() const override
+        {
             return TRIPLE;
         }
 
@@ -198,7 +217,8 @@ namespace backend {
         void calculate_def_use() override;
     };
 
-    class Double: public TACStatement {
+    class Double : public TACStatement
+    {
     public:
 
         // Explicitly define a copy constructor
@@ -209,7 +229,8 @@ namespace backend {
         Double() = default;
 
         // Override get_type to return DOUBLE
-        TACType get_type() const override {
+        TACType get_type() const override
+        {
             return DOUBLE;
         }
 
@@ -236,18 +257,20 @@ namespace backend {
 
     std::string get_type_name(TACType type);
 
-    class CommonStatement: public TACStatement {
+    class CommonStatement : public TACStatement
+    {
     public:
         StatementType type;
 
         // Explicitly define a copy constructor
-        CommonStatement(const CommonStatement& other): TACStatement(other), type(other.type) {}
+        CommonStatement(const CommonStatement &other) : TACStatement(other), type(other.type) {}
 
         // Default constructor
-        CommonStatement(): type() {}
+        CommonStatement() : type() {}
 
         // Override get_type to return COMMON
-        TACType get_type() const override {
+        TACType get_type() const override
+        {
             return COMMON;
         }
 
@@ -259,7 +282,8 @@ namespace backend {
         void build_successors() override;
     };
 
-    enum VariableType {
+    enum VariableType
+    {
         GLOBAL_St,
         STATIC_St,
         LOCAL_St,
@@ -267,18 +291,21 @@ namespace backend {
         ARG_St,
     };
 
-    class VariableStatement: public TACStatement {
+    class VariableStatement : public TACStatement
+    {
     public:
         VariableType type;
 
-        VariableStatement(const VariableStatement& other): TACStatement(other), type(other.type) {}
+        VariableStatement(const VariableStatement &other) : TACStatement(other), type(other.type) {}
 
-        VariableStatement(): type() {}
+        VariableStatement() : type() {}
 
-        TACType get_type() const override {
+        TACType get_type() const override
+        {
             return VARIABLE;
         }
 
+        void update_arg_count() override;
         void set_operands() override;
         void generate_asm() const override;
 
@@ -322,8 +349,6 @@ namespace backend {
     void create_if_statement(std::string op1, std::string op2, BinaryOp op, std::string label, bool left_const, bool right_const);
 
     void create_return_statement(std::string result, bool is_const);
-
-    void create_call_statement(std::string function_name, std::string arg_count);
 
     void create_call_statement(std::string ret, std::string function_name, std::string arg_count);
 
