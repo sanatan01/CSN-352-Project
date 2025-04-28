@@ -8,6 +8,7 @@
 #include <fstream>
 #include <types.h>
 #include <codegen.h>
+#include <set>
 
 extern std::fstream assembly_file;
 
@@ -42,6 +43,8 @@ namespace backend {
         bool is_constant;
         StorageLoc storage_loc;
 
+
+        //TODO: plase review this
         Operand() = default;
         Operand(std::string name, bool is_const);
         Operand(const Operand& other)
@@ -64,6 +67,11 @@ namespace backend {
         std::vector<Label> labels;
         int line_number;
 
+        // Liveness analysis of the operands
+        std::set<std::string> live_in, live_out;
+        std::set<std::string> def, use;
+        std::set<int> successors;
+
         // Explicitly define a copy constructor
         TACStatement(const TACStatement& other)
             : operands(other.operands), labels(other.labels), line_number(other.line_number) {}
@@ -85,7 +93,11 @@ namespace backend {
             generate_asm();
         }
 
-
+        // Functions for liveness analysis
+        // virtual void calculate_def_use();
+        virtual void build_successors() {
+            successors.insert(line_number + 1);
+        }
     };
 
     enum BinaryOp {
@@ -143,6 +155,7 @@ namespace backend {
 
         void set_operands() override;
         void generate_asm() const override;
+        void build_successors() override;
     };
 
     class Triple: public TACStatement {
@@ -221,6 +234,8 @@ namespace backend {
 
         void set_operands() override;
         void generate_asm() const override;
+
+        void build_successors() override;
     };
 
     enum VariableType {
@@ -257,7 +272,7 @@ namespace backend {
         StatementType type;
         CastStatement(const CastStatement& other): TACStatement(other), type(other.type), cast_type(other.cast_type) {}
 
-        CastStatement(): type(), cast_type(){}
+        CastStatement(): type(), cast_type() {}
 
         TACType get_type() const override {
             return CAST;

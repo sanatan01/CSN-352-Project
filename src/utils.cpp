@@ -17,7 +17,7 @@ void debug_msg(std::string msg, int line_num, int column) {
 }
 
 void output_msg(std::string msg) {
-#ifdef _DEBUG_MODE
+// #ifdef _DEBUG_MODE
     std::cout << "[   ASM   ] " << msg << std::endl;
-#endif
+// #endif
 }

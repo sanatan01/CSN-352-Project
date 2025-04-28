@@ -9,6 +9,7 @@
 #include <memory>
 #include <fstream>
 #include <iomanip>
+#include <set>
 
 namespace backend
 {
@@ -133,8 +134,10 @@ namespace backend
         static void push(Operand op);
         static void pop(int size);
         static int get_offset(std::string name);
+    
 
         static bool add_symbol(std::string name, int index, int loc);
+
         static bool add_symbol(std::string name, int size, GlobalType type, int loc = 0);
 
         static int get_symbol_size(std::string name);

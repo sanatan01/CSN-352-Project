@@ -27,6 +27,15 @@ int main(){
     // int **c;
     // c = &a;
 
+    const int FINAL_VALUE = 5; // final constant value
+    int result =0;
+    int i;
+    for(i=0;i<FINAL_VALUE;i++){
+        result += i;
+    }
+
+    int restultfinal = result;
+
 
     int a = 100;
     int b = 10;
@@ -44,6 +53,18 @@ int main(){
     int final =a;
     int final1 = c;
     int final2 =d;
+
+    int *ptr;
+
+    ptr = &final;
+
+    *ptr = 1;
+
+    final1 = final +10;
+
+    // ptr = &final2;
+
+    int final4 =final1;
 
     // int nice3 = a;
 

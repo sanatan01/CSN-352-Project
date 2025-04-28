@@ -27,7 +27,7 @@ using namespace backend;
 
 %token <string> IDENTIFIER TEMP STRING_LITERAL CONSTANT_LITERAL LABEL REFERENCE LPAREN RPAREN
 %token <string> CALL RETURN PARAM PUSH POP GOTO STATIC IF FUNC ENTER EXIT DATA GLOBAL ARG
-%token <string> COMMA ASSIGN AMPERSAND EXCLAMATION
+%token <string> COMMA ASSIGN AMPERSAND EXCLAMATION NEWLINE
 %token <string> TILDE MINUS PLUS ASTERISK SLASH PERCENT DOT
 %token <string> LESS_THAN GREATER_THAN CARET PIPE LE_OP GE_OP
 %token <string> RIGHT_OP LEFT_OP AND_OP OR_OP EQ_OP NE_OP
@@ -89,18 +89,19 @@ conditional_operator
     ;
 
 statement
-    : labeled_statement
-    | add_variable_statement
-    | if_statement
-    | return_statement
-    | call_statement
-    | assignment_statement
-    | param_statement
-    | pop_statement
-    | goto_statement
-    | cast_statement
-    | ENTER { create_enter_statement(); }
-    | EXIT { create_exit_statement(); }
+    : labeled_statement NEWLINE
+    | add_variable_statement NEWLINE
+    | if_statement NEWLINE
+    | return_statement NEWLINE
+    | call_statement NEWLINE
+    | assignment_statement NEWLINE
+    | param_statement NEWLINE
+    | pop_statement NEWLINE
+    | goto_statement NEWLINE
+    | cast_statement NEWLINE
+    | ENTER NEWLINE { create_enter_statement(); } 
+    | EXIT NEWLINE { create_exit_statement(); }
+    | NEWLINE { /* Ignore empty lines */ }
     ;
 
 cast_statement

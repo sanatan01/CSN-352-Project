@@ -63,13 +63,13 @@ void TAC::clear_stream() {
 
 void TAC::print_tac(std::string str) {
     if (str.length() >=5 && (str[1] == 'f' && str[2] == 'u' && str[3] == 'n' && str[4] == 'c')) {
-        tac_stream << '\n' << '\n' << str << std::endl;
+        tac_stream << '\n' << '\n' << str << " #" << std::endl;
     }
     else if (str[0] == 'L') {
-        tac_stream << "\n\t" << str << std::endl;
+        tac_stream << "\n\t" << str << " #" << std::endl;
     }
     else {
-        tac_stream << "\t\t" << str << std::endl;
+        tac_stream << "\t\t" << str << " #" << std::endl;
     }
 }
 

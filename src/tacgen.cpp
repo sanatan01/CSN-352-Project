@@ -210,6 +210,23 @@ namespace backend {
 
     // =================== Quad Functions ===================
 
+    void Quad::build_successors() {
+        if (is_conditional) {
+            successors.insert(line_number + 1);
+            auto it = tac_labels.find(labels.back().name);
+            if (it != tac_labels.end()) {
+                successors.insert(it->second.location);
+            }
+            else {
+                error_msg("Label not found in Quad");
+            }
+
+        }
+        else {
+            TACStatement::build_successors();
+        }
+    }
+
     void Quad::set_operands() {
         // Set the operands for the Quad statement
 
@@ -328,7 +345,7 @@ namespace backend {
     void Quad::generate_asm() const {
         if (is_conditional) {
             GPR lvalue = get_gpr(operands[0]);
-            GPR rvalue = get_gpr(operands[1]);
+            GPR rvalue = get_gpr(operands.back());
             if (operands[0].is_constant) {
                 if (is_float(operands[0].type)) {
                     if (operands[0].size == 4) {
@@ -351,7 +368,7 @@ namespace backend {
                     }
                 }
                 else {
-                    if (operands[0].size <= 4) {
+                    if (operands.back().size <= 4) {
                         CodeGen::add_to_asm("li " + get_gpr_name(lvalue) + ", " + operands[0].name, "Loading constant for Quad");
                     }
                     else {
@@ -360,10 +377,10 @@ namespace backend {
                 }
             }
             if (is_float(operands[0].type)) {
-                if(operands[0].size == 4){
+                if (operands[0].size == 4) {
                     CodeGen::add_to_asm("c.eq.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Conditional statement");
                 }
-                else{
+                else {
                     CodeGen::add_to_asm("c.eq.d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Conditional statement");
                 }
 
@@ -569,11 +586,36 @@ namespace backend {
                     }
                     else {
                         //TODO: long long to be handled
+                        CodeGen::add_to_asm("", "Long long is not handled in relational operation");
                         // CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
                     }
                 }
             }
             else {
+                if (operands[0].is_constant) {
+                    if (is_float(operands.back().type)) {
+                        if (operands.back().size == 4) {
+                            auto [hi, lo] = floatToIEEEHex(operands[0].name, false);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue1), "Transferring constant to float Quad");
+                        }
+                        else {
+                            auto [hi, lo] = floatToIEEEHex(operands[0].name, true);
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue1), "Transferring constant to double Quad");
+                            CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
+                            CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue1) + 1)), "Transferring constant to double Quad");
+                        }
+                    }
+                    else {
+                        if (operands.back().size <= 4) {
+                            CodeGen::add_to_asm("li " + get_gpr_name(rvalue1) + ", " + operands[0].name, "Loading constant for Quad");
+                        }
+                        else {
+                            //TODO: long long to be handled
+                        }
+                    }
+                }
                 if (is_float(operands.back().type)) {
                     if (operands.back().size == 4) {
                         CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Relational operation in Quad float variable");
@@ -833,7 +875,8 @@ namespace backend {
                 switch (loctype) {
                 case STACK:
                 {
-                    CodeGen::add_to_asm("lw " + get_gpr_name(lvalue) + ", " + std::to_string(MMU::get_offset(operands[0].name)) + "($sp)", "Loading address of " + operands[0].name);
+                    CodeGen::add_to_asm("addi " + get_gpr_name(lvalue) + ", $sp, " + std::to_string(MMU::get_offset(operands[0].name)), "Loading address of " + operands[0].name);
+                    // CodeGen::add_to_asm("lw " + get_gpr_name(lvalue) + ", " + std::to_string(MMU::get_offset(operands[0].name)) + "($sp)", "Loading address of " + operands[0].name);
                 }
                 break;
                 case DATA:
@@ -850,12 +893,14 @@ namespace backend {
             case DEREF_OP:
             {
                 GPR rvalue = get_gpr(operands[0]);
+
                 CodeGen::add_to_asm("lw " + get_gpr_name(lvalue) + ", " + "0(" + get_gpr_name(rvalue) + ")", "Loading value of " + operands[0].name);
                 check_last_use(rvalue, line_number);
             }
             break;
             case EXCLAMATION_OP:
             {
+                //TODO: add for float using c.eq.s and branching
                 GPR rvalue = get_gpr(operands[0]);
                 CodeGen::add_to_asm("sltiu " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue) + ", 1", "Loading value of " + operands[0].name);
                 check_last_use(rvalue, line_number);
@@ -900,14 +945,34 @@ namespace backend {
             case POS_OP:
             {
                 GPR rvalue = get_gpr(operands[0]);
-                CodeGen::add_to_asm("move " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
+                if (is_float(operands.back().type)) {
+                    if (operands.back().size == 4) {
+                        CodeGen::add_to_asm("mov.s " + get_gpr_name(rvalue) + get_gpr_name(lvalue), "Loading value of " + operands[0].name);
+                    }
+                    else {
+                        CodeGen::add_to_asm("mov.d " + get_gpr_name(rvalue) + get_gpr_name(lvalue), "Loading value of " + operands[0].name);
+                    }
+                }
+                else {
+                    CodeGen::add_to_asm("move " + get_gpr_name(rvalue) + ", " + get_gpr_name(lvalue), "Loading value of " + operands[0].name);
+                }
                 check_last_use(rvalue, line_number);
             }
             break;
             case NEG_OP:
             {
                 GPR rvalue = get_gpr(operands[0]);
-                CodeGen::add_to_asm("neg " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
+                if (is_float(operands.back().type)) {
+                    if (operands.back().size == 4) {
+                        CodeGen::add_to_asm("neg.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
+                    }
+                    else {
+                        CodeGen::add_to_asm("neg.d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
+                    }
+                }
+                else {
+                    CodeGen::add_to_asm("neg " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
+                }
                 check_last_use(rvalue, line_number);
             }
             break;
@@ -923,12 +988,21 @@ namespace backend {
             if (operands[0].is_constant) {
                 CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", " + operands[0].name, "Loading value of " + operands[0].name);
             }
+            GPR address = s0;
+            if (operands.back().storage_loc == DATA) {
+                CodeGen::add_to_asm("la " + get_gpr_name(address) + ", " + CodeGen::convert_to_valid(operands.back().name), "Loading address of " + operands[0].name);
+                CodeGen::add_to_asm("sw " + get_gpr_name(rvalue) + ", 0(" + get_gpr_name(address) + ")", "Storing value of " + operands[0].name);
+            }
+            else {
+                CodeGen::add_to_asm("addi " + get_gpr_name(address) + ", $sp, " + std::to_string(MMU::get_offset(operands.back().name)), "Loading address of " + operands.back().name);
+                CodeGen::add_to_asm("sw " + get_gpr_name(rvalue) + ", 0(" + get_gpr_name(address) + ")", "Storing value of " + operands[0].name);
+            }
 
-            CodeGen::add_to_asm("sw " + get_gpr_name(rvalue) + ", 0(" + get_gpr_name(lvalue) + ")", "Storing value of " + operands[0].name);
             check_last_use(rvalue, line_number);
             if (operands[0].is_constant) {
                 free_gpr(rvalue);
             }
+
         }
         break;
         case AMPERSAND_SP:
@@ -1000,11 +1074,11 @@ namespace backend {
                 else {
                     // TODO: handle  long long
                     CodeGen::add_to_asm("", "Got operands 0f size >= 4: as" + std::to_string(operands.back().size) + " with name " + operands.back().name);
-                    auto [hi, lo] = getHighLowBytes(operands[0].name);
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading high part of long long");
-                    CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)", "Storing high part of long long");
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo, "Loading low part of long long");
-                    CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing low part of long long");
+                    // auto [hi, lo] = getHighLowBytes(operands[0].name);
+                    // CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading high part of long long");
+                    // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)", "Storing high part of long long");
+                    // CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo, "Loading low part of long long");
+                    // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing low part of long long");
                 }
             }
         }
@@ -1094,6 +1168,21 @@ namespace backend {
     };
 
     // ================ Common Functions ======================
+
+    void CommonStatement::build_successors() {
+
+        if (type == GOTO_St) {
+            auto it = tac_labels.find(labels[0].name);
+            if (it == tac_labels.end()) {
+                error_msg("Label " + labels[0].name + " not found");
+                return;
+            }
+            successors.insert(it->second.location);
+        }
+        else {
+            TACStatement::build_successors();
+        }
+    }
 
     void CommonStatement::set_operands() {
         // Set the operands for the CommonStatement
@@ -1338,11 +1427,11 @@ namespace backend {
                         }
                         else {
                             // TODO: handle  long long
-                            auto [hi, lo] = getHighLowBytes(operands[1].name);
-                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading high part of long long");
-                            CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)", "Storing high part of long long");
-                            CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo, "Loading low part of long long");
-                            CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing low part of long long");
+                            // auto [hi, lo] = getHighLowBytes(operands[1].name);
+                            // CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading high part of long long");
+                            // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)", "Storing high part of long long");
+                            // CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo, "Loading low part of long long");
+                            // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing low part of long long");
                         }
                     }
                 }
@@ -1540,11 +1629,11 @@ namespace backend {
                 else {
                     // TODO: handle  long long
                     CodeGen::add_to_asm("", "Got operands 0f size >= 4: as" + std::to_string(operands.back().size) + " with name " + operands.back().name);
-                    auto [hi, lo] = getHighLowBytes(operands[0].name);
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading high part of long long");
-                    CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)", "Storing high part of long long");
-                    CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo, "Loading low part of long long");
-                    CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing low part of long long");
+                    // auto [hi, lo] = getHighLowBytes(operands[0].name);
+                    // CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + hi, "Loading high part of long long");
+                    // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name) + 4) + "($sp)", "Storing high part of long long");
+                    // CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + lo, "Loading low part of long long");
+                    // CodeGen::add_to_asm("sw " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Storing low part of long long");
                 }
             }
         }
@@ -1987,8 +2076,26 @@ namespace backend {
         curr_line++;
     }
 
+
+    void build_successors() {
+        output_msg("Building succesors...");
+
+        for (auto& statement : statements) {
+            statement->build_successors();
+            std::string succ_all = "";
+            for (const auto& succ : statement->successors) {
+                succ_all += std::to_string(succ) + " ";
+            }
+            output_msg(" Successors for statement: " + std::to_string(statement->line_number) + " are: " + succ_all);
+        }
+    }
+
     void optimise_tac() {
         output_msg("Optimising TAC...");
+
+        build_successors();
+
+
         init_gpr_map();
         for (auto& it : last_used) {
             output_msg("Last used: " + it.first + " " + std::to_string(it.second));
