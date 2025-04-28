@@ -28,12 +28,22 @@ int main(){
     // c = &a;
 
 
-    int nice;
-    nice = 10;
-    int nice1=nice;
-    nice1 = nice;
-    int nice2 =10;
-    nice2 =nice1;
+    int a = 100;
+    int b = 10;
+
+    int c = a*b;
+    int d = c/b;
+
+    if(a>b){
+        a=0;
+    }
+    else{
+        a=1;
+    }
+
+    int final =a;
+    int final1 = c;
+    int final2 =d;
 
     // int nice3 = a;
 

@@ -253,7 +253,6 @@ namespace backend {
                 }
             }
             case MUL:
-            case DIV:
             case MOD:
             case BITWISE_AND:
             case BITWISE_OR:
@@ -266,6 +265,7 @@ namespace backend {
                     operands[1] = Operand(firstOp);
                 }
             }
+            case DIV:
             case SUB:
             {
                 if (!operands[0].is_constant) {
@@ -440,6 +440,7 @@ namespace backend {
         }
         break;
         case SUB:
+        case DIV:
         {
             if (operands[0].is_constant) {
                 GPR rvalue1 = get_gpr(operands[0]);
@@ -476,7 +477,6 @@ namespace backend {
             }
         }
         case MUL:
-        case DIV:
         {
             GPR lvalue = get_gpr(operands[2]);
             GPR rvalue1 = get_gpr(operands[0]);
