@@ -150,10 +150,10 @@ triple_statement
 
 double_statement
     : variable ASSIGN variable {
-        create_double(std::string($1), std::string($3), false, false);
+        create_double(std::string($1), std::string($3), false);
     }
     | variable ASSIGN CONSTANT_LITERAL {
-        create_double(std::string($1), std::string($3), true, false);
+        create_double(std::string($1), std::string($3), true);
     }
     ;
 

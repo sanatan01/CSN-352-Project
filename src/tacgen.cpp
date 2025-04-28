@@ -210,6 +210,19 @@ namespace backend {
 
     // =================== Quad Functions ===================
 
+    void Quad::calculate_def_use() {
+        if (is_conditional) {
+            if (!operands[0].is_constant) use.insert(operands[0].name);
+            if (!operands[1].is_constant) use.insert(operands[1].name);
+        }
+        else {
+            if (!operands[0].is_constant) use.insert(operands[0].name);
+            if (!operands[1].is_constant) use.insert(operands[1].name);
+            if (!operands[2].is_constant)def.insert(operands[2].name);
+        }
+    }
+
+
     void Quad::build_successors() {
         if (is_conditional) {
             successors.insert(line_number + 1);
@@ -323,9 +336,18 @@ namespace backend {
             {
                 Operand firstOp = Operand(operands[0]);
                 Operand secondOp = Operand(operands[1]);
-                if (firstOp.type.type_tag == STANDARD_TYPE) {
+                if (firstOp.is_constant){
                     operands[0] = Operand(secondOp);
                     operands[1] = Operand(firstOp);
+                    if(op == LT) {
+                        op = GE;
+                    } else if (op == LE) {
+                        op = GT;
+                    } else if (op == GE) {
+                        op = LT;
+                    } else if (op == GT) {
+                        op = LE;
+                    }
                 }
                 Operand op = Operand();
                 op.name = operands.back().name;
@@ -744,6 +766,48 @@ namespace backend {
 
     // =================== Triple Functions ===================
 
+    void Triple::calculate_def_use() {
+        if (special_op == NONE_SP) {
+            switch (op) {
+            case TILDE_OP:
+            case EXCLAMATION_OP:
+            case POS_OP:
+            case NEG_OP:
+            case REF_OP:
+                if (!operands[0].is_constant) use.insert(operands[0].name);
+                if (!operands.back().is_constant) def.insert(operands.back().name);
+                break;
+            case DEREF_OP:
+                if (!operands.back().is_constant) def.insert(operands.back().name);
+            case NOP: // it should not reach here
+            default:
+                break;
+            }
+        }
+        else if (special_op == ASTERISK_SP) {
+            switch (op) {
+            case NOP:
+                if (!operands[0].is_constant) use.insert(operands[0].name);
+                if (!operands[1].is_constant) use.insert(operands[1].name);
+                // NOTE: we are taking the risky case and ignoring where * refers to
+                break;
+                // It shoule not reach here
+            case TILDE_OP:
+            case EXCLAMATION_OP:
+            case POS_OP:
+            case NEG_OP:
+            case REF_OP:
+            case DEREF_OP:
+            default:
+                break;
+            }
+        }
+        else {
+            // It should not reach here
+        }
+    }
+
+
     void Triple::set_operands() {
         // Set the operands for the Triple statement
         for (auto& operand : operands) {
@@ -1020,6 +1084,11 @@ namespace backend {
 
     // =================== Double Functions ===================
 
+    void Double::calculate_def_use() {
+        if (!operands.back().is_constant)def.insert(operands.back().name);
+        if (!operands[0].is_constant) use.insert(operands[0].name);
+    }
+
     void Double::set_operands() {
         // Set the operands for the Double statement
         for (auto& operand : operands) {
@@ -1031,17 +1100,13 @@ namespace backend {
                 operand = Operand(MMU::get_symbol(operand.name));
                 continue;
             }
-            if (string_lit) {
-                output_msg("Need to handle string literals");
-            }
-            else {
-                std::string name = operands.back().name;
-                operands.back() = Operand(operands[0]);
-                operands.back().name = name;
-                operands.back().is_constant = false;
-                operands.back().storage_loc = TEMP;
-                MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
-            }
+            std::string name = operands.back().name;
+            operands.back() = Operand(operands[0]);
+            operands.back().name = name;
+            operands.back().is_constant = false;
+            operands.back().storage_loc = TEMP;
+            MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+
         }
     }
 
@@ -1168,6 +1233,28 @@ namespace backend {
     };
 
     // ================ Common Functions ======================
+
+
+    void CommonStatement::calculate_def_use() {
+        switch (type) {
+        case GOTO_St:
+        case POP_St:
+        case FUNC_St:
+        case LABEL_St:
+        case ENTER_St:
+        case EXIT_St:
+            break;
+        case RETURN_St:
+        case PARAM_St:
+            if (!operands[0].is_constant) use.insert(operands[0].name);
+            break;
+        case CALL_St:
+            if (!operands.back().is_constant) def.insert(operands.back().name);
+            break;
+        default:
+            break;
+        }
+    }
 
     void CommonStatement::build_successors() {
 
@@ -1339,6 +1426,12 @@ namespace backend {
     }
 
     // ================ Variable Functions ======================
+
+    void VariableStatement::calculate_def_use() {
+        if (operands.size() != 3) return; // No defs or uses
+        if (!operands.back().is_constant) def.insert(operands.back().name);
+        if (!operands[1].is_constant)use.insert(operands[1].name);
+    }
 
     void VariableStatement::set_operands() {
         // Set the operands for the VariableStatement
@@ -1553,6 +1646,13 @@ namespace backend {
         }
         }
     };
+
+    // ================ Cast Functions ======================
+
+    void CastStatement::calculate_def_use() {
+        if (!operands.back().is_constant) def.insert(operands.back().name);
+        if (!operands[0].is_constant) use.insert(operands[0].name);
+    }
 
     void CastStatement::set_operands() {
         // Set the operands for the CastStatement
@@ -1782,20 +1882,18 @@ namespace backend {
         curr_line++;
     }
 
-    void create_double(std::string result, std::string op1, bool is_const, bool is_str) {
+    void create_double(std::string result, std::string op1, bool is_const) {
         Double double_stmt;
-        double_stmt.string_lit = is_str;
-        double_stmt.str = op1;
         double_stmt.line_number = curr_line;
 
-        if (!is_str) {
-            if (is_const) {
-                double_stmt.operands.push_back(Operand(op1, true));
-            }
-            else {
-                double_stmt.operands.push_back(Operand(op1, false));
-            }
+
+        if (is_const) {
+            double_stmt.operands.push_back(Operand(op1, true));
         }
+        else {
+            double_stmt.operands.push_back(Operand(op1, false));
+        }
+
 
         double_stmt.operands.push_back(Operand(result, false));
 
@@ -2061,7 +2159,6 @@ namespace backend {
             error_msg("cast type: currently not supported" + cast_type1);
             return;
         }
-        _statement.type = CAST_St;
         _statement.cast_type = cast_map[cast_type1];
         _statement.operands.push_back(Operand(op1, is_constant));
         _statement.operands.push_back(Operand(result, false));
@@ -2090,16 +2187,98 @@ namespace backend {
         }
     }
 
+    void calculate_def_use() {
+        output_msg("Calculating def-use...");
+
+        for (auto& statement : statements) {
+            statement->calculate_def_use();
+            std::string def_all = "";
+            for (const auto& def : statement->def) {
+                def_all += def + " ";
+            }
+            std::string use_all = "";
+            for (const auto& use : statement->use) {
+                use_all += use + " ";
+            }
+            output_msg(" Defs for statement: " + std::to_string(statement->line_number) + " are: " + def_all);
+            output_msg(" Uses for statement: " + std::to_string(statement->line_number) + " are: " + use_all);
+        }
+    }
+
+    void liveness_analysis() {
+        output_msg("Performing liveness analysis...");
+
+        bool changed = true;
+        while (changed) {
+            changed = false;
+            // iterate backwards for clarity, though order doesn’t actually matter
+            for (int i = statements.size() - 1; i >= 0; --i) {
+                auto& S = *statements[i];
+                // live_out = ∪ live_in of all successors
+                std::set<std::string> new_out;
+                for (int j : S.successors) {
+                    if (j > 0 && j <= statements.size()) {
+                        new_out.insert(statements[j-1]->live_in.begin(),
+                                       statements[j-1]->live_in.end());
+                    }
+                }
+
+                // live_in = use ∪ (live_out - def)
+                std::set<std::string> new_in = S.use;
+                for (auto& v : new_out) {
+                    if (!S.def.count(v))
+                        new_in.insert(v);
+                }
+
+                // check for changes
+                if (new_out != S.live_out || new_in != S.live_in) {
+                    changed = true;
+                    S.live_out.swap(new_out);
+                    S.live_in.swap(new_in);
+                }
+
+            }
+        }
+
+        output_msg("Completed liveness analysis...");
+
+        for (auto& statement : statements) {
+            std::string live_in_all = "";
+            for (const auto& live : statement->live_in) {
+                live_in_all += live + " ";
+            }
+            std::string live_out_all = "";
+            for (const auto& live : statement->live_out) {
+                live_out_all += live + " ";
+            }
+            output_msg(" Live in for statement: " + std::to_string(statement->line_number) + " are: " + live_in_all);
+            output_msg(" Live out for statement: " + std::to_string(statement->line_number) + " are: " + live_out_all);
+        }
+
+        // Set last_used according to liveness analysis
+        for (auto& statement : statements) {
+            for (const auto& live : statement->live_in) {
+                last_used[live] = (statement->line_number+1);
+            }
+        }
+
+        for (auto& it : last_used) {
+            output_msg("Last used: " + it.first + " " + std::to_string(it.second));
+        }
+    }
+
     void optimise_tac() {
         output_msg("Optimising TAC...");
 
         build_successors();
+        calculate_def_use();
 
+        statements.back()->successors = std::set<int>();
+
+        liveness_analysis();
 
         init_gpr_map();
-        for (auto& it : last_used) {
-            output_msg("Last used: " + it.first + " " + std::to_string(it.second));
-        }
+
         for (const auto& statement : statements) {
             statement->generate_assembly();
         }

@@ -1,4 +1,4 @@
-int a =100;
+// int a =100;
 // char c='b';
 // short b = 0x1234;
 // long long ll = 0x1234567890;
@@ -16,7 +16,7 @@ int a =100;
 // long wow1;
 
 int main(){
-    static int sa = 100;
+    // static int sa = 100;
     // static char sc = 'b';
     // static short sb = 0x1234;
     // static long long sll_static = 0x1234567890;
@@ -27,44 +27,43 @@ int main(){
     // int **c;
     // c = &a;
 
-    const int FINAL_VALUE = 5; // final constant value
+    // const int FINAL_VALUE = 5; // final constant value
     int result =0;
-    int i;
-    for(i=0;i<FINAL_VALUE;i++){
+    for(int i=0;i<10; i++){
         result += i;
     }
 
-    int restultfinal = result;
+     int restultfinal = result;
 
 
-    int a = 100;
-    int b = 10;
+    // int a = 100;
+    // int b = 10;
 
-    int c = a*b;
-    int d = c/b;
+    // int c = a*b;
+    // int d = c/b;
 
-    if(a>b){
-        a=0;
-    }
-    else{
-        a=1;
-    }
+    // if(a>b){
+    //     a=0;
+    // }
+    // else{
+    //     a=1;
+    // }
 
-    int final =a;
-    int final1 = c;
-    int final2 =d;
+    // int final =a;
+    // int final1 = c;
+    // int final2 =d;
 
-    int *ptr;
+    // int *ptr;
 
-    ptr = &final;
+    // ptr = &final;
 
-    *ptr = 1;
+    // *ptr = 1;
 
-    final1 = final +10;
+    // final1 = final +10;
 
-    // ptr = &final2;
+    // // ptr = &final2;
 
-    int final4 =final1;
+    // int final4 =final1;
 
     // int nice3 = a;
 

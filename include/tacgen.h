@@ -77,7 +77,8 @@ namespace backend {
             : operands(other.operands), labels(other.labels), line_number(other.line_number) {}
 
         // Default constructor
-        TACStatement() = default;
+        TACStatement() : line_number(0), live_in(), live_out(), def(), use(), successors() {}
+
 
         // Default destructor
         virtual ~TACStatement() = default;
@@ -94,10 +95,38 @@ namespace backend {
         }
 
         // Functions for liveness analysis
-        // virtual void calculate_def_use();
+        virtual void calculate_def_use() = 0;
         virtual void build_successors() {
             successors.insert(line_number + 1);
         }
+    };
+
+    // class Block {
+    //     public:
+    //     std::unique_ptr<TACStatement> leader;
+    //     std::set<int> successor;
+    //     std::vector<std::string> live_in, live_out;
+    //     std::vector<std::string> def, use;
+
+
+    // };
+
+    // void 
+    
+    enum SpecialOp {
+        NONE_SP,
+        AMPERSAND_SP,
+        ASTERISK_SP,
+    };
+    
+    enum UnaryOp {
+        NOP,
+        REF_OP,
+        DEREF_OP,
+        EXCLAMATION_OP,
+        TILDE_OP,
+        POS_OP,
+        NEG_OP,
     };
 
     enum BinaryOp {
@@ -120,23 +149,7 @@ namespace backend {
         GE,          // GE_OP
         LE           // LE_OP
     };
-
-    enum SpecialOp {
-        NONE_SP,
-        AMPERSAND_SP,
-        ASTERISK_SP,
-    };
-
-    enum UnaryOp {
-        NOP,
-        REF_OP,
-        DEREF_OP,
-        EXCLAMATION_OP,
-        TILDE_OP,
-        POS_OP,
-        NEG_OP,
-    };
-
+    
     class Quad: public TACStatement { // This also includes conditional statements
     public:
         bool is_conditional;
@@ -155,7 +168,10 @@ namespace backend {
 
         void set_operands() override;
         void generate_asm() const override;
+        
+        // Liveness analysis
         void build_successors() override;
+        void calculate_def_use() override;
     };
 
     class Triple: public TACStatement {
@@ -177,19 +193,20 @@ namespace backend {
 
         void set_operands() override;
         void generate_asm() const override;
+
+        // Liveness analysis
+        void calculate_def_use() override;
     };
 
     class Double: public TACStatement {
     public:
-        bool string_lit;
-        std::string str;
 
         // Explicitly define a copy constructor
         Double(const Double& other)
-            : TACStatement(other), string_lit(other.string_lit), str(other.str) {}
+            : TACStatement(other) {}
 
         // Default constructor
-        Double(): string_lit(false), str() {}
+        Double() = default;
 
         // Override get_type to return DOUBLE
         TACType get_type() const override {
@@ -198,19 +215,21 @@ namespace backend {
 
         void set_operands() override;
         void generate_asm() const override;
+
+        // Liveness analysis
+        void calculate_def_use() override;
     };
 
     enum StatementType {
-        GOTO_St, // No register
-        POP_St,  // No register
-        PARAM_St,
-        CALL_St,
-        RETURN_St,
-        FUNC_St,  // No Register
-        LABEL_St, // No Register
-        ENTER_St, // No Register
-        EXIT_St,  // No Register
-        CAST_St,
+        GOTO_St, // No register // No use,def
+        POP_St,  // No register // No use,def
+        PARAM_St, // Only use
+        CALL_St, // Only def
+        RETURN_St, // Only use
+        FUNC_St,  // No Register // No use, def
+        LABEL_St, // No Register // No use, def
+        ENTER_St, // No Register // No use, def
+        EXIT_St,  // No Register // No use, def
     };
 
     std::string get_type_name(StatementType type);
@@ -235,6 +254,8 @@ namespace backend {
         void set_operands() override;
         void generate_asm() const override;
 
+        // Liveness analysis
+        void calculate_def_use() override;
         void build_successors() override;
     };
 
@@ -260,6 +281,9 @@ namespace backend {
 
         void set_operands() override;
         void generate_asm() const override;
+
+        // Liveness analysis
+        void calculate_def_use() override;
     };
 
     extern std::vector<std::unique_ptr<TACStatement>>
@@ -269,10 +293,9 @@ namespace backend {
     class CastStatement: public TACStatement {
     public:
         PrimitiveTypes cast_type;
-        StatementType type;
-        CastStatement(const CastStatement& other): TACStatement(other), type(other.type), cast_type(other.cast_type) {}
+        CastStatement(const CastStatement& other): TACStatement(other), cast_type(other.cast_type) {}
 
-        CastStatement(): type(), cast_type() {}
+        CastStatement(): cast_type() {}
 
         TACType get_type() const override {
             return CAST;
@@ -280,6 +303,9 @@ namespace backend {
 
         void set_operands() override;
         void generate_asm() const override;
+
+        // Liveness analysis
+        void calculate_def_use() override;
     };
 
     // Function declarations
@@ -287,7 +313,7 @@ namespace backend {
 
     void create_triple(std::string result, bool is_const, UnaryOp op, SpecialOp special_op, std::string op1);
 
-    void create_double(std::string result, std::string op1, bool is_const, bool is_str);
+    void create_double(std::string result, std::string op1, bool is_const);
 
     void create_label_statement(std::string label);
 
