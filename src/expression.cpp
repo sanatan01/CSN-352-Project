@@ -126,7 +126,7 @@ std::string operation_integer_values(std::string op, std::string op1, std::strin
     else if (op == "%") {
         return std::to_string(std::stoll(op1) % std::stoll(op2));
     }
-    else if(op == "!"){
+    else if (op == "!") {
         long long t = !std::stoll(op2);
         return std::to_string(t);
     }
@@ -148,7 +148,7 @@ std::string operation_float_value(std::string op, std::string op1, std::string o
     else if (op == "/") {
         return std::to_string(std::stold(op1) / std::stold(op2));
     }
-    else if (op == "!"){
+    else if (op == "!") {
         return std::to_string(!std::stold(op2));
     }
     else {
@@ -162,19 +162,19 @@ std::string operation_relational(std::string op, std::string op1, PrimitiveTypes
     // Convert operands based on their types
     long double val1 = isFloat(opt1) ? std::stold(op1) : std::stoll(op1);
     long double val2 = isFloat(opt2) ? std::stold(op2) : std::stoll(op2);
-    
+
     // Perform the comparison
     bool result;
     if (op == "<") result = val1 < val2;
     else if (op == ">") result = val1 > val2;
     else if (op == "<=") result = val1 <= val2;
     else if (op == ">=") result = val1 >= val2;
-    else  if(op == "==") result = val1 == val2;
+    else  if (op == "==") result = val1 == val2;
     else if (op == "!=") result = val1 != val2;
-    else if  (op == "&&") result = val1 && val2;
+    else if (op == "&&") result = val1 && val2;
     else if (op == "||") result = val1 || val2;
     else return "0"; // Default for unrecognized operator
-    
+
     return std::to_string(result);
 }
 
@@ -361,7 +361,7 @@ Expression* multiplicative_expression(OpExpression* oe) {
         make_unsigned(tmp);
         oe->prim_type = tmp;
 
-        if(oe->op1.is_constant && oe->op2.is_constant) {
+        if (oe->op1.is_constant && oe->op2.is_constant) {
             oe->is_constant = true;
             oe->name = operation_integer_values(oe->op, oe->op1.name, oe->op2.name);
             return oe;
@@ -387,7 +387,7 @@ Expression* additive_expression(OpExpression* oe) {
     //     return oe;
     // }
 
-    if(oe->op1.exp_type->type_tag == STANDARD_TYPE && oe->op2.exp_type->type_tag == STANDARD_TYPE ) {
+    if (oe->op1.exp_type->type_tag == STANDARD_TYPE && oe->op2.exp_type->type_tag == STANDARD_TYPE) {
         if (isFloat(op1Type) && !isFloat(op2Type)) {
             change_type(&(oe->op2), &(oe->op1));
         }
@@ -459,7 +459,7 @@ Expression* relational_expression(OpExpression* oe) {
             else if (isFloat(op2Type) && !isFloat(op1Type)) {
                 change_type(&(oe->op1), &(oe->op2));
             }
-    
+
             oe->prim_type = greater_type(op1Type, op2Type);
             op1Type = PrimitiveTypes(oe->op1.prim_type);
             op2Type = PrimitiveTypes(oe->op2.prim_type);
@@ -472,9 +472,9 @@ Expression* relational_expression(OpExpression* oe) {
                 }
             }
 
-            if(oe->op1.is_constant && oe->op2.is_constant) {
+            if (oe->op1.is_constant && oe->op2.is_constant) {
                 oe->is_constant = true;
-                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);  
+                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);
                 return oe;
             }
 
@@ -547,9 +547,9 @@ Expression* equality_expression(OpExpression* oe) {
 
             oe->prim_type = PrimitiveTypes(BOOL_T);
 
-            if(oe->op1.is_constant && oe->op2.is_constant) {
+            if (oe->op1.is_constant && oe->op2.is_constant) {
                 oe->is_constant = true;
-                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);  
+                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);
                 return oe;
             }
 
@@ -559,7 +559,7 @@ Expression* equality_expression(OpExpression* oe) {
             else if (isFloat(op2Type) && !isFloat(op1Type)) {
                 change_type(&(oe->op1), &(oe->op2));
             }
-    
+
             oe->prim_type = greater_type(op1Type, op2Type);
             op1Type = PrimitiveTypes(oe->op1.prim_type);
             op2Type = PrimitiveTypes(oe->op2.prim_type);
@@ -720,13 +720,13 @@ Expression* logical_and_expression(OpExpression* oe) {
     }
 
     if (oe->op == "&&") {
-        if ((isInt(op1Type)|| isFloat(op1Type)) && (isInt(op2Type)|| isFloat(op2Type))) {
+        if ((isInt(op1Type) || isFloat(op1Type)) && (isInt(op2Type) || isFloat(op2Type))) {
             // Result type is boolean
             oe->prim_type = PrimitiveTypes(BOOL_T);
 
-            if(oe->op1.is_constant && oe->op2.is_constant) {
+            if (oe->op1.is_constant && oe->op2.is_constant) {
                 oe->is_constant = true;
-                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);  
+                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);
                 return oe;
             }
         }
@@ -757,13 +757,13 @@ Expression* logical_or_expression(OpExpression* oe) {
     }
 
     if (oe->op == "||") {
-        if ((isInt(op1Type)|| isFloat(op1Type)) && (isInt(op2Type)|| isFloat(op2Type))) {
+        if ((isInt(op1Type) || isFloat(op1Type)) && (isInt(op2Type) || isFloat(op2Type))) {
             // Result type is boolean
             oe->prim_type = PrimitiveTypes(BOOL_T);
 
-            if(oe->op1.is_constant && oe->op2.is_constant) {
+            if (oe->op1.is_constant && oe->op2.is_constant) {
                 oe->is_constant = true;
-                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);  
+                oe->name = operation_relational(oe->op, oe->op1.name, op1Type, oe->op2.name, op2Type);
                 return oe;
             }
         }
@@ -1226,7 +1226,7 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
             }
         }
         temp1 = TAC::get_temp();
-        std::string constantFolded = operation_integer_values("*",exp->name,std::to_string(pe->exp_type->array_type->return_type->getSize()));
+        std::string constantFolded = operation_integer_values("*", exp->name, std::to_string(pe->exp_type->array_type->return_type->getSize()));
         TAC::print_tac(temp1 + " = " + constantFolded);
         // oe->prim_type.is_const = false; //TODO: make it non-constant
     }
@@ -1243,8 +1243,8 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
             }
         }
         temp1 = TAC::get_temp();
-        std::string constantFolded = operation_integer_values("*",exp->name,std::to_string(pe->exp_type->pointer_type->return_type->getSize()));
-        TAC::print_tac(temp1 + " = " + constantFolded );
+        std::string constantFolded = operation_integer_values("*", exp->name, std::to_string(pe->exp_type->pointer_type->return_type->getSize()));
+        TAC::print_tac(temp1 + " = " + constantFolded);
     }
     else {
         error_msg("Subscripted value is neither array nor pointer",
@@ -1259,9 +1259,7 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
 
     std::string temp3 = TAC::get_temp();
     TAC::print_tac(temp3 + " = " + pe->name + " + " + temp1);
-    std::string temp4 = TAC::get_temp();
-    TAC::print_tac(temp4 + " = * " + temp3);
-    P->name = temp4;
+    P->name = "*" + temp3;
     return P;
 }
 
@@ -1498,9 +1496,7 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 }
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
-                std::string temp1 = TAC::get_temp();
-                TAC::print_tac(temp1 + " = * " + new_temp);
-                P->name = temp1;
+                P->name = "*" + new_temp;
                 // TAC::print_tac(" *"+temp1 + " = " + pe->name + " + " std::to_string(offset));
                 return P;
             }
@@ -1521,9 +1517,7 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 }
                 std::string new_temp = TAC::get_temp();
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
-                std::string temp1 = TAC::get_temp();
-                TAC::print_tac(temp1 + " = * " + new_temp);
-                P->name = temp1;
+                P->name = "*" + new_temp;
                 // TAC::print_tac(" *"+temp1 + " = " + pe->name + " + " std::to_string(offset));
                 return P;
             }
@@ -1564,9 +1558,7 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 TAC::print_tac(temp_var1 + " =  *" + pe->name);
                 std::string temp_var2 = TAC::get_temp();
                 TAC::print_tac(temp_var2 + " = " + temp_var1 + " + " + std::to_string(offset));
-                std::string temp_var3 = TAC::get_temp();
-                TAC::print_tac(temp_var3 + " = * " + temp_var2);
-                P->name = temp_var3;
+                P->name = "*" + temp_var2;
                 return P;
             }
             else if (pe->exp_type->pointer_type->return_type->type_tag == UNION_TYPE) {
@@ -1580,11 +1572,11 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                     P->prim_type = ERROR_T;
                 }
 
-                std::string new_temp = TAC::get_temp();
-                TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
-                std::string temp1 = TAC::get_temp();
-                TAC::print_tac(temp1 + " = * " + new_temp);
-                P->name = temp1;
+                std::string temp_var1 = TAC::get_temp();
+                TAC::print_tac(temp_var1 + " =  *" + pe->name);
+                std::string temp_var2 = TAC::get_temp();
+                TAC::print_tac(temp_var2 + " = " + temp_var1 + " + " + std::to_string(offset));
+                P->name = "*" + temp_var2;
                 return P;
             }
         }
@@ -1707,20 +1699,20 @@ Expression* create_unary_expression(OpExpression* oe) {
         else {
 
             if (isInt(op1Type)) {
-                if(oe->op1.is_constant){
+                if (oe->op1.is_constant) {
                     oe->prim_type = op1Type;
                     oe->is_constant = true;
-                    oe->is_assignable= false;
+                    oe->is_assignable = false;
                     oe->name = operation_integer_values(u_op.substr(1), oe->op1.name, "1");
                     return oe;
                 }
                 // 3AC
             }
             else if (isFloat(op1Type)) {
-                if(oe->op1.is_constant){
+                if (oe->op1.is_constant) {
                     oe->prim_type = op1Type;
                     oe->is_constant = true;
-                    oe->is_assignable= false;
+                    oe->is_assignable = false;
                     oe->name = operation_float_value(u_op.substr(1), oe->op1.name, "1");
                     return oe;
                 }
@@ -2004,16 +1996,16 @@ Expression* create_unary_expression(OpExpression* oe) {
         std::string new_temp;
         if (isInt(op1Type) || isFloat(op1Type)) {
 
-            if(oe->op1.is_constant){
-                if(isInt(op1Type)){
-                    oe->name = operation_integer_values(u_op,"0",oe->op1.name);
+            if (oe->op1.is_constant) {
+                if (isInt(op1Type)) {
+                    oe->name = operation_integer_values(u_op, "0", oe->op1.name);
                 }
-                else{
-                    oe->name = operation_float_value(u_op,"0",oe->op1.name);
+                else {
+                    oe->name = operation_float_value(u_op, "0", oe->op1.name);
                 }
                 oe->prim_type = op1Type;
                 oe->is_constant = true;
-                oe->is_assignable= false;
+                oe->is_assignable = false;
                 return oe;
             }
             // 3AC
@@ -2041,11 +2033,11 @@ Expression* create_unary_expression(OpExpression* oe) {
         std::string new_temp;
         if (isInt(op1Type) || isFloat(op1Type)) {
             // 3AC
-            if(oe->op1.is_constant){
+            if (oe->op1.is_constant) {
                 oe->name = oe->op1.name;
                 oe->prim_type = op1Type;
                 oe->is_constant = true;
-                oe->is_assignable= false;
+                oe->is_assignable = false;
                 return oe;
             }
             oe->prim_type = op1Type;
@@ -2068,11 +2060,11 @@ Expression* create_unary_expression(OpExpression* oe) {
         std::string new_temp = TAC::get_temp();
         if (isInt(op1Type)) {
             // 3AC
-            if(oe->op1.is_constant){
-                oe->name = operation_integer_values(u_op,"0",oe->op1.name);
+            if (oe->op1.is_constant) {
+                oe->name = operation_integer_values(u_op, "0", oe->op1.name);
                 oe->prim_type = BOOL_T;
                 oe->is_constant = true;
-                oe->is_assignable= false;
+                oe->is_assignable = false;
                 return oe;
             }
             oe->prim_type = BOOL_T;

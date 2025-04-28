@@ -268,7 +268,23 @@ namespace backend {
                     GlobalType* typ = old_op.type.struct_type->get_member(std::stoi(operands[1].name));
                     if (typ->type_tag == POINTER_TYPE) {
                         op.type = *(create_pointer_type(typ->pointer_type->return_type, typ->pointer_type->ptr_level + 1, typ->getSpecifiers()));
-
+                    }
+                    else {
+                        op.type = *(create_pointer_type(typ));
+                    }
+                    op.name = operands.back().name;
+                    op.is_constant = false;
+                    op.size = typ->getSize();
+                    operands.back() = Operand(op);
+                    operands.back().storage_loc = TEMP;
+                    MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type);
+                    break;
+                }
+                else if (old_op.type.type_tag == ARRAY_TYPE) {
+                    Operand op = Operand();
+                    GlobalType* typ = old_op.type.array_type->return_type;
+                    if (typ->type_tag == POINTER_TYPE) {
+                        op.type = *(create_pointer_type(typ->pointer_type->return_type, typ->pointer_type->ptr_level + 1, typ->getSpecifiers()));
                     }
                     else {
                         op.type = *(create_pointer_type(typ));
@@ -422,6 +438,61 @@ namespace backend {
         switch (op) {
         case ADD:
         {
+
+            if (operands[0].type.type_tag == ARRAY_TYPE || operands[0].type.type_tag == STRUCT_TYPE || operands[0].type.type_tag == UNION_TYPE) {
+                GPR lvalue = get_gpr(operands[2]);
+
+                if (operands[0].storage_loc == DATA) {
+                    // For data section, use la to load the address
+                    CodeGen::add_to_asm("la " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(operands[0].name), "Loading address of array/struct from data section");
+
+                    if (operands[1].is_constant) {
+                        // Add the offset for constant index
+                        CodeGen::add_to_asm("addi " + get_gpr_name(s0) + ", " + get_gpr_name(s0) + ", " + operands[1].name, "Adding offset to array/struct address");
+                    }
+                    else {
+                        // Add the offset for variable index
+                        GPR rvalue2 = get_gpr(operands[1]);
+                        CodeGen::add_to_asm("add " + get_gpr_name(s0) + ", " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Adding offset to array/struct address");
+                        check_last_use(rvalue2, line_number);
+                    }
+                }
+                else if (operands[0].storage_loc == STACK) {
+                    // For stack section, use sp as the base address
+                    if (operands[1].is_constant)
+                        CodeGen::add_to_asm("addi " + get_gpr_name(s0) + ", " + get_gpr_name(sp) + ", " + std::to_string(std::stoi(operands[1].name) + MMU::get_offset(operands[0].name)), "Addition operation in Quad");
+                    else {
+                        GPR rvalue2 = get_gpr(operands[1]);
+                        CodeGen::add_to_asm("addi " + get_gpr_name(rvalue2) + ", " + get_gpr_name(rvalue2) + ", " + std::to_string(MMU::get_offset(operands[0].name)), "Addition operation in Quad");
+                        CodeGen::add_to_asm("add " + get_gpr_name(s0) + ", " + get_gpr_name(sp) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad");
+                        check_last_use(rvalue2, line_number);
+                    }
+                }
+
+                else {
+                    GPR address = get_gpr(operands[0]);
+                    if (operands[1].is_constant) {
+                        // Add the offset for constant index
+                        CodeGen::add_to_asm("addi " + get_gpr_name(address) + ", " + get_gpr_name(address) + ", " + operands[1].name, "Adding offset to array/struct address");
+                    }
+                    else {
+                        // Add the offset for variable index
+                        GPR rvalue2 = get_gpr(operands[1]);
+                        CodeGen::add_to_asm("add " + get_gpr_name(address) + ", " + get_gpr_name(address) + ", " + get_gpr_name(rvalue2), "Adding offset to array/struct address");
+                        check_last_use(rvalue2, line_number);
+                    }
+                    CodeGen::add_to_asm("move " + get_gpr_name(lvalue) + ", " + get_gpr_name(address), "Loading address into " + get_gpr_name(lvalue), true);
+                    check_last_use(address, line_number);
+                    check_last_use(lvalue, line_number);
+                    break;
+                }
+
+                // Load the value at computed address
+                CodeGen::add_to_asm("move " + get_gpr_name(lvalue) + ", " + get_gpr_name(s0), "Loading address into " + get_gpr_name(lvalue), true);
+                check_last_use(lvalue, line_number);
+                break;
+            }
+
             GPR lvalue = get_gpr(operands[2]);
             GPR rvalue1 = get_gpr(operands[0]);
             GPR rvalue2 = get_gpr(operands[1]);
@@ -956,7 +1027,13 @@ namespace backend {
             break;
             case DEREF_OP:
             {
+
+
+
+                store_all_registers();
+                free_all_registers();
                 GPR rvalue = get_gpr(operands[0]);
+                lvalue = get_gpr(operands.back());
 
                 CodeGen::add_to_asm("lw " + get_gpr_name(lvalue) + ", " + "0(" + get_gpr_name(rvalue) + ")", "Loading value of " + operands[0].name);
                 check_last_use(rvalue, line_number);
@@ -1048,24 +1125,24 @@ namespace backend {
         break;
         case ASTERISK_SP:
         {
+            store_all_registers();
+            free_all_registers();
             GPR rvalue = get_gpr(operands[0]);
             if (operands[0].is_constant) {
-                CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", " + operands[0].name, "Loading value of " + operands[0].name);
+                CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", " + operands[0].name, "Loading value of " + operands.back().name);
             }
             GPR address = s0;
             if (operands.back().storage_loc == DATA) {
-                CodeGen::add_to_asm("la " + get_gpr_name(address) + ", " + CodeGen::convert_to_valid(operands.back().name), "Loading address of " + operands[0].name);
-                CodeGen::add_to_asm("sw " + get_gpr_name(rvalue) + ", 0(" + get_gpr_name(address) + ")", "Storing value of " + operands[0].name);
+                CodeGen::add_to_asm("la " + get_gpr_name(address) + ", " + CodeGen::convert_to_valid(operands.back().name), "Loading address of " + operands.back().name);
+            }
+            else if (operands.back().storage_loc == STACK) {
+                CodeGen::add_to_asm("lw " + get_gpr_name(address) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Loading address of " + operands.back().name);
             }
             else {
-                CodeGen::add_to_asm("addi " + get_gpr_name(address) + ", $sp, " + std::to_string(MMU::get_offset(operands.back().name)), "Loading address of " + operands.back().name);
-                CodeGen::add_to_asm("sw " + get_gpr_name(rvalue) + ", 0(" + get_gpr_name(address) + ")", "Storing value of " + operands[0].name);
+                CodeGen::add_to_asm("move " + get_gpr_name(address) + ", " + get_gpr_name(lvalue), "Storing value of " + operands.back().name);
             }
-
+            CodeGen::add_to_asm("sw " + get_gpr_name(rvalue) + ", 0(" + get_gpr_name(address) + ")", "Storing value of " + operands.back().name);
             check_last_use(rvalue, line_number);
-            if (operands[0].is_constant) {
-                free_gpr(rvalue);
-            }
 
         }
         break;
@@ -1475,7 +1552,7 @@ namespace backend {
             output_msg("Calling function " + labels[0].name + " with return type " + operands.back().type.getType() + " and size " + std::to_string(operands.back().size));
 
             // Stpre all args
-            GPR arg_regs[] = { a0, a1, a2, a3};
+            GPR arg_regs[] = { a0, a1, a2, a3 };
             std::vector<Register> para;
             CodeGen::add_to_asm("addi, $sp, $sp, -16", "Pushing stack for args params");
             int j = 0;
@@ -1769,7 +1846,7 @@ namespace backend {
                     else {
                         // We perform a shallow copy of the pointers for any other type
                         GPR lvalue = get_gpr(operands[1]);
-                        CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + std::to_string(MMU::get_offset(operands[1].name)), "Shallow copy of pointer");
+                        CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(lvalue), "Shallow copy of pointer");
                         check_last_use(lvalue, line_number);
                     }
                 }

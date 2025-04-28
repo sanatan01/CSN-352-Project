@@ -125,6 +125,8 @@ namespace backend
 
     GPR get_assigned_gpr(std::string name);
     GPR get_gpr(Operand op, bool load = true);
+    void free_all_registers();
+    void store_all_registers();
 
     class MMU
     {

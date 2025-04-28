@@ -323,6 +323,16 @@ namespace backend {
                     }
                 }
                 else {
+
+                    // if (op.type.type_tag == POINTER_TYPE) {
+                    //     if (op.type.pointer_type->return_type->type_tag == ARRAY_TYPE || 
+                    //         op.type.pointer_type->return_type->type_tag == STRUCT_TYPE ||
+                    //         op.type.pointer_type->return_type->type_tag == UNION_TYPE) 
+                        
+                    //         CodeGen::add_to_asm("addi " + get_gpr_name(reg) + ", " + ptr + ", " + std::to_string(offset) + " # Loading address of array/struct/union", "Loading address into " + get_gpr_name(reg), true);
+                    //     break;
+                    // }
+
                     // TODO, make sure that hi lo are set properly
                     CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", " + std::to_string(offset) + "(" + ptr + ")", "Loading into " + get_gpr_name(reg) + " from stack with name " + op.name, true);
                     set_gpr(reg, op.name);
@@ -458,7 +468,7 @@ namespace backend {
                         if (gpr_map[j].is_free()) {
 
                             set_gpr(j, args[i].name);
-                            CodeGen::add_to_asm("lw " + get_gpr_name(j) + ", " + std::to_string((3 - (x.reg_name[2]-'0')) * 4) + "($sp)", "Moving argument to register");
+                            CodeGen::add_to_asm("lw " + get_gpr_name(j) + ", " + std::to_string((3 - (x.reg_name[2] - '0')) * 4) + "($sp)", "Moving argument to register");
                             found_reg = true;
                             break;
                         }
@@ -718,7 +728,7 @@ namespace backend {
     }
 
     void free_gpr(GPR reg) {
-        CodeGen::add_to_asm("", "Freeing gpr " + get_gpr_name(reg) + ", " + gpr_map[reg].name, true);
+        if (gpr_map[reg].name != "") CodeGen::add_to_asm("", "Freeing gpr " + get_gpr_name(reg) + ", " + gpr_map[reg].name, true);
         gpr_map[reg].free_reg();
     }
 
@@ -777,6 +787,76 @@ namespace backend {
         return temp;
     }
 
+    void free_all_registers() {
+
+        for (int i = 0; i < 10; ++i) {
+
+            if (MMU::get_symbol(gpr_map[temps[i]].name).storage_loc == TEMP) {
+                continue;
+            }
+
+            free_gpr(temps[i]);
+        }
+        for (int i = 0; i < 32; ++i) {
+
+            if (MMU::get_symbol(gpr_map[temps[i]].name).storage_loc == TEMP) {
+                continue;
+            }
+
+            free_gpr(floats[i]);
+        }
+    }
+
+    void store_all_registers() {
+        for (int i = 0; i < 10; ++i) {
+            if (gpr_map[temps[i]].value == 1) {
+                Operand op = MMU::get_symbol(gpr_map[temps[i]].name);
+                if (op.size <= 4 || ((int(temps[i] - t0)) % 2) == 0) {
+                    if (op.storage_loc == STACK) {
+                        CodeGen::add_to_asm("sw " + get_gpr_name(temps[i]) + ", " + std::to_string(MMU::get_offset(op.name)) + "($sp)", "Storing  all gprs for pointer");
+                    }
+                    else if (op.storage_loc == DATA) {
+                        CodeGen::add_to_asm("la " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(op.name), "Storing  all gprs for pointer");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(temps[i]) + ", 0(" + get_gpr_name(s0) + ")", "Storing  all gprs for pointer");
+                    }
+                }
+                else {
+                    if (op.storage_loc == STACK) {
+                        CodeGen::add_to_asm("sw " + get_gpr_name(temps[i]) + ", " + std::to_string(MMU::get_offset(op.name) + 4) + "($sp)", "Storing  all gprs for pointer");
+                    }
+                    else if (op.storage_loc == DATA) {
+                        CodeGen::add_to_asm("la " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(op.name), "Storing  all gprs for pointer");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(temps[i]) + ", 4(" + get_gpr_name(s0) + ")", "");
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < 32; ++i) {
+            if (gpr_map[floats[i]].value == 1) {
+                Operand op = MMU::get_symbol(gpr_map[floats[i]].name);
+                if (op.size <= 4 || ((int(floats[i] - f0 % 2)) == 0)) {
+                    if (op.storage_loc == STACK) {
+                        CodeGen::add_to_asm("swc1 " + get_gpr_name(floats[i]) + ", " + std::to_string(MMU::get_offset(op.name)) + "($sp)", "Storing  all gprs for pointer");
+                    }
+                    else if (op.storage_loc == DATA) {
+                        CodeGen::add_to_asm("la " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(op.name), "Storing  all gprs for pointer");
+                        CodeGen::add_to_asm("swc1 " + get_gpr_name(floats[i]) + ", 0(" + get_gpr_name(s0) + ")", "Storing  all gprs for pointer");
+                    }
+                }
+                else {
+                    if (op.storage_loc == STACK) {
+                        CodeGen::add_to_asm("swc1 " + get_gpr_name(floats[i]) + ", " + std::to_string(MMU::get_offset(op.name) + 4) + "($sp)", "Storing  all gprs for pointer");
+                    }
+                    else if (op.storage_loc == DATA) {
+                        CodeGen::add_to_asm("la " + get_gpr_name(s0) + ", " + CodeGen::convert_to_valid(op.name), "Storing  all gprs for pointer");
+                        CodeGen::add_to_asm("swc1 " + get_gpr_name(floats[i]) + ", 4(" + get_gpr_name(s0) + ")", "");
+                    }
+                }
+            }
+        }
+    }
+
 
     // ================== MMU Variables ==================
 
@@ -829,10 +909,6 @@ namespace backend {
         op.type = GlobalType(*symbol.identifier.type);
         op.is_constant = false;
         op.storage_loc = StorageLoc(loc);
-
-        if (symbol.identifier.type->type_tag == ARRAY_TYPE) {
-            op.type = *create_pointer_type(symbol.identifier.type->array_type->return_type, symbol.identifier.type->array_type->dim, symbol.identifier.type->getSpecifiers());
-        }
 
         switch (op.type.type_tag) {
         case STANDARD_TYPE:
@@ -938,6 +1014,8 @@ namespace backend {
         // Add padding to create consistent column alignment
         if (name.length() < 8)
             txt += "\t";
+
+        CodeGen::data_stream << "# " + std::to_string(type) + "\n";
 
         // Handle initialized values
         switch (type) {
