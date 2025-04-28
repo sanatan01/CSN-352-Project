@@ -1,5 +1,12 @@
 int addx(int a, int b) {
-    return a;
+
+    if (b == 0) {
+        return 1;
+    }
+    else {
+        int x = b - 1;
+        return a + addx(a, x);
+    }
 }
 
 // float subx(float a, float b) {
@@ -12,13 +19,13 @@ int addx(int a, int b) {
 // }
 
 int main() {
-    int a = 5;
+    int a = 2;
     // int a = 5;
-    int b = 10;
+    int b = 3;
     int c = addx(a, b);
     // float d = subx(a, b);
     // test_func();
 
-    int c = a;
+    // int d = a;
     return 0;
 }

@@ -78,5 +78,5 @@ int main(){
     // nice = ~0;
     // nice = *c;
 
-
+    return 0;
 }
