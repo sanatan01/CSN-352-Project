@@ -1174,7 +1174,7 @@ Expression* create_cast_expression_typename(OpExpression* oe) {
     }
     // 3AC or AST
     std::string temp = TAC::get_temp();
-    TAC::print_tac(temp + std::string(" = (") + oe->op1.exp_type->getType() + std::string(") ") + std::to_string(oe->op2.exp_type->getSize()));
+    TAC::print_tac(temp + std::string(" = (") + oe->op1.exp_type->getType() + std::string(") ") + oe->op2.name);
     oe->name = temp;
     // P->add_children({tn, ce});
     return oe;

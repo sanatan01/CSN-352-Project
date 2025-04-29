@@ -41,13 +41,15 @@ int main(){
     // int restultfinal = 5;
     int a=5;
 
+    float f = 5.5;
+
     int resultmany = manyArgs(a,a,a,5);
 
     int y = 66;
     
     int z = 90;
 
-    printf("Result: %i %i %i %i", y, resultmany, y, z);
+    printf("Result: %i %i %i %f", y, resultmany, y, f);
 
 
     // int a = 100;
