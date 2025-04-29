@@ -370,6 +370,10 @@ namespace backend
 
     // Main function to make all changes to TAC
 
+    void create_printf_code();
+
+    void create_scanf_code();
+
     void optimise_tac();
 
     void print_assembly();

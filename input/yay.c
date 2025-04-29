@@ -15,6 +15,11 @@
 // long  double ld1;
 // long wow1;
 
+int manyArgs(int a, int b, int c, int d ){
+    int x = a+b+c+d*2;
+    return x;
+}
+
 int main(){
     // static int sa = 100;
     // static char sc = 'b';
@@ -28,12 +33,21 @@ int main(){
     // c = &a;
 
     // const int FINAL_VALUE = 5; // final constant value
-    int result =0;
-    for(int i=0;i<10; i++){
-        result += i;
-    }
+    // int result =0;
+    // for(int i=0;i<10; i++){
+    //     result += i;
+    // }
 
-     int restultfinal = result;
+    // int restultfinal = 5;
+    int a=5;
+
+    int resultmany = manyArgs(a,a,a,5);
+
+    int y = 66;
+    
+    int z = 90;
+
+    printf("Result: %i %i %i %i", y, resultmany, y, z);
 
 
     // int a = 100;

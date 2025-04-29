@@ -1360,7 +1360,13 @@ namespace backend {
             }
 
             if (type == CALL_St) {
-                operands.back().type = GlobalType(*MMU::function_map[labels[0].name].function_type->return_type);
+
+                if (labels[0].name == "printf" || labels[0].name == "scanf") {
+                    operands.back().type = *(create_primitive_type(INT_T));
+                }
+                else {
+                    operands.back().type = GlobalType(*MMU::function_map[labels[0].name].function_type->return_type);
+                }
                 operands.back().storage_loc = TEMP;
                 if (operands.back().type.type_tag == STRUCT_TYPE || operands.back().type.type_tag == UNION_TYPE) {
                     operands.back().type = *(create_pointer_type(&operands.back().type));
@@ -1551,6 +1557,49 @@ namespace backend {
 
             output_msg("Calling function " + labels[0].name + " with return type " + operands.back().type.getType() + " and size " + std::to_string(operands.back().size));
 
+            if (labels[0].name == "printf" || labels[0].name == "scanf") {
+
+                dump_all_regs();
+
+                CodeGen::add_to_asm("la " + get_gpr_name(a0) + ", " + CodeGen::convert_to_valid(params[0].name), "Loading address of " + params[0].name);
+
+
+                int sz = 0;
+                for (int i = params.size() - 1; i >= 1; i--) {
+                    sz += std::max((int)params[i].size, 4);
+                }
+
+                CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(sz), "Pushing stack for args params");
+                for (int i = params.size() - 1; i >= 1; i--) {
+                    if (is_float(params[i].type)) {
+                        if (params[i].size == 4) {
+                            GPR result_reg = get_gpr(params[i]);
+                            CodeGen::add_to_asm("s.s " + get_gpr_name(result_reg) + ", " + std::to_string(sz - params[i].size) + "($sp)", "Pushing arg reg to stack");
+                            sz -= params[i].size;
+                        }
+                        else {
+                            GPR result_reg = get_gpr(params[i]);
+                            CodeGen::add_to_asm("s.d" + get_gpr_name(result_reg) + ", " + std::to_string(sz - params[i].size) + "($sp)", "Pushing arg reg to stack");
+                            sz -= params[i].size;
+                        }
+                    }
+                    else {
+                        GPR result_reg = get_gpr(params[i]);
+                        CodeGen::add_to_asm("sw " + get_gpr_name(result_reg) + ", " + std::to_string(sz - std::max((int)params[i].size, 4)) + "($sp)", "Pushing arg reg to stack");
+                        sz -= std::max((int)params[i].size, 4);
+                    }
+                }
+                
+                free_all_regs();
+                CodeGen::add_to_asm("jal " + labels[0].name, "Jump to function");
+                params.clear();
+                set_gpr(v0, operands.back().name);
+                check_last_use(v0, line_number);
+                restore_all_regs();
+
+                break;
+            }
+
             // Stpre all args
             GPR arg_regs[] = { a0, a1, a2, a3 };
             std::vector<Register> para;
@@ -1698,6 +1747,7 @@ namespace backend {
                 operands.back() = Operand(op);
                 MMU::add_symbol(operands.back().name, operands.back().size, operands.back().type, static_cast<int>(DATA));
             }
+            break;
             case ARG_St:
             {
                 operands.back().is_constant = false;
@@ -2518,6 +2568,8 @@ namespace backend {
         liveness_analysis();
 
         init_gpr_map();
+
+        create_printf_code();
 
         for (const auto& statement : statements) {
             statement->generate_assembly();

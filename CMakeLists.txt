@@ -26,6 +26,7 @@ set(PARSING_SRCS
     ${SRC_DIR}/codegen.cpp
     ${SRC_DIR}/tacgen.cpp
     ${SRC_DIR}/utils.cpp
+    ${SRC_DIR}/iomanip.cpp
 )
 
 # Output files for Bison and Flex
