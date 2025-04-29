@@ -264,6 +264,8 @@ namespace backend {
                 store_gpr(i, op.name);
                 free_gpr(i);
                 return i;
+            }else{
+                // 1.
             }
         }
         return empty;
@@ -1092,7 +1094,7 @@ namespace backend {
             highStream << std::hex << std::setw(8) << std::setfill('0') << highPart;
             lowStream << std::hex << std::setw(8) << std::setfill('0') << lowPart;
 
-            return { highStream.str(), lowStream.str() };
+            return { "0x" + highStream.str(), "0x" + lowStream.str() };
         }
         else {
             // Single precision (32-bit)
@@ -1103,7 +1105,12 @@ namespace backend {
             std::stringstream singleStream;
             singleStream << std::hex << std::setw(8) << std::setfill('0') << repr;
 
-            return { singleStream.str(), "" };
+            return { "0x" + singleStream.str(), "" };
         }
+    }
+
+
+    bool is_float_register(GPR reg){
+        return reg == f0 || reg == f1 || reg == f2 || reg == f3 || reg == f4 || reg == f5 || reg == f6 || reg == f7 || reg == f8 || reg == f9 || reg == f10 || reg == f11 || reg == f12 || reg == f13 || reg == f14 || reg == f15 || reg == f16 || reg == f17 || reg == f18 || reg == f19 || reg == f20 || reg == f21 || reg == f22 || reg == f23 || reg == f24 || reg == f25 || reg == f26 || reg == f27 || reg == f28 || reg == f29 || reg == f30 || reg == f31;
     }
 }

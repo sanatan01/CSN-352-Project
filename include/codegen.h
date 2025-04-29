@@ -183,4 +183,6 @@ namespace backend
     bool is_float(GlobalType typ);
     std::pair<std::string, std::string> getHighLowBytes(const std::string &decimalStr);
     std::pair<std::string, std::string> floatToIEEEHex(const std::string &inputStr, bool isDouble);
+
+    bool is_float_register(GPR reg);
 }
