@@ -1,65 +1,28 @@
-// float subx(float a, float b) {
-//     return b;
+
+// int multiple_params(int a, int b, int c, int d, int e, int f) {
+//     int g = a + b + c + d + e + f;
+//     return g;
 // }
 
+float float_params(float a) {
+    return a;
+}
 
-// void test_func() {
-    //     return;
-    // }
-struct s {
-    int a;
-    int b;
-    int c;
-};
+int addx(int a, int b) {
+    if ( b == 0) {
+        return a;
+    }
 
+    return addx(a+1, b-1);
+}
 
 int main() {
-    // int a = 2;
-    // // int a = 5;
-    // int b = 3;
-    
-    // // float a1 = 2.2;/
-    
-    // int *ptr = &a;
-    
-    
-    // *ptr = 5;
-    
-    // int *ptr2 = ptr - 4;
-    
-    // *ptr2 = 10;
-    
-    // int result =a;
-    // int result2 = b;
-    
-    // int arr[5];
-    
-    // arr[0] = 1;
-    // arr[1] = 2;
-    // arr[2] = 3;
-    
-    // int result3 = arr[1];
-    
-    // struct s* x;
 
-    struct s z;
-
-    // x = &z;
-
-    // x->b = 5;
-
-    // int result = x->b;
-
-    z.a = 5;
-
-    int a = 5;
-    int b = 10;
-
-    z.a = a * b;
-
-    int  result = z.a;
-
-    // float d = subx(a, b);
+    // int d = multiple_params(1, 2, 3, 4, 5, 6);
+    int a = 10;
+    int b = 12;
+    int d = addx(a, b);
+    printf("%i", d);
     // test_func();
 
     // int d = a;

@@ -1703,15 +1703,13 @@ namespace backend {
             free_all_regs();
             CodeGen::add_to_asm("jal " + labels[0].name, "Jump to function");
             // Clear the stack pushed by params
+            restore_all_regs();
             if (CodeGen::stack_pushed != 0) {
-                MMU::pop(CodeGen::stack_pushed);
                 CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(CodeGen::stack_pushed), "Clearing stack pushed params");
                 CodeGen::stack_pushed = 0;
             }
 
-            restore_all_regs();
 
-            CodeGen::add_to_asm("addi $sp, $sp, 16", "Popping stack for args params");
             int i = 0;
             for (GPR reg : arg_regs) {
                 gpr_map[reg] = CodeGen::arg_map.back()[i];
@@ -1720,6 +1718,7 @@ namespace backend {
             }
             CodeGen::arg_map.pop_back();
             params.clear();
+            CodeGen::add_to_asm("addi $sp, $sp, 16", "Popping stack for args params");
 
             // Set return values
             GlobalType ret = GlobalType(*MMU::function_map[CodeGen::current_func].function_type->return_type);
