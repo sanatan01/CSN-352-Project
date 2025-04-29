@@ -2666,6 +2666,7 @@ namespace backend {
         init_gpr_map();
 
         create_printf_code();
+        create_scanf_code();
 
         for (const auto& statement : statements) {
             statement->generate_assembly();
