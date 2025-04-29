@@ -258,6 +258,7 @@ namespace backend {
     }
 
     GPR empty_strategy_gpr() {
+        output_msg("Empty strategy gpr called");
         for (auto i : temps) {
             Operand op = MMU::get_symbol(gpr_map[i].name);
             if (op.storage_loc != TEMP) {
@@ -465,7 +466,7 @@ namespace backend {
             bool found_reg = false;
 
             for (auto x : CodeGen::arg_map.back()) {
-                if (x.name == args[i].name) {
+                if (x.name == args[i].name && x.name != "") {
                     for (GPR j : int_args) {
                         if (gpr_map[j].is_free()) {
 
@@ -498,14 +499,13 @@ namespace backend {
 
                     // Pushing to stack if no free registers
                     CodeGen::stack_pushed += args[i].size;
-                    MMU::push(args[i]);
                     CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing constant argument to stack");
                     auto [hi, lo] = floatToIEEEHex(args[i].name, args[i].size == 8);
-                    CodeGen::add_to_asm("li " + get_gpr_name(f0) + ", " + hi, "Loading constant argument");
-                    CodeGen::add_to_asm("sw " + get_gpr_name(f0) + ", " + std::to_string(MMU::get_offset(args[i].name)) + "($sp)", "Moving constant argument");
+                    CodeGen::add_to_asm("l.s " + get_gpr_name(f0) + ", " + hi, "Loading constant argument");
+                    CodeGen::add_to_asm("s.s " + get_gpr_name(f0) + ", " + "0($sp)", "Moving constant argument");
                     if (args[i].size == 8) {
-                        CodeGen::add_to_asm("li " + get_gpr_name(f0) + ", " + lo, "Loading constant argument");
-                        CodeGen::add_to_asm("sw " + get_gpr_name(f0) + ", " + std::to_string(MMU::get_offset(args[i].name) + 4) + "($sp)", "Moving constant argument");
+                        CodeGen::add_to_asm("l.s " + get_gpr_name(f0) + ", " + lo, "Loading constant argument");
+                        CodeGen::add_to_asm("s.s " + get_gpr_name(f0) + ", " + "4($sp)", "Moving constant argument");
                     }
                     free_gpr(f0);
                 }
@@ -523,7 +523,6 @@ namespace backend {
 
                     // Pushing to stack if no free registers
                     CodeGen::stack_pushed += args[i].size;
-                    MMU::push(args[i]);
                     CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing constant argument to stack");
                     if (args[i].size <= 4) {
                         CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + args[i].name, "Loading constant argument");
@@ -549,7 +548,12 @@ namespace backend {
                                 load_gpr(j, args[i], true);
                             }
                             else {
-                                CodeGen::add_to_asm("move " + get_gpr_name(j) + ", " + get_gpr_name(reg), "Moving argument to register");
+                                if (args[i].size == 8) {
+                                    CodeGen::add_to_asm("mov.d " + get_gpr_name(j) + ", " + get_gpr_name(reg), "Moving argument to register");
+                                    set_gpr(static_cast<GPR>(int(j) + 1), args[i].name);
+                                } else {
+                                    CodeGen::add_to_asm("mov.s " + get_gpr_name(j) + ", " + get_gpr_name(reg), "Moving argument to register");
+                                }
                                 set_gpr(j, args[i].name);
                             }
                             found_reg = true;
@@ -567,10 +571,28 @@ namespace backend {
                     }
 
                     CodeGen::stack_pushed += args[i].size;
-                    MMU::push(args[i]);
-                    // TODO
-                    CodeGen::add_to_asm("Need to add assembly for storing known float into stack pointer", "Pushing float argument to stack");
-                    error_msg("Pushing to stack not implemented for float args");
+                    CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing float argument to stack");
+                    GPR reg = get_assigned_gpr(args[i].name);
+                    if (reg == empty) {
+                        load_gpr(f0, args[i], true);
+                    }
+                    else {
+                        set_gpr(f0, args[i].name);
+                        if (args[i].size == 8) {
+                            set_gpr(static_cast<GPR>(int(f0) + 1), args[i].name);
+                            CodeGen::add_to_asm("mov.d " + get_gpr_name(f0) + ", " + get_gpr_name(reg), "Moving argument to register");
+                        } else {
+                            CodeGen::add_to_asm("mov.s " + get_gpr_name(f0) + ", " + get_gpr_name(reg), "Moving argument to register");
+                        }
+                    }
+
+                    if (args[i].size == 8) {
+                        CodeGen::add_to_asm("s.d " + get_gpr_name(f0) + ", " + std::to_string(MMU::get_offset(args[i].name)) + "($sp)", "Moving float argument to stack");
+                    }
+                    else {
+                        CodeGen::add_to_asm("s.s " + get_gpr_name(f0) + ", " + std::to_string(MMU::get_offset(args[i].name)) + "($sp)", "Moving float argument to stack");
+                    }
+                    free_gpr(f0);
                 }
                 else {
                     if (args[i].type.type_tag == STANDARD_TYPE) {
@@ -607,21 +629,21 @@ namespace backend {
                         load_gpr(s1, args[i], false);
                     }
                     CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing argument to stack");
-                    MMU::push(args[i]);
                     CodeGen::stack_pushed += args[i].size;
                     for (int j = 0; j < args[i].size; j += 4) {
                         switch (args[i].storage_loc) {
                         case STACK:
-                            CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset(args[i].name) + j) + "($sp)", "Pushing argument to stack");
+                            CodeGen::add_to_asm("lw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset(args[i].name) + j + args[i].size) + "($sp)", "Pushing argument to stack");
+                            CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(j) + "($sp)", "Pushing argument to stack");
                             break;
                         case DATA:
-                            CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(j) + "(" + get_gpr_name(s1) + ")", "Pushing argument to stack from data section");
+                            CodeGen::add_to_asm("lw " + get_gpr_name(s0) + ", " + std::to_string(j) + "(" + get_gpr_name(s1) + ")", "Pushing argument to stack from data section");
+                            CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(j) + "($sp)", "Pushing argument to stack");
                             break;
                         default:
                             error_msg("Invalid storage location for argument");
                             break;
                         }
-                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(j) + "($sp)", "Pushing argument to stack");
                     }
                     free_gpr(s1);
                     free_gpr(s0);

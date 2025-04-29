@@ -1,18 +1,15 @@
+static int i;
+
 int main(){
 
     char *str = "Hello, World!";
 
-    int i = 0;
-    while (i>10) {
-        int a=5;
-        i+=1;
-    }
-
+    scanf("%i\n", &i);
+    
     while (i--) {
-        char c = 'f';
+        int j = 0;
     }
 
     printf("%d\n", i);
 
-    scanf("%d\n", &i);
 }
