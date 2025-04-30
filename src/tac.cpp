@@ -103,6 +103,10 @@ void TAC::add_label(Case labelCase) {
         falseCase.push_back(label_count++);
         debug_msg("False labels count: " + std::to_string(falseCase.size()));
         break;
+    case LOOP_C:
+        gotoCase.push_back(label_count++);
+        debug_msg("Loop labels count: " + std::to_string(gotoCase.size()));
+        break;
     default:
         debug_msg("Invalid label case");
         break;
@@ -147,6 +151,12 @@ std::string TAC::get_label(Case caseLabel) {
             return "ERROR";
         }
         return "L" + std::to_string(falseCase.back());
+    case LOOP_C:
+        if (gotoCase.empty()) {
+            error_msg("No loop label found");
+            return "ERROR";
+        }
+        return "L" + std::to_string(gotoCase.back());
     default:
         error_msg("Invalid label case");
         return "ERROR";
@@ -184,6 +194,9 @@ void TAC::print_label(Case labelCase) {
         break;
     case FALSE_C:
         TAC::print_tac("L" + std::to_string(falseCase.back()) + ":");
+        break;
+    case LOOP_C:
+        TAC::print_tac("L" + std::to_string(gotoCase.back()) + ":");
         break;
     default:
         error_msg("Invalid label case");
@@ -337,6 +350,12 @@ void TAC::print_goto(int _case, bool remove) {
         TAC::print_tac(".goto " + TAC::get_label(FALSE_C));
         if (remove) {
             TAC::remove_false_label();
+        }
+        break;
+    case LOOP_C:
+        TAC::print_tac(".goto " + TAC::get_label(LOOP_C));
+        if (remove) {
+            TAC::remove_goto_label();
         }
         break;
     default:

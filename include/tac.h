@@ -28,7 +28,8 @@ enum Case
     RETURN_C,
     GOTO_C,
     TRUE_C,
-    FALSE_C
+    FALSE_C,
+    LOOP_C
 };
 
 class TAC
