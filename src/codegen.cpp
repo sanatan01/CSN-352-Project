@@ -14,6 +14,8 @@ namespace backend {
     int CodeGen::stack_pushed = 0;
     std::string CodeGen::current_func = "";
 
+    std::vector<int> CodeGen::pop_size;
+
     int arg_int_count;
     int arg_float_count;
     int arg_stack_count;
@@ -195,80 +197,95 @@ namespace backend {
                       f22, f23, f24, f25, f26, f27,
                       f28, f29, f30, f31 };
 
-    GPR empty_strategy_float() {
+    GPR empty_strategy_float(TACStatement const* curr) {
+        std::vector<std::string> not_free_gprs;
+
+        for (auto i : curr->operands) {
+            not_free_gprs.push_back(i.name);
+        }
+
         for (int i = 0; i < 32; i++) {
             if (i == 0 || i == 1 || (i >= 12 && i <= 14))
                 continue;
             Operand op = MMU::get_symbol(gpr_map[floats[i]].name);
             if (op.storage_loc != TEMP) {
+                if (std::find(not_free_gprs.begin(), not_free_gprs.end(), op.name) != not_free_gprs.end()) {
+                    CodeGen::add_to_asm("", "GPR not freed because it is used in current statement float: " + op.name);
+                    continue;
+                }
                 store_gpr(floats[i], op.name);
                 free_gpr(floats[i]);
                 return floats[i];
             }
         }
-        return empty;
-    }
 
-    GPR empty_strategy_double() {
-        for (int i = 0; i < 32; i += 2) {
+        for (int i = 0; i < 32; i++) {
             if (i == 0 || i == 1 || (i >= 12 && i <= 14))
                 continue;
             Operand op = MMU::get_symbol(gpr_map[floats[i]].name);
-            if (op.storage_loc != TEMP) {
+
+            if (op.storage_loc == TEMP) {
+                if (std::find(not_free_gprs.begin(), not_free_gprs.end(), op.name) != not_free_gprs.end()) {
+                    CodeGen::add_to_asm("", "GPR not freed because it is used in current statement float: " + op.name);
+                    continue;
+                }
+                MMU::update_symbol(gpr_map[floats[i]].name);
+                op.storage_loc = STACK;
+                MMU::push(op);
+                CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(op.size), "Pushing to stack temp variable: " + op.name);
                 store_gpr(floats[i], op.name);
                 free_gpr(floats[i]);
+                CodeGen::pop_size.back() += 4;
                 return floats[i];
             }
         }
-        for (int i = 0; i < 32; i += 2) {
-            if (i == 0 || i == 12 || i == 14)
-                continue;
 
-            if (gpr_map[floats[i]].is_free() || gpr_map[floats[i + 1]].is_free()) {
-                if (gpr_map[floats[i]].is_free()) {
-                    Operand op2 = MMU::get_symbol(gpr_map[floats[i + 1]].name);
-                    if (op2.storage_loc != TEMP) {
-                        store_gpr(floats[i + 1], op2.name);
-                        free_gpr(floats[i + 1]);
-                        return floats[i];
-                    }
-                }
-                if (gpr_map[floats[i + 1]].is_free()) {
-                    Operand op2 = MMU::get_symbol(gpr_map[floats[i]].name);
-                    if (op2.storage_loc != TEMP) {
-                        store_gpr(floats[i], op2.name);
-                        free_gpr(floats[i]);
-                        return floats[i];
-                    }
-                }
-                continue;
-            }
 
-            Operand op1 = MMU::get_symbol(gpr_map[floats[i]].name);
-            Operand op2 = MMU::get_symbol(gpr_map[floats[i + 1]].name);
-            if (op1.storage_loc != TEMP && op2.storage_loc != TEMP) {
-                store_gpr(floats[i], op1.name);
-                store_gpr(floats[i + 1], op2.name);
-                free_gpr(floats[i]);
-                free_gpr(floats[i + 1]);
-                return floats[i];
-            }
-        }
+        CodeGen::add_to_asm("", "Fatal error, can't free anything");
         return empty;
     }
 
-    GPR empty_strategy_gpr() {
-        output_msg("Empty strategy gpr called");
+    GPR empty_strategy_gpr(TACStatement const* curr) {
+        std::vector<std::string> not_free_gprs;
+
+        for (auto i : curr->operands) {
+            not_free_gprs.push_back(i.name);
+        }
+
         for (auto i : temps) {
             Operand op = MMU::get_symbol(gpr_map[i].name);
             if (op.storage_loc != TEMP) {
+                if (std::find(not_free_gprs.begin(), not_free_gprs.end(), op.name) != not_free_gprs.end()) {
+                    CodeGen::add_to_asm("", "GPR not freed because it is used in current statement float: " + op.name);
+                    continue;
+                }
                 store_gpr(i, op.name);
                 free_gpr(i);
                 return i;
-            }else{
-                // 1.
             }
         }
+
+        for (auto i : temps) {
+            Operand op = MMU::get_symbol(gpr_map[i].name);
+
+            if (op.storage_loc == TEMP) {
+                if (std::find(not_free_gprs.begin(), not_free_gprs.end(), op.name) != not_free_gprs.end()) {
+                    CodeGen::add_to_asm("", "GPR not freed because it is used in current statement float: " + op.name);
+                    continue;
+                }
+                MMU::update_symbol(gpr_map[i].name);
+                op.storage_loc = STACK;
+                MMU::push(op);
+                CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(op.size), "Pushing to stack temp variable: " + op.name);
+                store_gpr(i, op.name);
+                free_gpr(i);
+                CodeGen::pop_size.back() += 4;
+                return i;
+            }
+        }
+
+
+        CodeGen::add_to_asm("", "Fatal error, can't free anything");
         return empty;
     }
 
@@ -311,7 +328,7 @@ namespace backend {
 
             int offset = MMU::get_offset(op.name);
             if (ptr == "$fp") {
-                offset = 40 + arg_stack_count - CodeGen::fp_map[op.name];
+                offset = 36 + arg_stack_count - CodeGen::fp_map[op.name];
             }
             if (offset != -1) {
                 if (is_float(op.type)) {
@@ -331,7 +348,7 @@ namespace backend {
                     //     if (op.type.pointer_type->return_type->type_tag == ARRAY_TYPE || 
                     //         op.type.pointer_type->return_type->type_tag == STRUCT_TYPE ||
                     //         op.type.pointer_type->return_type->type_tag == UNION_TYPE) 
-                        
+
                     //         CodeGen::add_to_asm("addi " + get_gpr_name(reg) + ", " + ptr + ", " + std::to_string(offset) + " # Loading address of array/struct/union", "Loading address into " + get_gpr_name(reg), true);
                     //     break;
                     // }
@@ -382,55 +399,30 @@ namespace backend {
         }
     }
 
-    GPR get_free_gpr(Operand op, bool load) {
+    GPR get_free_gpr(Operand op, TACStatement const* curr, bool load) {
 
         if (is_float(op.type)) {
 
-            if (op.size == 8) {
-                for (int i = 0; i < 32; i += 2) {
-                    if (i == 0 || i == 12 || i == 14)
-                        continue;
 
-                    if (gpr_map[floats[i]].is_free() && gpr_map[floats[i + 1]].is_free()) {
-                        if (load)
-                            load_gpr(floats[i], op);
-                        else {
-                            set_gpr(floats[i], op.name);
-                            set_gpr(static_cast<GPR>(int(floats[i]) + 1), op.name);
-                        }
-                        return floats[i];
-                    }
+            for (int i = 0; i < 32; ++i) {
+                if (i == 0 || i == 1 || (i >= 12 && i <= 14))
+                    continue;
+                if (gpr_map[floats[i]].is_free()) {
+                    if (load)
+                        load_gpr(floats[i], op);
+                    else
+                        set_gpr(floats[i], op.name);
+                    return floats[i];
                 }
-                GPR ret = empty_strategy_double();
-                if (load)
-                    load_gpr(ret, op);
-                else {
-                    set_gpr(ret, op.name);
-                    set_gpr(static_cast<GPR>(int(ret) + 1), op.name);
-                }
-                return ret;
             }
-            else {
-                for (int i = 0; i < 32; ++i) {
-                    if (i == 0 || i == 1 || (i >= 12 && i <= 14))
-                        continue;
-                    if (gpr_map[floats[i]].is_free()) {
-                        if (load)
-                            load_gpr(floats[i], op);
-                        else
-                            set_gpr(floats[i], op.name);
-                        return floats[i];
-                    }
-                }
 
-                GPR ret = empty_strategy_float();
-                if (load)
-                    load_gpr(ret, op);
-                else
-                    set_gpr(ret, op.name);
-                return ret;
-            };
-        }
+            GPR ret = empty_strategy_float(curr);
+            if (load)
+                load_gpr(ret, op);
+            else
+                set_gpr(ret, op.name);
+            return ret;
+        };
 
         for (int i = 0; i < 10; ++i) {
             if (gpr_map[temps[i]].is_free()) {
@@ -441,7 +433,7 @@ namespace backend {
                 return temps[i];
             }
         }
-        GPR ret = empty_strategy_gpr();
+        GPR ret = empty_strategy_gpr(curr);
         if (load)
             load_gpr(ret, op);
         else
@@ -500,6 +492,9 @@ namespace backend {
                     // Pushing to stack if no free registers
                     CodeGen::stack_pushed += args[i].size;
                     CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing constant argument to stack");
+                    Operand op = Operand();
+                    op.size = args[i].size;
+                    MMU::push(op);
                     auto [hi, lo] = floatToIEEEHex(args[i].name, args[i].size == 8);
                     CodeGen::add_to_asm("l.s " + get_gpr_name(f0) + ", " + hi, "Loading constant argument");
                     CodeGen::add_to_asm("s.s " + get_gpr_name(f0) + ", " + "0($sp)", "Moving constant argument");
@@ -524,16 +519,19 @@ namespace backend {
                     // Pushing to stack if no free registers
                     CodeGen::stack_pushed += args[i].size;
                     CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing constant argument to stack");
+                    Operand op = Operand();
+                    op.size = args[i].size;
+                    MMU::push(op);
                     if (args[i].size <= 4) {
                         CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + args[i].name, "Loading constant argument");
-                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset(args[i].name)) + "($sp)", "Moving constant argument");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", 0($sp)", "Moving constant argument");
                     }
                     else {
                         auto [hi, lo] = getHighLowBytes(args[i].name);
                         CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant argument");
-                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset(args[i].name)) + "($sp)", "Moving constant argument");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", 4($sp)", "Moving constant argument");
                         CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant argument");
-                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", " + std::to_string(MMU::get_offset(args[i].name) + 4) + "($sp)", "Moving constant argument");
+                        CodeGen::add_to_asm("sw " + get_gpr_name(s0) + ", 0($sp)", "Moving constant argument");
                     }
 
                     free_gpr(s0);
@@ -551,7 +549,8 @@ namespace backend {
                                 if (args[i].size == 8) {
                                     CodeGen::add_to_asm("mov.d " + get_gpr_name(j) + ", " + get_gpr_name(reg), "Moving argument to register");
                                     set_gpr(static_cast<GPR>(int(j) + 1), args[i].name);
-                                } else {
+                                }
+                                else {
                                     CodeGen::add_to_asm("mov.s " + get_gpr_name(j) + ", " + get_gpr_name(reg), "Moving argument to register");
                                 }
                                 set_gpr(j, args[i].name);
@@ -572,6 +571,9 @@ namespace backend {
 
                     CodeGen::stack_pushed += args[i].size;
                     CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing float argument to stack");
+                    Operand op = Operand();
+                    op.size = args[i].size;
+                    MMU::push(op);
                     GPR reg = get_assigned_gpr(args[i].name);
                     if (reg == empty) {
                         load_gpr(f0, args[i], true);
@@ -581,7 +583,8 @@ namespace backend {
                         if (args[i].size == 8) {
                             set_gpr(static_cast<GPR>(int(f0) + 1), args[i].name);
                             CodeGen::add_to_asm("mov.d " + get_gpr_name(f0) + ", " + get_gpr_name(reg), "Moving argument to register");
-                        } else {
+                        }
+                        else {
                             CodeGen::add_to_asm("mov.s " + get_gpr_name(f0) + ", " + get_gpr_name(reg), "Moving argument to register");
                         }
                     }
@@ -630,6 +633,9 @@ namespace backend {
                     }
                     CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(args[i].size), "Pushing argument to stack");
                     CodeGen::stack_pushed += args[i].size;
+                    Operand op = Operand();
+                    op.size = args[i].size;
+                    MMU::push(op);
                     for (int j = 0; j < args[i].size; j += 4) {
                         switch (args[i].storage_loc) {
                         case STACK:
@@ -695,6 +701,11 @@ namespace backend {
     }
 
     void dump_all_regs() {
+
+        Operand op = Operand();
+        op.size = 40;
+        MMU::push(op);
+
         // Dump all regs to dump_map
         std::vector<Register> dump;
         for (int i = 0; i < 10; ++i) {
@@ -739,6 +750,7 @@ namespace backend {
             }
         }
         CodeGen::add_to_asm("addi $sp, $sp, 40 ", "Pop store of temp regs");
+        MMU::pop(40);
     }
 
     void set_gpr(GPR reg, std::string name) {
@@ -799,7 +811,7 @@ namespace backend {
         return empty;
     }
 
-    GPR get_gpr(Operand op, bool load) {
+    GPR get_gpr(Operand op, TACStatement const* curr, bool load) {
         for (int i = 0; i < 64; i++) {
             if (gpr_map[(GPR)i].name == op.name) {
                 // CodeGen::add_to_asm("# " + op.name + " is in " + get_gpr_name((GPR)i), "");
@@ -807,7 +819,7 @@ namespace backend {
             }
         }
 
-        GPR temp = get_free_gpr(op, load);
+        GPR temp = get_free_gpr(op, curr, load);
         return temp;
     }
 
@@ -1002,6 +1014,15 @@ namespace backend {
         return -1; // Not found
     }
 
+    void MMU::update_symbol(std::string name) {
+        if (symbol_map.find(name) != symbol_map.end()) {
+            symbol_map[name].storage_loc = STACK;
+        }
+        else {
+            error_msg("Symbol not found in symbol map");
+        }
+    }
+
     GlobalType* MMU::get_symbol_type(std::string index) {
         Symbol symbol = SymbolTable::get_symbol_by_index(std::stoi(index));
         if (symbol.identifier.type != nullptr) {
@@ -1132,7 +1153,7 @@ namespace backend {
     }
 
 
-    bool is_float_register(GPR reg){
+    bool is_float_register(GPR reg) {
         return reg == f0 || reg == f1 || reg == f2 || reg == f3 || reg == f4 || reg == f5 || reg == f6 || reg == f7 || reg == f8 || reg == f9 || reg == f10 || reg == f11 || reg == f12 || reg == f13 || reg == f14 || reg == f15 || reg == f16 || reg == f17 || reg == f18 || reg == f19 || reg == f20 || reg == f21 || reg == f22 || reg == f23 || reg == f24 || reg == f25 || reg == f26 || reg == f27 || reg == f28 || reg == f29 || reg == f30 || reg == f31;
     }
 }
