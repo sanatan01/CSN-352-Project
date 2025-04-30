@@ -302,14 +302,6 @@ namespace backend {
             case BITWISE_AND:
             case BITWISE_OR:
             case BITWISE_XOR:
-            {
-                Operand firstOp = Operand(operands[0]);
-                Operand secondOp = Operand(operands[1]);
-                if (firstOp.is_constant) {
-                    operands[0] = Operand(secondOp);
-                    operands[1] = Operand(firstOp);
-                }
-            }
             case DIV:
             case MOD:
             case SUB:
@@ -386,8 +378,8 @@ namespace backend {
 
     void Quad::generate_asm() const {
         if (is_conditional) {
-            GPR lvalue = get_gpr(operands[0]);
-            GPR rvalue = get_gpr(operands.back());
+            GPR lvalue = get_gpr(operands[0], this);
+            GPR rvalue = get_gpr(operands.back(), this);
             if (operands[0].is_constant) {
                 if (is_float(operands[0].type)) {
                     if (operands[0].size == 4) {
@@ -441,7 +433,7 @@ namespace backend {
         {
 
             if (operands[0].type.type_tag == ARRAY_TYPE || operands[0].type.type_tag == STRUCT_TYPE || operands[0].type.type_tag == UNION_TYPE) {
-                GPR lvalue = get_gpr(operands[2]);
+                GPR lvalue = get_gpr(operands[2], this);
 
                 if (operands[0].storage_loc == DATA) {
                     // For data section, use la to load the address
@@ -453,7 +445,7 @@ namespace backend {
                     }
                     else {
                         // Add the offset for variable index
-                        GPR rvalue2 = get_gpr(operands[1]);
+                        GPR rvalue2 = get_gpr(operands[1], this);
                         CodeGen::add_to_asm("add " + get_gpr_name(s0) + ", " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Adding offset to array/struct address");
                         check_last_use(rvalue2, line_number);
                     }
@@ -463,7 +455,7 @@ namespace backend {
                     if (operands[1].is_constant)
                         CodeGen::add_to_asm("addi " + get_gpr_name(s0) + ", " + get_gpr_name(sp) + ", " + std::to_string(std::stoi(operands[1].name) + MMU::get_offset(operands[0].name)), "Addition operation in Quad");
                     else {
-                        GPR rvalue2 = get_gpr(operands[1]);
+                        GPR rvalue2 = get_gpr(operands[1], this);
                         CodeGen::add_to_asm("addi " + get_gpr_name(rvalue2) + ", " + get_gpr_name(rvalue2) + ", " + std::to_string(MMU::get_offset(operands[0].name)), "Addition operation in Quad");
                         CodeGen::add_to_asm("add " + get_gpr_name(s0) + ", " + get_gpr_name(sp) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad");
                         check_last_use(rvalue2, line_number);
@@ -471,14 +463,14 @@ namespace backend {
                 }
 
                 else {
-                    GPR address = get_gpr(operands[0]);
+                    GPR address = get_gpr(operands[0], this);
                     if (operands[1].is_constant) {
                         // Add the offset for constant index
                         CodeGen::add_to_asm("addi " + get_gpr_name(address) + ", " + get_gpr_name(address) + ", " + operands[1].name, "Adding offset to array/struct address");
                     }
                     else {
                         // Add the offset for variable index
-                        GPR rvalue2 = get_gpr(operands[1]);
+                        GPR rvalue2 = get_gpr(operands[1], this);
                         CodeGen::add_to_asm("add " + get_gpr_name(address) + ", " + get_gpr_name(address) + ", " + get_gpr_name(rvalue2), "Adding offset to array/struct address");
                         check_last_use(rvalue2, line_number);
                     }
@@ -494,55 +486,53 @@ namespace backend {
                 break;
             }
 
-            GPR lvalue = get_gpr(operands[2]);
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
+        }
+        case SUB:
+        case DIV:
+        case MUL:
+        {
+            GPR lvalue = get_gpr(operands[2], this);
+            GPR rvalue1 = get_gpr(operands[0], this);
+            GPR rvalue2 = get_gpr(operands[1], this);
             output_msg("Name of operand 2 is : " + operands[2].name + " Storage location is : " + std::to_string(operands[2].storage_loc));
             output_msg("Name of lvalue is : " + gpr_map[lvalue].name);
 
-            if (operands[1].is_constant) {
+            if (operands[0].is_constant) {
+
                 if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
-                        CodeGen::add_to_asm("add.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad float constant");
-                    }
-                    else {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm("add.d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad double constant");
-                    }
+                    auto [hi, lo] = floatToIEEEHex(operands[0].name, false);
+                    CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
+                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue1), "Transferring constant to float Quad");
                 }
                 else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("addi " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + operands[1].name, "Addition operation in Quad constant size<=4");
-                    }
-                    else {
-                        // TODO: long long to be handled
-                        //  CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                    }
+                    CodeGen::add_to_asm("li " + get_gpr_name(rvalue1) + ", " + operands[0].name, "Loading constant for Quad");
+                }
+            }
+            if (operands[1].is_constant) {
+                if (is_float(operands.back().type)) {
+                    auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
+                    CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
+                    CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
+                }
+                else {
+                    CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
+                }
+            }
+
+            if (is_float(operands.back().type)) {
+                if (operands.back().size == 4) {
+                    CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad float variable");
+                }
+                else {
+                    CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad double variable");
                 }
             }
             else {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        CodeGen::add_to_asm("add.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad float variable");
-                    }
-                    else {
-                        CodeGen::add_to_asm("add.d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad double variable");
-                    }
+                if (operands.back().size <= 4) {
+                    CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad size<=4 for variabls:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
                 }
                 else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("add " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Addition operation in Quad size<=4 for variabls:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
-                    }
-                    else {
-                        // TODO: long long to be handled
-                    }
+                    // TODO: long long to be handled
                 }
             }
             check_last_use(rvalue1, line_number);
@@ -551,100 +541,7 @@ namespace backend {
             CodeGen::add_to_asm("", "The registers lvalue, rvalue1,and rvalue2 are associated with names : " + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
 
         }
-        break;
-        case SUB:
-        case DIV:
-        {
-            if (operands[0].is_constant) {
-                GPR rvalue1 = get_gpr(operands[0]);
-                GPR rvalue2 = get_gpr(operands[1]);
-                GPR lvalue = get_gpr(operands[2]);
 
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        auto [hi, lo] = floatToIEEEHex(operands[0].name, false);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue1), "Transferring constant to float Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float constant");
-                    }
-                    else {
-                        auto [hi, lo] = floatToIEEEHex(operands[0].name, true);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue1), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad double constant");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad constant size<=4 for operands:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
-                    }
-                    else {
-                        // TODO: long long to be handled
-                        //  CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                    }
-                }
-                break;
-            }
-        }
-        case MUL:
-        {
-            GPR lvalue = get_gpr(operands[2]);
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
-
-            if (operands[1].is_constant) {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, false);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for float Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to float Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float constant");
-                    }
-                    else {
-                        auto [hi, lo] = floatToIEEEHex(operands[1].name, true);
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + hi, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(rvalue2), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + lo, "Loading constant for double Quad");
-                        CodeGen::add_to_asm("mtc1 " + get_gpr_name(s0) + ", " + get_gpr_name(static_cast<GPR>(int(rvalue2) + 1)), "Transferring constant to double Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad double constant");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                        CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad constant size<=4 for operands:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
-                    }
-                    else {
-                        // TODO: long long to be handled
-                        //  CodeGen::add_to_asm("li " + get_gpr_name(rvalue2) + ", " + operands[1].name, "Loading constant for Quad");
-                    }
-                }
-            }
-            else {
-                if (is_float(operands.back().type)) {
-                    if (operands.back().size == 4) {
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad float variable");
-                    }
-                    else {
-                        CodeGen::add_to_asm(binaryOpToName(op) + ".d " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad double variable");
-                    }
-                }
-                else {
-                    if (operands.back().size <= 4) {
-                        CodeGen::add_to_asm(binaryOpToName(op) + " " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue1) + ", " + get_gpr_name(rvalue2), "Mult/Sub/Div operation in Quad size<=4 for variables:" + gpr_map[lvalue].name + ", " + gpr_map[rvalue1].name + ", " + gpr_map[rvalue2].name);
-                    }
-                    else {
-                        // TODO: long long to be handled
-                    }
-                }
-            }
-            check_last_use(rvalue1, line_number);
-            check_last_use(rvalue2, line_number);
-            check_last_use(lvalue, line_number);
-        }
 
         break;
         case EQ:
@@ -654,9 +551,9 @@ namespace backend {
         case GE:
         case LE:
         {
-            GPR lvalue = get_gpr(operands[2]);
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
+            GPR lvalue = get_gpr(operands[2], this);
+            GPR rvalue1 = get_gpr(operands[0], this);
+            GPR rvalue2 = get_gpr(operands[1], this);
 
             if (operands[1].is_constant) {
                 if (is_float(operands.back().type)) {
@@ -736,9 +633,9 @@ namespace backend {
         break;
         case MOD:
         {
-            GPR lvalue = get_gpr(operands[2]);
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
+            GPR lvalue = get_gpr(operands[2], this);
+            GPR rvalue1 = get_gpr(operands[0], this);
+            GPR rvalue2 = get_gpr(operands[1], this);
 
             if (is_float(operands.back().type)) {
                 error_msg("Modulus operation not supported for float found in codegen ");
@@ -773,9 +670,9 @@ namespace backend {
         case BITWISE_OR:
         case BITWISE_XOR:
         {
-            GPR lvalue = get_gpr(operands[2]);
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
+            GPR lvalue = get_gpr(operands[2], this);
+            GPR rvalue1 = get_gpr(operands[0], this);
+            GPR rvalue2 = get_gpr(operands[1], this);
 
             if (is_float(operands.back().type)) {
                 error_msg("Modulus operation not supported for float found in codegen ");
@@ -826,9 +723,9 @@ namespace backend {
         case LOGICAL_AND:
         case LOGICAL_OR:
         {
-            GPR lvalue = get_gpr(operands[2]); 
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
+            GPR lvalue = get_gpr(operands[2], this);
+            GPR rvalue1 = get_gpr(operands[0], this);
+            GPR rvalue2 = get_gpr(operands[1], this);
 
             if (is_float(operands.back().type)) {
                 error_msg("Logical operation not supported for float found in codegen ");
@@ -872,9 +769,9 @@ namespace backend {
         case SHL:
         case SHR:
         {
-            GPR lvalue = get_gpr(operands[2]);
-            GPR rvalue1 = get_gpr(operands[0]);
-            GPR rvalue2 = get_gpr(operands[1]);
+            GPR lvalue = get_gpr(operands[2], this);
+            GPR rvalue1 = get_gpr(operands[0], this);
+            GPR rvalue2 = get_gpr(operands[1], this);
 
             if (is_float(operands.back().type)) {
                 error_msg("Shift operation not supported for float found in codegen ");
@@ -1082,7 +979,7 @@ namespace backend {
     }
 
     void Triple::generate_asm() const {
-        GPR lvalue = get_gpr(operands.back());
+        GPR lvalue = get_gpr(operands.back(), this);
         CodeGen::add_to_asm("# " + operands.back().name + " is in " + get_gpr_name(lvalue), "");
         switch (special_op) {
         case NONE_SP:
@@ -1117,8 +1014,8 @@ namespace backend {
 
                 store_all_registers();
                 free_all_registers();
-                GPR rvalue = get_gpr(operands[0]);
-                lvalue = get_gpr(operands.back());
+                GPR rvalue = get_gpr(operands[0], this);
+                lvalue = get_gpr(operands.back(), this);
 
                 CodeGen::add_to_asm("lw " + get_gpr_name(lvalue) + ", " + "0(" + get_gpr_name(rvalue) + ")", "Loading value of " + operands[0].name);
                 check_last_use(rvalue, line_number);
@@ -1127,7 +1024,7 @@ namespace backend {
             case EXCLAMATION_OP:
             {
                 //TODO: add for float using c.eq.s and branching
-                GPR rvalue = get_gpr(operands[0]);
+                GPR rvalue = get_gpr(operands[0], this);
                 CodeGen::add_to_asm("sltiu " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue) + ", 1", "Loading value of " + operands[0].name);
                 check_last_use(rvalue, line_number);
             }
@@ -1135,7 +1032,7 @@ namespace backend {
             case TILDE_OP:
             {
                 // TODO: handle constant
-                GPR rvalue = get_gpr(operands[0]);
+                GPR rvalue = get_gpr(operands[0], this);
                 if (operands[0].is_constant) {
                     CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", " + operands[0].name, "Loading value of " + operands[0].name);
                 }
@@ -1170,7 +1067,7 @@ namespace backend {
             break;
             case POS_OP:
             {
-                GPR rvalue = get_gpr(operands[0]);
+                GPR rvalue = get_gpr(operands[0], this);
                 if (is_float(operands.back().type)) {
                     if (operands.back().size == 4) {
                         CodeGen::add_to_asm("mov.s " + get_gpr_name(rvalue) + get_gpr_name(lvalue), "Loading value of " + operands[0].name);
@@ -1187,7 +1084,7 @@ namespace backend {
             break;
             case NEG_OP:
             {
-                GPR rvalue = get_gpr(operands[0]);
+                GPR rvalue = get_gpr(operands[0], this);
                 if (is_float(operands.back().type)) {
                     if (operands.back().size == 4) {
                         CodeGen::add_to_asm("neg.s " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
@@ -1212,7 +1109,7 @@ namespace backend {
         {
             store_all_registers();
             free_all_registers();
-            GPR rvalue = get_gpr(operands[0]);
+            GPR rvalue = get_gpr(operands[0], this);
             if (operands[0].is_constant) {
                 CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", " + operands[0].name, "Loading value of " + operands.back().name);
             }
@@ -1273,7 +1170,7 @@ namespace backend {
     }
 
     void Double::generate_asm() const {
-        GPR resultReg = get_gpr(operands.back());
+        GPR resultReg = get_gpr(operands.back(), this);
 
         if (operands[0].is_constant) {
             if (is_float(operands.back().type)) {
@@ -1319,7 +1216,7 @@ namespace backend {
                 if (typeMask[operands[1].type.standard_type->name] == typeMask[operands.back().type.standard_type->name]) {
 
                     // get rvalue register
-                    GPR secondReg = get_gpr(operands[0]);
+                    GPR secondReg = get_gpr(operands[0], this);
 
                     if (operands.back().size <= 4) {
                         if (!is_float(operands[0].type)) {
@@ -1348,7 +1245,7 @@ namespace backend {
                     // TODO: currently this one is for float not double
 
                     // Get register for rvalue  operand
-                    GPR secondReg = get_gpr(operands[0]);
+                    GPR secondReg = get_gpr(operands[0], this);
 
                     if (!is_float(operands[0].type) && is_float(operands.back().type)) {
 
@@ -1385,7 +1282,7 @@ namespace backend {
             }
             else {
                 // We perform a shallow copy of the pointers for any other type
-                GPR lvalue = get_gpr(operands[0]);
+                GPR lvalue = get_gpr(operands[0], this);
                 CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(lvalue), "Shallow copy of pointer");
                 check_last_use(lvalue, line_number);
             }
@@ -1395,6 +1292,14 @@ namespace backend {
 
     // ================ Common Functions ======================
 
+    void CommonStatement::update_arg_count() {
+        if (type == FUNC_St) {
+            reset_arg_count();
+        }
+        else {
+            TACStatement::update_arg_count();
+        }
+    }
 
     void CommonStatement::calculate_def_use() {
         switch (type) {
@@ -1481,21 +1386,6 @@ namespace backend {
                 error_msg("Invalid number of operands for POP statement");
                 return;
             }
-
-            if (CodeGen::current_scope == 1) {
-                GPR arg_regs[] = { a0, a1, a2, a3, f0, f1 };
-                for (auto reg : arg_regs) {
-                    free_gpr(reg);
-                }
-
-                // Stack se pop
-
-            }
-
-            // Fetch the operands
-            int sz = std::stoi(operands[0].name);
-            CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(sz), "Pop " + std::to_string(sz) + " bytes from stack");
-            MMU::pop(sz);
         }
         break;
         case FUNC_St:
@@ -1529,9 +1419,19 @@ namespace backend {
         break;
         case ENTER_St:
             CodeGen::current_scope++;
+            CodeGen::pop_size.push_back(0);
             break;
         case EXIT_St:
             CodeGen::current_scope--;
+            if (CodeGen::pop_size.back() != 0) {
+                CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(CodeGen::pop_size.back()), "Pop " + std::to_string(CodeGen::pop_size.back()) + " bytes from stack because temp was stored");
+                MMU::pop(CodeGen::pop_size.back());
+            }
+
+            if (CodeGen::current_scope == 0) {
+                CodeGen::fp_map.clear();
+            }
+            CodeGen::pop_size.pop_back();
             break;
         case GOTO_St:
         {
@@ -1583,7 +1483,7 @@ namespace backend {
                 }
                 else {
                     if (is_float(ret)) {
-                        GPR ret_gpr = get_gpr(operands[0]);
+                        GPR ret_gpr = get_gpr(operands[0], this);
                         if (operands[0].size == 4) {
                             CodeGen::add_to_asm("mov.s " + get_gpr_name(f0) + ", " + get_gpr_name(ret_gpr), "Loading float return value");
                         }
@@ -1622,7 +1522,7 @@ namespace backend {
                         free_gpr(s0);
                     }
                     else {
-                        GPR ret_gpr = get_gpr(operands[0]);
+                        GPR ret_gpr = get_gpr(operands[0], this);
                         CodeGen::add_to_asm("move " + get_gpr_name(v0) + ", " + get_gpr_name(ret_gpr), "Loading int return value");
                         check_last_use(ret_gpr, line_number);
                     }
@@ -1655,29 +1555,34 @@ namespace backend {
                 }
 
                 CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string(sz), "Pushing stack for args params");
+                Operand op = Operand();
+                op.size = sz;
+                MMU::push(op);
                 for (int i = params.size() - 1; i >= 1; i--) {
+                    GPR result_reg = get_gpr(params[i], this);
                     if (is_float(params[i].type)) {
                         if (params[i].size == 4) {
-                            GPR result_reg = get_gpr(params[i]);
+
                             CodeGen::add_to_asm("s.s " + get_gpr_name(result_reg) + ", " + std::to_string(sz - params[i].size) + "($sp)", "Pushing arg reg to stack");
                             sz -= params[i].size;
                         }
                         else {
-                            GPR result_reg = get_gpr(params[i]);
+
                             CodeGen::add_to_asm("s.d" + get_gpr_name(result_reg) + ", " + std::to_string(sz - params[i].size) + "($sp)", "Pushing arg reg to stack");
                             sz -= params[i].size;
                         }
                     }
                     else {
-                        GPR result_reg = get_gpr(params[i]);
                         CodeGen::add_to_asm("sw " + get_gpr_name(result_reg) + ", " + std::to_string(sz - std::max((int)params[i].size, 4)) + "($sp)", "Pushing arg reg to stack");
                         sz -= std::max((int)params[i].size, 4);
                     }
+                    check_last_use(result_reg, line_number);
                 }
-                
+
                 free_all_regs();
                 CodeGen::add_to_asm("jal " + labels[0].name, "Jump to function");
                 params.clear();
+                MMU::pop(sz);
                 set_gpr(v0, operands.back().name);
                 check_last_use(v0, line_number);
                 restore_all_regs();
@@ -1696,6 +1601,9 @@ namespace backend {
                 free_gpr(reg);
                 j++;
             }
+            Operand op = Operand();
+            op.size = 16;
+            MMU::push(op);
 
             CodeGen::arg_map.push_back(para);
 
@@ -1705,6 +1613,7 @@ namespace backend {
             // Clear the stack pushed by params
             restore_all_regs();
             if (CodeGen::stack_pushed != 0) {
+                MMU::pop(CodeGen::stack_pushed);
                 CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(CodeGen::stack_pushed), "Clearing stack pushed params");
                 CodeGen::stack_pushed = 0;
             }
@@ -1717,6 +1626,7 @@ namespace backend {
                 i++;
             }
             CodeGen::arg_map.pop_back();
+            MMU::pop(16);
             params.clear();
             CodeGen::add_to_asm("addi $sp, $sp, 16", "Popping stack for args params");
 
@@ -1726,7 +1636,7 @@ namespace backend {
 
 
             if (is_float(ret)) {
-                GPR ret_gpr = get_gpr(operands.back());
+                GPR ret_gpr = get_gpr(operands.back(), this);
                 if (operands.back().size == 4) {
                     CodeGen::add_to_asm("mov.s " + get_gpr_name(ret_gpr) + ", " + get_gpr_name(f0), "Loading float return value");
                 }
@@ -1766,7 +1676,7 @@ namespace backend {
                 free_gpr(s0);
             }
             else {
-                GPR ret_gpr = get_gpr(operands.back());
+                GPR ret_gpr = get_gpr(operands.back(), this);
                 CodeGen::add_to_asm("move " + get_gpr_name(ret_gpr) + ", " + get_gpr_name(v0), "Loading int return value");
                 check_last_use(ret_gpr, line_number);
                 check_last_use(v0, line_number);
@@ -1787,9 +1697,10 @@ namespace backend {
     // ================ Variable Functions ======================
 
     void VariableStatement::calculate_def_use() {
-        if (operands.size() != 3) return; // No defs or uses
         if (!operands.back().is_constant) def.insert(operands.back().name);
-        if (!operands[1].is_constant)use.insert(operands[1].name);
+        if (operands.size() == 3) { // No defs or uses
+            if (!operands[1].is_constant)use.insert(operands[1].name);
+        }
     }
 
     void VariableStatement::set_operands() {
@@ -1868,7 +1779,7 @@ namespace backend {
                 MMU::push(operands.back());
                 CodeGen::add_to_asm("addi $sp, $sp, -" + std::to_string((operands.back()).size), "Allocating space for " + operands.back().name);
 
-                GPR resultReg = get_gpr(operands.back(), false);
+                GPR resultReg = get_gpr(operands.back(), this, false);
 
                 if (operands[1].is_constant) {
                     if (is_float(operands.back().type)) {
@@ -1912,7 +1823,7 @@ namespace backend {
 
                         if (typeMask[operands[1].type.standard_type->name] == typeMask[operands.back().type.standard_type->name]) {
                             // get rvalue register
-                            GPR secondReg = get_gpr(operands[1]);
+                            GPR secondReg = get_gpr(operands[1], this);
 
                             if (operands.back().size <= 4) {
                                 if (!is_float(operands[1].type)) {
@@ -1942,7 +1853,7 @@ namespace backend {
                             // TODO: currently this one is for float not double
 
                             // Get register for rvalue  operand
-                            GPR secondReg = get_gpr(operands[1]);
+                            GPR secondReg = get_gpr(operands[1], this);
 
                             if (!is_float(operands[1].type) && is_float(operands.back().type)) {
 
@@ -1979,7 +1890,7 @@ namespace backend {
                     }
                     else {
                         // We perform a shallow copy of the pointers for any other type
-                        GPR lvalue = get_gpr(operands[1]);
+                        GPR lvalue = get_gpr(operands[1], this);
                         CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(lvalue), "Shallow copy of pointer");
                         check_last_use(lvalue, line_number);
                     }
@@ -2075,7 +1986,7 @@ namespace backend {
             return;
         }
 
-        GPR resultReg = get_gpr(operands.back(), true);
+        GPR resultReg = get_gpr(operands.back(), this, true);
 
         if (operands[0].is_constant) {
             if (is_float(operands.back().type)) {
@@ -2096,11 +2007,11 @@ namespace backend {
             }
             else {
                 if (operands.back().size <= 4) {
-                    if(is_float(operands.back().type)){
+                    if (is_float(operands.back().type)) {
                         CodeGen::add_to_asm("li " + get_gpr_name(s0) + ", " + operands[0].name, "Loading int constant");
                         CodeGen::add_to_asm("cvt.s.w " + get_gpr_name(resultReg) + ", " + get_gpr_name(s0), "Convert int to float");
                     }
-                    else{
+                    else {
                         CodeGen::add_to_asm("li " + get_gpr_name(resultReg) + ", " + operands[0].name, "Loading int constant");
                     }
                     // TODO: No need
@@ -2128,7 +2039,7 @@ namespace backend {
                 if (typeMask[operands[1].type.standard_type->name] == typeMask[operands.back().type.standard_type->name]) {
 
                     // get rvalue register
-                    GPR secondReg = get_gpr(operands[0]);
+                    GPR secondReg = get_gpr(operands[0], this);
 
                     if (operands.back().size <= 4) {
                         if (is_float_register(secondReg) && is_float_register(resultReg)) {
@@ -2141,7 +2052,8 @@ namespace backend {
                         else if (!is_float_register(secondReg) && is_float_register(resultReg)) {
                             CodeGen::add_to_asm("mtc1 " + get_gpr_name(secondReg) + ", " + get_gpr_name(f0), "Convert float to int");
                             CodeGen::add_to_asm("cvt.w.s " + get_gpr_name(resultReg) + ", " + get_gpr_name(f0), "Convert float to int");
-                        }else{
+                        }
+                        else {
                             CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(secondReg), "moving int");
                         }
                     }
@@ -2163,7 +2075,7 @@ namespace backend {
                     // TODO: currently this one is for float not double
 
                     // Get register for rvalue  operand
-                    GPR secondReg = get_gpr(operands[0]);
+                    GPR secondReg = get_gpr(operands[0], this);
 
                     if (!is_float(operands[0].type) && is_float(operands.back().type)) {
 
@@ -2200,7 +2112,7 @@ namespace backend {
             }
             else {
                 // We perform a shallow copy of the pointers for any other type
-                GPR lvalue = get_gpr(operands[0]);
+                GPR lvalue = get_gpr(operands[0], this);
                 CodeGen::add_to_asm("move " + get_gpr_name(resultReg) + ", " + get_gpr_name(lvalue), "Shallow copy of pointer");
                 check_last_use(lvalue, line_number);
             }

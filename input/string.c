@@ -5,11 +5,15 @@ int main(){
     char *str = "Hello, World!";
 
     scanf("%i\n", &i);
-    
-    while (i--) {
-        int j = 0;
+
+    int j = 0;
+    while(i--) {
+        j += i;
+        break;
     }
 
-    printf("%d\n", i);
+    printf("%i\n", i);
 
+
+    return 0;
 }

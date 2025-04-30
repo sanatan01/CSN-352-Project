@@ -1,18 +1,14 @@
-int add(int a, int b){
-    if(a==0){
-        // Good
-    }
-    else{
-        // Not good
-    }
-    int i;
+int add(int a, int b) {
+    return a + b;
 }
 
-void foo(){
+void foo() {
 
-     int **a;
+    int** a;
 
-     int **c = a;
+    int** c = a;
+
+    return;
 }
 
 
@@ -20,14 +16,14 @@ void foo(){
 int main() {
     int arr[5];
 
-    char * cab = "hello";
+    char* cab = "hello";
 
-    arr[3]=5;
+    arr[3] = 5;
     // Basic arithmetic expressions
     int i;
-    for(i = 0; i < 10; i +=1 ) {
-        if(i == 5) {
-            i=6;
+    for (i = 0; i < 10; i += 1) {
+        if (i == 5) {
+            i = 6;
             break;
         }
         else {
@@ -35,9 +31,9 @@ int main() {
         }
     }
 
-    for(i = 0; i < 10; i++ ) {
-        if(i == 5) {
-            i=6;
+    for (i = 0; i < 10; i++) {
+        if (i == 5) {
+            i = 6;
             break;
         }
         else {
@@ -45,14 +41,14 @@ int main() {
         }
     }
 
-    while(i == 0){
+    while (i == 0) {
         i += 2;
     }
 
 
     return i;
 
-    int a,b,c,d,e,f,g;
+    int a, b, c, d, e, f, g;
 
     a = 5;
     b = 3;
@@ -64,9 +60,9 @@ int main() {
     g = a + b * c - d / e;
 
     int kyun = 5;
-    int *kyu = &kyun;
+    int* kyu = &kyun;
 
-    
+
     // Bitwise expressions
     int bw_and = a & b;    // bitwise AND
     int bw_or = a | b;    // bitwise OR
@@ -89,25 +85,25 @@ int main() {
     int ge = (a >= b);
 
     // // Assignment expressions and compound assignments
-    long long x;
+    int x;
     x = a;
     x += b;
     x -= b;
     x *= a;
     x /= 2;
 
-//    Conditional (ternary) operator
+    //    Conditional (ternary) operator
     int cond;
     cond = (a > b) ? a : b;
     cond = (a > b) ? a : x;
 
-    int za,zb;
+    int za, zb;
     int res;
-    res=add(za,zb);
+    res = add(za, zb);
 
-    a=res++;
+    a = res++;
     int* bf;
-    bf= &a;
+    bf = &a;
 
 
     // Unary expressions
@@ -115,15 +111,12 @@ int main() {
     pre_inc = ++a;
     post_dec = b--;
 
-    // Cast expression
-    double cast_expr;
-    cast_expr = (double)a;
 
     // sizeof operator
     int size;
     size = sizeof(a);
 
-    char *ptr1;
+    char* ptr1;
 
     za = ptr1[3];
 
@@ -143,8 +136,8 @@ int main() {
 
     foo();
     int s;
-    s = add(1,2);
+    s = add(1, 2);
 
-    int aaaloo = -100, bhaijaan(int a), chowmein=10;
+    int aaaloo = -100, bhaijaan(int a), chowmein = 10;
 
 }

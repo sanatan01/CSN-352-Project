@@ -105,7 +105,7 @@ namespace backend
 
     void init_gpr_map();
 
-    GPR get_free_gpr(Operand op, bool load);
+    GPR get_free_gpr(Operand op,TACStatement const *curr, bool load);
     void get_free_arg_gpr(std::vector<Operand> args, Operand ret);
     int set_arg_type(Operand op);
 
@@ -124,7 +124,7 @@ namespace backend
     void restore_all_regs();
 
     GPR get_assigned_gpr(std::string name);
-    GPR get_gpr(Operand op, bool load = true);
+    GPR get_gpr(Operand op, TACStatement const *curr,bool load = true);
     void free_all_registers();
     void store_all_registers();
 
@@ -137,37 +137,40 @@ namespace backend
     public:
         static std::map<std::string, GlobalType> function_map;
         MMU() = delete;
-
+        
         static void push(Operand op);
         static void pop(int size);
         static int get_offset(std::string name);
-    
-
+        
+        
         static bool add_symbol(std::string name, int index, int loc);
-
+        
         static bool add_symbol(std::string name, int size, GlobalType type, int loc = 0);
-
+        
         // Functions for function call
         static GlobalType get_symbol_type(std::string name, int index);
-
+        
         static int get_symbol_size(std::string name);
+        static void update_symbol(std::string name);
         static Operand get_symbol(std::string name);
         static GlobalType *get_symbol_type(std::string name);
         static bool is_symbol_present(std::string name);
         static void add_to_func_map(std::string name, std::string index);
     };
-
+    
     class CodeGen
     {
-    public:
+        public:
         static int current_scope;
         static int stack_pushed;
         static std::string current_func;
-
+        
+        static std::vector<int> pop_size;
         // Making things work
         static std::vector<std::vector<Register>> dump_map;
         static std::vector<std::vector<Register>> arg_map;
         static std::map<std::string, int> fp_map;
+        // static std::vector<std::string> current_args;
 
         static std::stringstream asm_stream;
         static std::stringstream data_stream;

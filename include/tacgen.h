@@ -99,7 +99,7 @@ namespace backend
         virtual void update_arg_count()
         {
             // Default implementation sets this to 0, if ARG_St we inc this
-            reset_arg_count();
+            // reset_arg_count();
         }
 
         virtual void generate_assembly()
@@ -276,6 +276,7 @@ namespace backend
 
         void set_operands() override;
         void generate_asm() const override;
+        void update_arg_count() override;
 
         // Liveness analysis
         void calculate_def_use() override;
