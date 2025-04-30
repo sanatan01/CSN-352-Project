@@ -73,6 +73,10 @@ void SymbolTable::add_symbol(Identifier* id, bool args, int line, int column) {
         }
     }
 
+    if (id->type->type_tag == ENUM_TYPE) {
+        id->type = create_primitive_type(INT_T);
+    }
+
     Symbol symbol(*id, current_scope_level, id->type->isDefined(), get_count(), line, column);
     std::string name = symbol.identifier.name;
     symbol.identifier.name = symbol.identifier.name + "." + std::to_string(symbol.global_count);
@@ -111,6 +115,10 @@ void SymbolTable::add_symbol_with_assign(Identifier* id, std::string assign, int
             error_msg("Multiple definitions of symbol " + id->name + " in same scope found");
             return;
         }
+    }
+
+    if (id->type->type_tag == ENUM_TYPE) {
+        id->type = create_primitive_type(INT_T);
     }
 
     Symbol symbol(*id, current_scope_level, id->type->isDefined(), get_count(), line, column);

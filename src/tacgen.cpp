@@ -271,6 +271,7 @@ namespace backend {
                     }
                     else {
                         op.type = *(create_pointer_type(typ));
+                        op.is_member = true;
                     }
                     op.name = operands.back().name;
                     op.is_constant = false;
@@ -288,6 +289,7 @@ namespace backend {
                     }
                     else {
                         op.type = *(create_pointer_type(typ));
+                        op.is_member = true;
                     }
                     op.name = operands.back().name;
                     op.is_constant = false;
@@ -378,6 +380,7 @@ namespace backend {
 
     void Quad::generate_asm() const {
         if (is_conditional) {
+            store_all_static();
             GPR lvalue = get_gpr(operands[0], this);
             GPR rvalue = get_gpr(operands.back(), this);
             if (operands[0].is_constant) {
@@ -422,7 +425,16 @@ namespace backend {
 
             }
             else {
-                CodeGen::add_to_asm("beq " + get_gpr_name(lvalue) + ", $zero, " + labels.back().name, "Conditional statement");
+                switch(op) {
+                    case EQ:
+                    CodeGen::add_to_asm("beq " + get_gpr_name(lvalue) + ", $zero, " + labels.back().name, "Conditional statement");
+                    break;
+                    case NE:
+                    CodeGen::add_to_asm("bne " + get_gpr_name(lvalue) + ", $zero, " + labels.back().name, "Conditional statement");
+                    break;
+                    default:
+                    break;  
+                }
             }
             check_last_use(lvalue, line_number);
             check_last_use(rvalue, line_number);
@@ -1011,11 +1023,20 @@ namespace backend {
             {
 
 
-
                 store_all_registers();
                 free_all_registers();
                 GPR rvalue = get_gpr(operands[0], this);
                 lvalue = get_gpr(operands.back(), this);
+
+                if ( operands[0].type.type_tag == POINTER_TYPE ) {
+                    GlobalType* ret = operands[0].type.pointer_type->return_type;
+                    if (ret->type_tag == STRUCT_TYPE || ret->type_tag == UNION_TYPE || ret->type_tag == ARRAY_TYPE) {
+                        CodeGen::add_to_asm("move " + get_gpr_name(lvalue) + ", " + get_gpr_name(rvalue), "Loading value of " + operands[0].name);
+                        check_last_use(rvalue, line_number);
+                        break;
+                    }
+                } 
+
 
                 CodeGen::add_to_asm("lw " + get_gpr_name(lvalue) + ", " + "0(" + get_gpr_name(rvalue) + ")", "Loading value of " + operands[0].name);
                 check_last_use(rvalue, line_number);
@@ -1110,18 +1131,23 @@ namespace backend {
             store_all_registers();
             free_all_registers();
             GPR rvalue = get_gpr(operands[0], this);
+
             if (operands[0].is_constant) {
                 CodeGen::add_to_asm("li " + get_gpr_name(rvalue) + ", " + operands[0].name, "Loading value of " + operands.back().name);
             }
             GPR address = s0;
-            if (operands.back().storage_loc == DATA) {
-                CodeGen::add_to_asm("la " + get_gpr_name(address) + ", " + CodeGen::convert_to_valid(operands.back().name), "Loading address of " + operands.back().name);
-            }
-            else if (operands.back().storage_loc == STACK) {
-                CodeGen::add_to_asm("lw " + get_gpr_name(address) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Loading address of " + operands.back().name);
-            }
-            else {
-                CodeGen::add_to_asm("move " + get_gpr_name(address) + ", " + get_gpr_name(lvalue), "Storing value of " + operands.back().name);
+            if (!operands.back().is_member) {
+                if (operands.back().storage_loc == DATA) {
+                    CodeGen::add_to_asm("la " + get_gpr_name(address) + ", " + CodeGen::convert_to_valid(operands.back().name), "Loading address of " + operands.back().name);
+                }
+                else if (operands.back().storage_loc == STACK) {
+                    CodeGen::add_to_asm("lw " + get_gpr_name(address) + ", " + std::to_string(MMU::get_offset(operands.back().name)) + "($sp)", "Loading address of " + operands.back().name);
+                }
+                else {
+                    CodeGen::add_to_asm("move " + get_gpr_name(address) + ", " + get_gpr_name(lvalue), "Storing value of " + operands.back().name);
+                }
+            } else {
+                address = lvalue;
             }
             CodeGen::add_to_asm("sw " + get_gpr_name(rvalue) + ", 0(" + get_gpr_name(address) + ")", "Storing value of " + operands.back().name);
             check_last_use(rvalue, line_number);
@@ -1311,6 +1337,7 @@ namespace backend {
         case EXIT_St:
             break;
         case RETURN_St:
+            if (operands.size() == 0) break;
         case PARAM_St:
             if (!operands[0].is_constant) use.insert(operands[0].name);
             break;
@@ -1439,6 +1466,7 @@ namespace backend {
                 error_msg("Invalid number of operands for GOTO statement");
                 return;
             }
+            store_all_static();
             // Fetch the operands
             std::string label = labels[0].name;
             CodeGen::add_to_asm("j " + label, "Jump to label " + label);
@@ -1528,6 +1556,8 @@ namespace backend {
                     }
                 }
             }
+
+            store_all_static();
             // Function Epilogue
             CodeGen::add_to_asm("# Function epilogue", "");
             CodeGen::add_to_asm("move $sp, $fp", "Restore stack pointer");
@@ -1544,6 +1574,7 @@ namespace backend {
 
             if (labels[0].name == "printf" || labels[0].name == "scanf") {
 
+                store_all_static();
                 dump_all_regs();
 
                 CodeGen::add_to_asm("la " + get_gpr_name(a0) + ", " + CodeGen::convert_to_valid(params[0].name), "Loading address of " + params[0].name);
@@ -1731,6 +1762,7 @@ namespace backend {
                 Operand op = MMU::get_symbol(operands.back().name);
                 operands.back() = Operand(op);
                 operands.back().is_constant = false;
+                last_used[operands.back().name] = curr_line;
             }
             break;
             case DATA_St:

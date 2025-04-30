@@ -304,18 +304,18 @@ namespace backend {
         switch (op.storage_loc) {
         case TEMP:
         {
-            if (reg == a0) {
-                CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", 12($sp)", "Loading into " + get_gpr_name(reg) + " from temp with name " + op.name, true);
-            }
-            else if (reg == a1) {
-                CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", 8($sp)", "Loading into " + get_gpr_name(reg) + " from temp with name " + op.name, true);
-            }
-            else if (reg == a2) {
-                CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", 4($sp)", "Loading into " + get_gpr_name(reg) + " from temp with name " + op.name, true);
-            }
-            else if (reg == a3) {
-                CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", 0($sp)", "Loading into " + get_gpr_name(reg) + " from temp with name " + op.name, true);
-            }
+            // if (reg == a0) {
+            //     CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", 12($sp)", "Loading into " + get_gpr_name(reg) + " from temp with name " + op.name, true);
+            // }
+            // else if (reg == a1) {
+            //     CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", 8($sp)", "Loading into " + get_gpr_name(reg) + " from temp with name " + op.name, true);
+            // }
+            // else if (reg == a2) {
+            //     CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", 4($sp)", "Loading into " + get_gpr_name(reg) + " from temp with name " + op.name, true);
+            // }
+            // else if (reg == a3) {
+            //     CodeGen::add_to_asm("lw " + get_gpr_name(reg) + ", 0($sp)", "Loading into " + get_gpr_name(reg) + " from temp with name " + op.name, true);
+            // }
         }
         set_gpr(reg, op.name);
         break;
@@ -480,7 +480,16 @@ namespace backend {
                 if (is_float(args[i].type)) {
                     for (GPR j : float_args) {
                         if (gpr_map[j].is_free()) {
-                            load_gpr(j, args[i], true);
+                            if (args[i].is_constant) {
+                                auto [hi, lo] = floatToIEEEHex(args[i].name, args[i].size == 8);
+                                CodeGen::add_to_asm("l.s " + get_gpr_name(j) + ", " + hi, "Loading constant argument");
+                                if (args[i].size == 8) {
+                                    CodeGen::add_to_asm("l.s" + get_gpr_name(GPR((int)j + 1)) + ", " + lo, "Loading constant argument");
+                                }
+                            }
+                            else {
+                                load_gpr(j, args[i], true);
+                            }
                             found_reg = true;
                             break;
                         }
@@ -499,15 +508,20 @@ namespace backend {
                     CodeGen::add_to_asm("l.s " + get_gpr_name(f0) + ", " + hi, "Loading constant argument");
                     CodeGen::add_to_asm("s.s " + get_gpr_name(f0) + ", " + "0($sp)", "Moving constant argument");
                     if (args[i].size == 8) {
-                        CodeGen::add_to_asm("l.s " + get_gpr_name(f0) + ", " + lo, "Loading constant argument");
-                        CodeGen::add_to_asm("s.s " + get_gpr_name(f0) + ", " + "4($sp)", "Moving constant argument");
+                        CodeGen::add_to_asm("l.s " + get_gpr_name(f1) + ", " + lo, "Loading constant argument");
+                        CodeGen::add_to_asm("s.s " + get_gpr_name(f1) + ", " + "4($sp)", "Moving constant argument");
                     }
                     free_gpr(f0);
                 }
                 else {
                     for (GPR j : int_args) {
                         if (gpr_map[j].is_free()) {
-                            load_gpr(j, args[i], true);
+                            if (args[i].is_constant) {
+                                CodeGen::add_to_asm("li " + get_gpr_name(j) + ", " + args[i].name, "Loading constant argument");
+                                set_gpr(j, args[i].name);
+                            } else {
+                                load_gpr(j, args[i], true);
+                            } 
                             found_reg = true;
                             break;
                         }
@@ -727,6 +741,16 @@ namespace backend {
         }
         CodeGen::add_to_asm("addi $sp, $sp, 40 ", "Pop store of temp regs");
         MMU::pop(40);
+    }
+
+    void store_all_static(){
+        GPR free_regs[] = { t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f16, f17, f18, f19, f20, f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31 };
+        for (GPR reg : free_regs) {
+            if (MMU::get_symbol(gpr_map[reg].name).storage_loc == DATA) {
+                store_gpr(reg, gpr_map[reg].name);
+                free_gpr(reg);
+            }
+        }
     }
 
     void set_gpr(GPR reg, std::string name) {

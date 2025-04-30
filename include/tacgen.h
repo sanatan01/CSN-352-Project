@@ -44,6 +44,7 @@ namespace backend
         size_t size;
         GlobalType type;
         bool is_constant;
+        bool is_member;
         StorageLoc storage_loc;
 
 
@@ -52,7 +53,7 @@ namespace backend
         Operand(std::string name, bool is_const);
         Operand(const Operand &other)
             : name(other.name), size(other.size), type(other.type),
-              is_constant(other.is_constant), storage_loc(other.storage_loc) {}
+              is_constant(other.is_constant), storage_loc(other.storage_loc), is_member(other.is_member) {}
     };
 
     enum TACType

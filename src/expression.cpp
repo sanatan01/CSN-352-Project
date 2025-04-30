@@ -1228,6 +1228,7 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
         temp1 = TAC::get_temp();
         std::string constantFolded = operation_integer_values("*", exp->name, std::to_string(pe->exp_type->array_type->return_type->getSize()));
         TAC::print_tac(temp1 + " = " + constantFolded);
+                        
         // oe->prim_type.is_const = false; //TODO: make it non-constant
     }
     else if (pe->exp_type->type_tag == POINTER_TYPE) {
@@ -1258,6 +1259,11 @@ Expression* create_postfix_expr_arr(Expression* pe, Expression* exp) {
     // oe->column = column;
 
     std::string temp3 = TAC::get_temp();
+    if (pe->name[0] == '*') {
+        std::string new_temp = TAC::get_temp();
+        TAC::print_tac(new_temp + " = " + pe->name);
+        pe->name = new_temp;
+    }
     TAC::print_tac(temp3 + " = " + pe->name + " + " + temp1);
     P->name = "*" + temp3;
     return P;
@@ -1310,7 +1316,7 @@ Expression* create_postfix_expr_fun(Identifier* fi, VectorExpression* ae) {
         for (auto& itr : ae->operands) {
             if (itr.name[0] == '*') {
                 std::string new_temp = TAC::get_temp();
-                TAC::print_tac(new_temp + " = * " + itr.name);
+                TAC::print_tac(new_temp + " = " + itr.name);
                 itr.name = new_temp;
             }
         }
@@ -1495,6 +1501,11 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                     }
                 }
                 std::string new_temp = TAC::get_temp();
+                if (pe->name[0] == '*') {
+                    std::string new_temp = TAC::get_temp();
+                    TAC::print_tac(new_temp + " = " + pe->name);
+                    pe->name = new_temp;
+                }
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
                 P->name = "*" + new_temp;
                 // TAC::print_tac(" *"+temp1 + " = " + pe->name + " + " std::to_string(offset));
@@ -1516,6 +1527,11 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                     P->prim_type = ERROR_T;
                 }
                 std::string new_temp = TAC::get_temp();
+                if (pe->name[0] == '*') {
+                    std::string new_temp = TAC::get_temp();
+                    TAC::print_tac(new_temp + " = " + pe->name);
+                    pe->name = new_temp;
+                }
                 TAC::print_tac(new_temp + " = " + pe->name + " + " + std::to_string(offset));
                 P->name = "*" + new_temp;
                 // TAC::print_tac(" *"+temp1 + " = " + pe->name + " + " std::to_string(offset));
@@ -1555,6 +1571,11 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                     }
                 }
                 std::string temp_var1 = TAC::get_temp();
+                if (pe->name[0] == '*') {
+                    std::string new_temp = TAC::get_temp();
+                    TAC::print_tac(new_temp + " = " + pe->name);
+                    pe->name = new_temp;
+                }
                 TAC::print_tac(temp_var1 + " =  *" + pe->name);
                 std::string temp_var2 = TAC::get_temp();
                 TAC::print_tac(temp_var2 + " = " + temp_var1 + " + " + std::to_string(offset));
@@ -1573,6 +1594,11 @@ Expression* create_postfix_expr_struct(std::string access_op, Expression* pe, Id
                 }
 
                 std::string temp_var1 = TAC::get_temp();
+                if (pe->name[0] == '*') {
+                    std::string new_temp = TAC::get_temp();
+                    TAC::print_tac(new_temp + " = " + pe->name);
+                    pe->name = new_temp;
+                }
                 TAC::print_tac(temp_var1 + " =  *" + pe->name);
                 std::string temp_var2 = TAC::get_temp();
                 TAC::print_tac(temp_var2 + " = " + temp_var1 + " + " + std::to_string(offset));
@@ -1661,6 +1687,12 @@ Expression* create_unary_expression(OpExpression* oe) {
     // 3AC
     std::string u_op = oe->op;
 
+    if (oe->op1.name[0] == '*') {
+        std::string new_temp = TAC::get_temp();
+        TAC::print_tac(new_temp + " = " + oe->op1.name);
+        oe->op1.name = new_temp;
+    }
+    
     if (u_op == "++" || u_op == "--") {
 
         oe->is_assignable = false;

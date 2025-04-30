@@ -1130,7 +1130,11 @@ case_statement_list
 	| case_statement_list case_statement
 
 case_statement
-	: CASE { TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C); } signed_constant_expression  COLON {TAC::print_tac(".if " + switch_temps.back()->name + " != " + std::string($3) + " .goto " + TAC::get_label(GOTO_C));} statement
+	: CASE { TAC::print_label(GOTO_C); TAC::remove_goto_label(); TAC::add_label(GOTO_C); } signed_constant_expression  COLON {
+		std::string temp = TAC::get_temp();
+		TAC::print_tac(temp + " = " + switch_temps.back()->name + "== " + std::string($3));
+		TAC::print_tac(".if " + temp + "== 0 .goto " + TAC::get_label(GOTO_C));
+		} statement
 	;
 
 switch_statement

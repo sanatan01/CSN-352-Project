@@ -123,6 +123,8 @@ namespace backend
     void free_all_regs();
     void restore_all_regs();
 
+    void store_all_static();
+
     GPR get_assigned_gpr(std::string name);
     GPR get_gpr(Operand op, TACStatement const *curr,bool load = true);
     void free_all_registers();
