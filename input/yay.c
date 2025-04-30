@@ -46,7 +46,7 @@ int main() {
                       a81, a82, a83, a84, a85, a86, a87, a88, a89, a90,
                       a91, a92, a93, a94, a95, a96, a97, a98, a99, a100);
 
-    printf("Sum of all variables = %d\n", sum);
+    printf("Sum of all variables = %i\n", sum);
 
     return 0;
 }

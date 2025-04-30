@@ -1206,7 +1206,7 @@ iteration_statement
 		TAC::remove_continue_label();
 		SymbolTable::exit_scope();
 	}
-	| FOR INC_SCOPE { TAC::create_loop_statement(); } LEFT_PAREN init_clause {TAC::print_label(CONTINUE_C);} expression_statement { TAC::print_goto_conditional($7, BREAK_C); TAC::dump_to_file(); } empty_expression { TAC::transfer_from_postfix(); TAC::dump_to_temp(); } RIGHT_PAREN statement {
+	| FOR INC_SCOPE { TAC::create_loop_statement(); TAC::add_label(GOTO_C); } LEFT_PAREN init_clause {TAC::print_label(CONTINUE_C);} expression_statement { TAC::print_goto_conditional($7, BREAK_C); TAC::dump_to_file(); } empty_expression { TAC::transfer_from_postfix(); TAC::dump_to_temp(); } RIGHT_PAREN statement {
 		TAC::get_from_temp();
 		TAC::print_goto(CONTINUE_C, true);
 		TAC::remove_break_label();

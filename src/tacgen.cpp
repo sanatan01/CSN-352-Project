@@ -1427,6 +1427,10 @@ namespace backend {
                 CodeGen::add_to_asm("addi $sp, $sp, " + std::to_string(CodeGen::pop_size.back()), "Pop " + std::to_string(CodeGen::pop_size.back()) + " bytes from stack because temp was stored");
                 MMU::pop(CodeGen::pop_size.back());
             }
+
+            if (CodeGen::current_scope == 0) {
+                CodeGen::fp_map.clear();
+            }
             CodeGen::pop_size.pop_back();
             break;
         case GOTO_St:
@@ -1597,6 +1601,9 @@ namespace backend {
                 free_gpr(reg);
                 j++;
             }
+            Operand op = Operand();
+            op.size = 16;
+            MMU::push(op);
 
             CodeGen::arg_map.push_back(para);
 
@@ -1619,6 +1626,7 @@ namespace backend {
                 i++;
             }
             CodeGen::arg_map.pop_back();
+            MMU::pop(16);
             params.clear();
             CodeGen::add_to_asm("addi $sp, $sp, 16", "Popping stack for args params");
 

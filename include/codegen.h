@@ -170,6 +170,7 @@ namespace backend
         static std::vector<std::vector<Register>> dump_map;
         static std::vector<std::vector<Register>> arg_map;
         static std::map<std::string, int> fp_map;
+        // static std::vector<std::string> current_args;
 
         static std::stringstream asm_stream;
         static std::stringstream data_stream;
