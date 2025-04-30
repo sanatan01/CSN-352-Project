@@ -1,47 +1,27 @@
 int main() {
 
-    // struct f {
-    //     int x;
-    // };
+    struct f {
+        int x;
+    };
 
-    // struct s {
-    //     int uh;
-    //     short b;
-    //     struct f* gsd;
-    // };
+    struct s {
+        int uh;
+        int b;
+    };
 
-    // struct f* z1;
-    // struct s z;
-    // z1->x = 5;
-    // z.b = 5;
-    // int a = z.b;
-    // int c = z.gsd->x;
-    // z.gsd->x = 10;
+    struct f ff;
 
-    // union k {
-    //     int s;
-    //     int fs;
-    //     long long g;
-    //     // char f[50];
-    // };
+    struct f* z1 = &ff;
+    ff.x = 5;
+    struct s z;
+    z.b = 10;
+    int a = z.b;
+    z1->x = 15;
+    int* xx = &(z.b);
+    int f = *xx;
+    printf("a is %i\n", f);
+    int x = ff.x;
+    printf("ff is %i\n", x);
 
-    // union k gus;
-    // gus.s = 5;
-    // gus.g = 7;
-
-    // enum Color {
-    //     A, B=7, C=9, D
-    // } asdf;
-
-    // enum Color ffg = B;
-
-    int arr[5];
-
-    arr[2]=5;
-
-
-
-    // struct s *ks;
-    // ks->b = 5;
-
+    return 0;
 }
